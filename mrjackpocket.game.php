@@ -76,13 +76,42 @@ class MrJackPocket extends Table
 
 
         /**
+         * 0) find Jack
          * 1) shuffle tales, their rotation and assign pos to x, y
          * 2) rotate tales near detectives if there is a need
          * 3) choose detective and jack from players
-         * 4) make generation of cards
+         * 4) make generation of cards ???
          * 5) save everything in DB: character_status, available_options, detective_status, round, player.isCriminal
          * 6) go to the next state
          */
+
+        $jackId = (string) bga_rand(1, 9);
+
+        // 1) shuffle tales, their rotation and assign pos to x, y
+        // 2) rotate tales near detectives if there is a need
+        $tales = array(); 
+        // { character_id, tale_pos, tale_is_opened, is_criminal, player_id_with_alibi }
+        $posArray = $this->getRandomPosArray(count($this->characters));
+        foreach ($this->characters as $index => $character) {
+            $tales[] = array(
+                'character_id' => $character['id'],
+                'tale_pos' => $posArray[$index],
+                'tale_is_opened' => true,
+                'is_criminal' => $character['id'] === $jackId,
+                'player_id_with_alibi' => null,
+                'wall_side' => $this->getInitialWallSide($posArray[$index]),
+            );
+        }
+
+        $jackIndex = bga_rand(0, 1);
+        $jackPlayerId = $players[$jackIndex]['player_id'];
+
+        // TODO saving character_status in db
+        // TODO saving available_options in db
+        // TODO saving detective_status in db
+        // TODO saving round in db
+        // TODO saving player in db
+
 
         /************ Start the game initialization *****/
 
@@ -153,6 +182,47 @@ class MrJackPocket extends Table
     /*
         In this space, you can put any utility methods useful for your game logic
     */
+
+    function getInitialWallSide($tale_pos) {
+        if ($tale_pos === 1) {
+            return 'left';
+        } else if ($tale_pos === 3) {
+            return 'right';
+        } else if ($tale_pos === 8) {
+            return 'down';
+        }
+
+        $side = bga_rand( 1, 4 );
+        if ($side === 1) {
+            return 'left';
+        } else if ($side === 2) {
+            return 'up';
+        } else if ($side === 3) {
+            return 'right';
+        } else {
+            return 'down';
+        }
+    }
+
+    // TODO check algo, maybe here you will find an errors
+    function getRandomPosArray($length) {
+        $result = array();
+        $numbers = range(1, $length);
+        foreach ($numbers as $number) {
+            $rand = bga_rand(0, $length - $number);
+            foreach ($numbers as $randNumber) {
+                if (array_key_exists($randNumber, $result)) {
+                    if ($rand === 0) {
+                        $result[$randNumber] = $number;
+                    } else {
+                        $rand--;
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
 
 
 
