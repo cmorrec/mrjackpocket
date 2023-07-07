@@ -1,0 +1,25 @@
+This directory contains all graphic files for your game:
+ - jpg and png formats are recommended, gif is also accepted
+ - do not use subdirectories
+ - use the "CSS sprite" technique for faster loading
+ - use a reasonable resolution for the web and compression
+
+Typically, this directory should contain fewer than 10 files, with no file larger than 4 Mb.
+
+See: http://en.doc.boardgamearena.com/Game_art:_img_directory for more details.
+
+
+1. template of closed tale with 4 ways
+2. template of opened tale with 4 ways
+3. template of closed tale with 3 ways
+4. template of opened tale with 3 ways (?or move it to the dpwn category?)
+5. - 13. circle icons of suspects (?or opened tales with 3 ways?)
+14. - 22. cards of alibi for suspects
+23. - 25. circle icons of detectives
+26. all three detectives icon
+27. turn tale circle icon
+28. change tales circle icon
+29. back side of alibi card
+30. circle time icon
+31. - 34. circle icons of mr jack rounds
+35. - 38. circle icons of detective rounds
