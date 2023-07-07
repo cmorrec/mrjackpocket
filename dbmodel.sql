@@ -30,10 +30,50 @@
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
--- character_status: character_id, tale_pos(?x,y?), tale_is_opened(=1), is_criminal, player_id_with_alibi, wall_side(null, right, left, up, down)
+-- character_status:
+    -- character_id
+    -- tale_pos(?x,y?)
+    -- tale_is_opened(=1)
+    -- is_criminal
+    -- player_id_with_alibi
+    -- wall_side(null, right, left, up, down)
+CREATE TABLE IF NOT EXISTS `character_status` (
+  `character_id` varchar(3) NOT NULL,
+  `tale_pos` int(3) NOT NULL,
+  `tale_is_opened` BOOLEAN NOT NULL,
+  `is_criminal` BOOLEAN NOT NULL,
+  `wall_side` varchar(10) DEFAULT NULL,
+  `player_id_with_alibi` varchar(21) DEFAULT NULL,
+  PRIMARY KEY (`character_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 -- available_options: round_num, option, was_used
+CREATE TABLE IF NOT EXISTS `available_options` (
+  `round_num` int(3) unsigned NOT NULL,
+  `option` varchar(16) NOT NULL,
+  `was_used` BOOLEAN NOT NULL DEFAULT FALSE,
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 -- detective_status: detective_id, detective_pos(?x,y?)
--- round: round_num, win_player_id, is_criminal_visible, play until visibility (default false, after draw before 8 round true)
--- ALTER TABLE `player` ADD `isCriminal` BOOLEAN NOT NULL;
--- cancel, approve action
--- table which can allow user to undo last action (if it is not existed)
+CREATE TABLE IF NOT EXISTS `detective_status` (
+  `detective_id` varchar(2) NOT NULL,
+  `detective_pos` int(3) NOT NULL,
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- round:
+    -- round_num
+    -- win_player_id
+    -- is_criminal_visible
+    -- play until visibility (default false, after draw before 8 round true)
+CREATE TABLE IF NOT EXISTS `round` (
+  `round_num` int(3) unsigned NOT NULL,
+  `is_criminal_visible` BOOLEAN DEFAULT NULL,
+  `play_until_visibility` BOOLEAN NOT NULL DEFAULT FALSE,
+  `win_player_id` varchar(21) DEFAULT NULL,
+  PRIMARY KEY (`round_num`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- change player ???
+ALTER TABLE `player` ADD `isJack` BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- cancel, approve action ???
