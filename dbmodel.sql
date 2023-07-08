@@ -75,5 +75,5 @@ CREATE TABLE IF NOT EXISTS `round` (
 
 -- change player ???
 ALTER TABLE `player` ADD `player_is_jack` BOOLEAN NOT NULL DEFAULT FALSE;
-
+-- player_id int
 -- cancel, approve action ???

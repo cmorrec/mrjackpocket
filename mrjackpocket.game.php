@@ -49,30 +49,14 @@ class MrJackPocket extends Table
     */
     protected function setupNewGame($players, $options = array())
     {
+        // TODO THink about colors
         // // Set the colors of the players with HTML color code
         // // The default below is red/green/blue/orange/brown
         // // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         // $gameinfos = self::getGameinfos();
         // $default_colors = $gameinfos['player_colors'];
-
-        // // Create players
-        // // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
-        // $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar) VALUES ";
-        // $values = array();
-        // foreach ($players as $player_id => $player) {
-        //     $color = array_shift($default_colors);
-        //     $values[] = "('" . $player_id . "','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "')";
-        // }
-        // $sql .= implode(',', $values);
-        // self::DbQuery($sql);
         // self::reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         // self::reloadPlayersBasicInfos();
-
-
-
-
-
-
 
         // TODO check all sql and php syntax
         /**
@@ -90,7 +74,6 @@ class MrJackPocket extends Table
         $jackPlayerId = $players[$jackIndex]['player_id'];
 
         // saving player in db
-        // TODO THink about colors
         $default_color = array("ff0000", "008000", "0000ff", "ffa500");
         $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar, player_is_jack, player_no) VALUES ";
         $values = array();
@@ -173,16 +156,91 @@ class MrJackPocket extends Table
     */
     protected function getAllDatas()
     {
+
+        $currentPlayerId = self::getCurrentPlayerId();
+        $privateData = $this->getPrivateData($currentPlayerId);
+        $publicData = $this->getPublicData();
+
+        return array_merge($privateData, $publicData);
+    }
+
+    function getPublicData(): array
+    {
+        /**
+         *      characters: {
+         *          id,
+         *          pos,
+         *          isOpened,
+         *          wallSide,
+         *      }[],
+         *      detectives: {
+         *          id,
+         *          pos,
+         *      }[],
+         *      currentOptions: {
+         *          ability,
+         *          wasUsed,
+         *      }[],
+         *      currentRound: {
+         *          num,
+         *          playUntilVisibility,
+         *          -- activePlayerId, // TODO
+         *      },
+         */
         $result = array();
+        $characters = $this->getCharacters();
+        $result['characters'] = array_map(
+            fn(array $character): array => array(
+                'id' => $character['character_id'],
+                'pos' => $character['tale_pos'],
+                'isOpened' => $character['tale_is_opened'],
+                'wallSide' => $character['wall_side'],
+            ),
+            $characters,
+        );
 
-        $current_player_id = self::getCurrentPlayerId(); // !! We must only return informations visible by this player !!
+        $detectives = $this->getDetectives();
+        $result['detectives'] = array_map(
+            fn(array $detective): array => array(
+                'id' => $detective['detective_id'],
+                'pos' => $detective['detective_pos'],
+            ),
+            $detectives,
+        );
 
-        // Get information about players
-        // Note: you can retrieve some extra field you added for "player" table in "dbmodel.sql" if you need it.
-        $sql = "SELECT player_id id, player_score score FROM player ";
-        $result['players'] = self::getCollectionFromDb($sql);
+        $currentOptions = $this->getCurrentOptions();
+        $result['currentOptions'] = array_map(
+            fn(array $option): array => array(
+                'ability' => $option['option'],
+                'wasUsed' => $option['was_used'],
+            ),
+            $currentOptions,
+        );
 
-        // TODO: Gather all information about current game situation (visible by player $current_player_id).
+        $currentRound = $this->getLastRound();
+        $result['currentRound'] = array(
+            'num' => $currentRound['round_num'],
+            'playUntilVisibility' => $currentRound['play_until_visibility'],
+        );
+
+        return $result;
+    }
+
+    function getPrivateData(int $playerId): array
+    {
+        /*
+         *      jack?: string,
+         *      alibiCards: string[],
+         *      winnedRounds: number[]; // maybe to public???
+         */
+        $result = array();
+        $result['alibiCards'] = $this->getAlibiCardsByPlayerId($playerId);
+        $result['winnedRounds'] = $this->getWinnedRoundsByPlayerId($playerId);
+        $player = $this->getPlayer($playerId);
+        if ($player['player_is_jack']) {
+            $jackCharacter = $this->getJackCharacter();
+            $result['jackId'] = $jackCharacter['character_id'];
+        }
 
         return $result;
     }
@@ -199,10 +257,8 @@ class MrJackPocket extends Table
     */
     function getGameProgression()
     {
-        // TODO: compute and return the game progression
-        // getCurrentRound / round_num
-
-        return 0;
+        $currentRound = $this->getLastRound();
+        return (int) (($currentRound['round_num'] / $this->round_num) * 100);
     }
 
 
@@ -270,7 +326,7 @@ class MrJackPocket extends Table
 
     function addRound(): void
     {
-        $lastRound = self::getObjectFromDB("SELECT round_num, play_until_visibility FROM `round` ORDER BY round_num DESC LIMIT 1");
+        $lastRound = $this->getLastRound();
         if (is_null($lastRound)) {
             $roundNum = 1;
             $playUntilVisibility = false;
@@ -283,6 +339,52 @@ class MrJackPocket extends Table
         self::DbQuery($sql);
     }
 
+    function getLastRound()
+    {
+        return self::getObjectFromDB("SELECT round_num, play_until_visibility FROM `round` ORDER BY round_num DESC LIMIT 1");
+    }
+
+    function getLastRoundNum()
+    {
+        $lastRound = $this->getLastRound();
+        return $lastRound['round_num'];
+    }
+
+    function getAlibiCardsByPlayerId(int $playerId): array
+    {
+        return self::getObjectListFromDB("SELECT character_id FROM character_status WHERE player_id_with_alibi = $playerId", true);
+    }
+
+    function getWinnedRoundsByPlayerId(int $playerId): array
+    {
+        return self::getObjectListFromDB("SELECT round_num FROM `round` WHERE win_player_id = $playerId", true);
+    }
+
+    function getPlayer(int $playerId): array
+    {
+        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = $playerId");
+    }
+
+    function getJackCharacter(): array
+    {
+        return self::getObjectFromDB("SELECT * FROM character_status WHERE is_jack = true");
+    }
+
+    function getCharacters(): array
+    {
+        return self::getObjectListFromDB("SELECT * FROM character_status");
+    }
+
+    function getDetectives(): array
+    {
+        return self::getObjectListFromDB("SELECT * FROM detective_status");
+    }
+
+    function getCurrentOptions(): array
+    {
+        $lastRound = $this->getLastRoundNum();
+        return self::getObjectListFromDB("SELECT * FROM available_options where round_num = $lastRound");
+    }
 
     //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
@@ -347,41 +449,41 @@ class MrJackPocket extends Table
          */
     }
 
-    function jockerHolmes($player_id, $new_pos)
-    {
-        /**
-         * 1) check ability of player to do it
-         * 2) move
-         * 3) go to the state next turn
-         */
-    }
+    // function jockerHolmes($player_id, $new_pos)
+    // {
+    //     /**
+    //      * 1) check ability of player to do it
+    //      * 2) move
+    //      * 3) go to the state next turn
+    //      */
+    // }
 
-    function jockerWatson($player_id, $new_pos)
-    {
-        /**
-         * 1) check ability of player to do it
-         * 2) move
-         * 3) go to the state next turn
-         */
-    }
+    // function jockerWatson($player_id, $new_pos)
+    // {
+    //     /**
+    //      * 1) check ability of player to do it
+    //      * 2) move
+    //      * 3) go to the state next turn
+    //      */
+    // }
 
-    function jockerDog($player_id, $new_pos)
-    {
-        /**
-         * 1) check ability of player to do it
-         * 2) move
-         * 3) go to the state next turn
-         */
-    }
+    // function jockerDog($player_id, $new_pos)
+    // {
+    //     /**
+    //      * 1) check ability of player to do it
+    //      * 2) move
+    //      * 3) go to the state next turn
+    //      */
+    // }
 
-    function jockerNothing($player_id, $new_pos)
-    {
-        /**
-         * 1) check ability of player to do it
-         * 2) move
-         * 3) go to the state next turn
-         */
-    }
+    // function jockerNothing($player_id, $new_pos)
+    // {
+    //     /**
+    //      * 1) check ability of player to do it
+    //      * 2) move
+    //      * 3) go to the state next turn
+    //      */
+    // }
 
     /*
     

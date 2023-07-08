@@ -21,7 +21,6 @@
 
 $this->round_num = 8;
 
-
 $this->options_to_move = [
   ['rotation', 'exchange'],
   ['rotation', 'jocker'],
