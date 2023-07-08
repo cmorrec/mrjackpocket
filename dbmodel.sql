@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `character_status` (
   `character_id` varchar(3) NOT NULL,
   `tale_pos` int(3) NOT NULL,
   `tale_is_opened` BOOLEAN NOT NULL,
-  `is_criminal` BOOLEAN NOT NULL,
+  `is_jack` BOOLEAN NOT NULL,
   `wall_side` varchar(10) DEFAULT NULL,
   `player_id_with_alibi` varchar(21) DEFAULT NULL,
   PRIMARY KEY (`character_id`)
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `available_options` (
 
 -- detective_status: detective_id, detective_pos(?x,y?)
 CREATE TABLE IF NOT EXISTS `detective_status` (
-  `detective_id` varchar(2) NOT NULL,
+  `detective_id` varchar(10) NOT NULL,
   `detective_pos` int(3) NOT NULL,
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -74,6 +74,6 @@ CREATE TABLE IF NOT EXISTS `round` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- change player ???
-ALTER TABLE `player` ADD `isJack` BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE `player` ADD `player_is_jack` BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- cancel, approve action ???

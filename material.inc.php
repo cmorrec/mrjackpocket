@@ -41,6 +41,19 @@ $this->character_pos = array(
   9 => array( 'x' => 3, 'y' => 3 ),
 );
 
+$this->init_tale_rotations = array(
+  1 => 'left',
+  3 => 'right',
+  8 => 'down',
+);
+
+$this->wall_sides = array(
+  1 => 'left',
+  2 => 'up',
+  3 => 'right',
+  4 => 'down',
+);
+
 $this->detective_pos = array(
   1 => array( 'x' => 1, 'y' => 0 ),
   2 => array( 'x' => 2, 'y' => 0 ),

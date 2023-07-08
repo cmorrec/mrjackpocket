@@ -31,7 +31,7 @@ class MrJackPocket extends Table
         //  the corresponding ID in gameoptions.inc.php.
         // Note: afterwards, you can get/set the global variables with getGameStateValue/setGameStateInitialValue/setGameStateValue
         parent::__construct();
-        self::initGameStateLabels( array() );
+        self::initGameStateLabels(array());
     }
 
     protected function getGameName()
@@ -74,7 +74,7 @@ class MrJackPocket extends Table
 
 
 
-
+        // TODO check all sql and php syntax
         /**
          * 0) find Jack
          * 1) shuffle tales, their rotation and assign pos to x, y
@@ -86,10 +86,27 @@ class MrJackPocket extends Table
          */
 
         $jackId = (string) bga_rand(1, 9);
+        $jackIndex = bga_rand(0, 1);
+        $jackPlayerId = $players[$jackIndex]['player_id'];
+
+        // saving player in db
+        // TODO THink about colors
+        $default_color = array("ff0000", "008000", "0000ff", "ffa500");
+        $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar, player_is_jack, player_no) VALUES ";
+        $values = array();
+        foreach ($players as $player_id => $player) {
+            $playerIsJack = (int) $player_id === $jackPlayerId;
+            $color = array_shift($default_color);
+            $player_no = ((int) $playerIsJack === 1) + 1;
+            $values[] = "('" . $player_id . "','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "','" . $playerIsJack . "','" . $player_no . "')";
+        }
+        $sql .= implode($values, ',');
+        self::DbQuery($sql);
+        self::reloadPlayersBasicInfos();
 
         // 1) shuffle tales, their rotation and assign pos to x, y
         // 2) rotate tales near detectives if there is a need
-        $tales = array(); 
+        $tales = array();
         // { character_id, tale_pos, tale_is_opened, is_criminal, player_id_with_alibi }
         $posArray = $this->getRandomPosArray(count($this->characters));
         foreach ($this->characters as $index => $character) {
@@ -103,15 +120,29 @@ class MrJackPocket extends Table
             );
         }
 
-        $jackIndex = bga_rand(0, 1);
-        $jackPlayerId = $players[$jackIndex]['player_id'];
+        // saving character_status in db
+        $sql = "INSERT INTO character_status (character_id, tale_pos, tale_is_opened, is_jack, wall_side) VALUES ";
+        $values = array();
+        foreach ($tales as $tale) {
+            $values[] = "('" . $tale['character_id'] . "','" . $tale['tale_pos'] . "','" . $tale['tale_is_opened'] . "','" . $tale['is_jack'] . "','" . $tale['wall_side'] . "')";
+        }
+        $sql .= implode($values, ',');
+        self::DbQuery($sql);
 
-        // TODO saving character_status in db
-        // TODO saving available_options in db
-        // TODO saving detective_status in db
-        // TODO saving round in db
-        // TODO saving player in db
+        // saving available_options in db
+        $this->saveOptionsInDB(1, $this->getRandomOptions());
 
+        // saving detective_status in db
+        $sql = "INSERT INTO detective_status (detective_id, detective_pos) VALUES ";
+        $values = array();
+        foreach ($this->init_pos as $pos) {
+            $values[] = "('" . $pos['detective'] . "','" . $pos['pos'] . "')";
+        }
+        $sql .= implode($values, ',');
+        self::DbQuery($sql);
+
+        // saving round in db
+        $this->addRound();
 
         /************ Start the game initialization *****/
 
@@ -183,29 +214,19 @@ class MrJackPocket extends Table
         In this space, you can put any utility methods useful for your game logic
     */
 
-    function getInitialWallSide($tale_pos) {
-        if ($tale_pos === 1) {
-            return 'left';
-        } else if ($tale_pos === 3) {
-            return 'right';
-        } else if ($tale_pos === 8) {
-            return 'down';
+    function getInitialWallSide($tale_pos)
+    {
+        if (array_key_exists($this->init_tale_rotations, $tale_pos)) {
+            return $this->init_tale_rotations[$tale_pos];
         }
 
-        $side = bga_rand( 1, 4 );
-        if ($side === 1) {
-            return 'left';
-        } else if ($side === 2) {
-            return 'up';
-        } else if ($side === 3) {
-            return 'right';
-        } else {
-            return 'down';
-        }
+        $side = bga_rand(1, 4);
+        return $this->wall_sides[$side];
     }
 
     // TODO check algo, maybe here you will find an errors
-    function getRandomPosArray($length) {
+    function getRandomPosArray(int $length): array
+    {
         $result = array();
         $numbers = range(1, $length);
         foreach ($numbers as $number) {
@@ -224,6 +245,43 @@ class MrJackPocket extends Table
         return $result;
     }
 
+    function getRandomOptions(): array
+    {
+        $randomPoses = $this->getRandomPosArray(count($this->options_to_move));
+
+        return array_map(
+            fn(int $pos): string => $this->options_to_move[$pos][bga_rand(0, 1)],
+            $randomPoses
+        );
+    }
+
+    function saveOptionsInDB(int $roundNum, array $options): void
+    {
+        $sql = "INSERT INTO available_options (round_num, `option`, was_used) VALUES ";
+        $values = array();
+
+        foreach ($options as $option) {
+            $wasUsed = 0;
+            $values[] = "('" . $roundNum . "','" . $option . "','" . $wasUsed . "')";
+        }
+        $sql .= implode($values, ',');
+        self::DbQuery($sql);
+    }
+
+    function addRound(): void
+    {
+        $lastRound = self::getObjectFromDB("SELECT round_num, play_until_visibility FROM `round` ORDER BY round_num DESC LIMIT 1");
+        if (is_null($lastRound)) {
+            $roundNum = 1;
+            $playUntilVisibility = false;
+        } else {
+            $roundNum = $lastRound['round_num'] + 1;
+            $playUntilVisibility = $lastRound['play_until_visibility'];
+        }
+
+        $sql = "INSERT INTO `round` (round_num, play_until_visibility) VALUES ($roundNum, $playUntilVisibility)";
+        self::DbQuery($sql);
+    }
 
 
     //////////////////////////////////////////////////////////////////////////////
@@ -390,7 +448,8 @@ class MrJackPocket extends Table
 
     // function stGameSetup() {}
 
-    function stAlibi() {
+    function stAlibi()
+    {
         /**
          * 1) define who has asked alibi or get it from params
          * 2) check if person could ask alibi
@@ -400,14 +459,16 @@ class MrJackPocket extends Table
          */
     }
 
-    function stNextTurn() {
+    function stNextTurn()
+    {
         /**
          * 1) define is it the end of round. if it is -- go to the state end of round
          * 2) if it is not - determine the next active player and go to the statuus playerTurn 
          */
     }
 
-    function stEndOfRound() {
+    function stEndOfRound()
+    {
         /**
          * 
          */
