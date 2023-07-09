@@ -454,6 +454,12 @@ class MrJackPocket extends Table
         }
     }
 
+    function useOption($option)
+    {
+        $sql = "UPDATE available_options SET was_used = true WHERE was_used = false AND `option` = $option LIMIT 1";
+        self::DbQuery($sql);
+    }
+
     //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
@@ -463,58 +469,83 @@ class MrJackPocket extends Table
         (note: each method below must match an input method in mrjackpocket.action.php)
     */
 
-    function rotateTale($player_id, $tale_id, $wall_side)
+    function rotateTale(int $playerId, string $taleId, ?string $wallSide)
     {
         /**
          * 1) check ability of player to do it
          * 2) rotate
          * 3) go to the state next turn
          */
+        // TODO check
+        $sql = "UPDATE character_status SET wall_side = $wallSide WHERE character_id = $taleId";
+        self::DbQuery($sql);
+        $this->useOption('rotation');
+        // TODO next state
     }
 
-    function exchangeTales(int $player_id, $tale_id_1, $tale_id_2)
+    function exchangeTales(int $playerId, $taleId1, $taleId2)
     {
         /**
          * 1) check ability of player to do it
          * 2) exchange
          * 3) go to the state next turn
          */
+        // TODO check
+        $sql = "UPDATE character_status SET tale_pos = (SELECT tale_pos from character_status WHERE tale_pos = $taleId2) WHERE tale_pos = $taleId1";
+        self::DbQuery($sql);
+        $sql = "UPDATE character_status SET tale_pos = (SELECT tale_pos from character_status WHERE tale_pos = $taleId1) WHERE tale_pos = $taleId2";
+        self::DbQuery($sql);
+
+        $this->useOption('exchange');
+        // TODO next state
     }
 
-    function jocker(int $player_id, $detective_id, $new_pos)
+    function jocker(int $playerId, $detectiveId, $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
+        // TODO check
+
+        // TODO next state
     }
 
-    function holmes(int $player_id, $new_pos)
+    function holmes(int $playerId, $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
+        // TODO check
+
+        // TODO next state
     }
 
-    function watson(int $player_id, $new_pos)
+    function watson(int $playerId, $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
+        // TODO check
+
+        // TODO next state
     }
 
-    function dog(int $player_id, $new_pos)
+    function dog(int $playerId, $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
+        // TODO check
+
+        // TODO next state
     }
 
     // function jockerHolmes($player_id, $new_pos)
