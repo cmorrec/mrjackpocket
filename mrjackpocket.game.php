@@ -112,9 +112,6 @@ class MrJackPocket extends Table
         $sql .= implode($values, ',');
         self::DbQuery($sql);
 
-        // saving available_options in db
-        $this->saveOptionsInDB(1, $this->getRandomOptions());
-
         // saving detective_status in db
         $sql = "INSERT INTO detective_status (detective_id, detective_pos) VALUES ";
         $values = array();
@@ -126,6 +123,8 @@ class MrJackPocket extends Table
 
         // saving round in db
         $this->addRound();
+        // saving available_options in db
+        $this->saveOptionsInDB(1, $this->getRandomOptions());
 
         /************ Start the game initialization *****/
 
@@ -398,10 +397,10 @@ class MrJackPocket extends Table
         return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = false");
     }
 
-    // function getPlayers(): array
-    // {
-    //     return self::getObjectListFromDB("SELECT * FROM player");
-    // }
+    function getPlayers(): array
+    {
+        return self::getObjectListFromDB("SELECT * FROM player");
+    }
 
     function getJackCharacter(): array
     {
@@ -473,7 +472,7 @@ class MrJackPocket extends Table
          */
     }
 
-    function exchangeTales($player_id, $tale_id_1, $tale_id_2)
+    function exchangeTales(int $player_id, $tale_id_1, $tale_id_2)
     {
         /**
          * 1) check ability of player to do it
@@ -482,7 +481,7 @@ class MrJackPocket extends Table
          */
     }
 
-    function jocker($player_id, $detective_id, $new_pos)
+    function jocker(int $player_id, $detective_id, $new_pos)
     {
         /**
          * 1) check ability of player to do it
@@ -491,7 +490,7 @@ class MrJackPocket extends Table
          */
     }
 
-    function holmes($player_id, $new_pos)
+    function holmes(int $player_id, $new_pos)
     {
         /**
          * 1) check ability of player to do it
@@ -500,7 +499,7 @@ class MrJackPocket extends Table
          */
     }
 
-    function watson($player_id, $new_pos)
+    function watson(int $player_id, $new_pos)
     {
         /**
          * 1) check ability of player to do it
@@ -509,7 +508,7 @@ class MrJackPocket extends Table
          */
     }
 
-    function dog($player_id, $new_pos)
+    function dog(int $player_id, $new_pos)
     {
         /**
          * 1) check ability of player to do it
