@@ -184,8 +184,13 @@ class MrJackPocket extends Table
          *      currentRound: {
          *          num,
          *          playUntilVisibility,
-         *          -- activePlayerId, // TODO
+         *          activePlayerId,
+         *          availableALibiCards: number;
          *      },
+         *      previousRounds: {
+         *          num,
+         *          winPlayerId
+         *      }[];
          */
         $result = array();
         $characters = $this->getCharacters();
@@ -217,10 +222,23 @@ class MrJackPocket extends Table
             $currentOptions,
         );
 
+        $previousRounds = $this->getPreviousRounds();
+        $result['previousRounds'] = array_map(
+            fn(array $round): array => array(
+                'num' => $round['round_num'],
+                'winPlayerId' => $round['win_player_id'],
+            ),
+            $previousRounds,
+        );
+
         $currentRound = $this->getLastRound();
+        $availableALibiCards = $this->getAvailableAlibiCards();
+        $activePlayer = $this->getActivePlayer();
         $result['currentRound'] = array(
             'num' => $currentRound['round_num'],
             'playUntilVisibility' => $currentRound['play_until_visibility'],
+            'availableALibiCards' => count($availableALibiCards),
+            'activePlayerId' => $activePlayer['player_id'],
         );
 
         return $result;
@@ -235,7 +253,7 @@ class MrJackPocket extends Table
          */
         $result = array();
         $result['alibiCards'] = $this->getAlibiCardsByPlayerId($playerId);
-        $result['winnedRounds'] = $this->getWinnedRoundsByPlayerId($playerId);
+        $result['winnedRounds'] = $this->getWinnedRoundsByPlayerId($playerId); // TODO remove it ???
         $player = $this->getPlayer($playerId);
         if ($player['player_is_jack']) {
             $jackCharacter = $this->getJackCharacter();
@@ -355,6 +373,11 @@ class MrJackPocket extends Table
         return self::getObjectListFromDB("SELECT character_id FROM character_status WHERE player_id_with_alibi = $playerId", true);
     }
 
+    function getAvailableAlibiCards(): array
+    {
+        return self::getObjectListFromDB("SELECT * FROM character_status WHERE player_id_with_alibi IS NULL AND is_jack = FALSE");
+    }
+
     function getWinnedRoundsByPlayerId(int $playerId): array
     {
         return self::getObjectListFromDB("SELECT round_num FROM `round` WHERE win_player_id = $playerId", true);
@@ -362,8 +385,23 @@ class MrJackPocket extends Table
 
     function getPlayer(int $playerId): array
     {
-        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = $playerId");
+        return self::getObjectFromDB("SELECT * FROM player WHERE player_id = $playerId");
     }
+
+    function getJackPlayer(): array
+    {
+        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = true");
+    }
+
+    function getDetectivePlayer(): array
+    {
+        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = false");
+    }
+
+    // function getPlayers(): array
+    // {
+    //     return self::getObjectListFromDB("SELECT * FROM player");
+    // }
 
     function getJackCharacter(): array
     {
@@ -384,6 +422,37 @@ class MrJackPocket extends Table
     {
         $lastRound = $this->getLastRoundNum();
         return self::getObjectListFromDB("SELECT * FROM available_options where round_num = $lastRound");
+    }
+
+    function getPreviousRounds(): array
+    {
+        return self::getObjectListFromDB("SELECT * FROM round where win_player_id is not NULL");
+    }
+
+    function getActivePlayer(): array
+    {
+        $currentOptions = $this->getCurrentOptions();
+        $currentRoundNum = $this->getLastRoundNum();
+        $usedOptions = count(
+            array_filter(
+                $currentOptions,
+                fn(array $option, int $_) => $option['was_used'],
+                ARRAY_FILTER_USE_BOTH,
+            ),
+        );
+        if ($currentRoundNum % 2 === 1) {
+            if ($usedOptions === 0 || $usedOptions === 3) {
+                return $this->getDetectivePlayer();
+            } else {
+                return $this->getJackPlayer();
+            }
+        } else {
+            if ($usedOptions === 0 || $usedOptions === 3) {
+                return $this->getJackPlayer();
+            } else {
+                return $this->getDetectivePlayer();
+            }
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////////
