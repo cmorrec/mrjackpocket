@@ -69,15 +69,15 @@ $this->detective_pos = array(
 );
 
 $this->characters = [
-  array( 'id' => '1', 'name' => 'Sgt Goodley', 'color' => 'black', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 0 ),
-  array( 'id' => '2', 'name' => 'Insp. Lestrade', 'color' => 'blue', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 0 ),
-  array( 'id' => '3', 'name' => 'Miss Stealthy', 'color' => 'green', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
-  array( 'id' => '4', 'name' => 'John Smith', 'color' => 'yellow', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
-  array( 'id' => '5', 'name' => 'John Pizer', 'color' => 'white', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
-  array( 'id' => '6', 'name' => 'William Gull', 'color' => 'violet', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
-  array( 'id' => '7', 'name' => 'Joseph Lane', 'color' => 'gray', 'opened_roads' => 4, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
-  array( 'id' => '8', 'name' => 'Jeremy Bert', 'color' => 'orange', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
-  array( 'id' => '9', 'name' => 'Madame', 'color' => 'pink', 'opened_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 2 ),
+  array( 'id' => '1', 'name' => 'Sgt Goodley', 'color' => 'black', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 0 ),
+  array( 'id' => '2', 'name' => 'Insp. Lestrade', 'color' => 'blue', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 0 ),
+  array( 'id' => '3', 'name' => 'Miss Stealthy', 'color' => 'green', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
+  array( 'id' => '4', 'name' => 'John Smith', 'color' => 'yellow', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
+  array( 'id' => '5', 'name' => 'John Pizer', 'color' => 'white', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
+  array( 'id' => '6', 'name' => 'William Gull', 'color' => 'violet', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
+  array( 'id' => '7', 'name' => 'Joseph Lane', 'color' => 'gray', 'closed_roads' => 4, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
+  array( 'id' => '8', 'name' => 'Jeremy Bert', 'color' => 'orange', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 1 ),
+  array( 'id' => '9', 'name' => 'Madame', 'color' => 'pink', 'closed_roads' => 3, 'tale_img' => '', 'alibi_img' => '', 'points' => 2 ),
 ];
 
 $this->detectives = [

@@ -412,6 +412,11 @@ class MrJackPocket extends Table
         return self::getObjectListFromDB("SELECT * FROM character_status");
     }
 
+    function getCharacterById(string $characterId): array
+    {
+        return self::getObjectFromDB("SELECT * FROM character_status WHERE character_id = '$characterId'");
+    }
+
     function getDetectives(): array
     {
         return self::getObjectListFromDB("SELECT * FROM detective_status");
@@ -454,10 +459,103 @@ class MrJackPocket extends Table
         }
     }
 
+    function getMetaCharacterById(string $characterId): ?array
+    {
+        return null;
+    }
+
     function useOption($option)
     {
-        $sql = "UPDATE available_options SET was_used = true WHERE was_used = false AND `option` = $option LIMIT 1";
+        $sql = "UPDATE available_options SET was_used = true WHERE was_used = false AND `option` = '$option' LIMIT 1";
         self::DbQuery($sql);
+    }
+
+    function array_any(array $array, callable $fn): bool
+    {
+        foreach ($array as $value) {
+            if ($fn($value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function array_find(array $array, callable $fn): bool
+    {
+        foreach ($array as $value) {
+            if ($fn($value)) {
+                return $value;
+            }
+        }
+        return null;
+    }
+
+    function array_every(array $array, callable $fn): bool
+    {
+        foreach ($array as $value) {
+            if (!$fn($value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function checkAction(int $playerId, string $action)
+    {
+        $activePlayer = $this->getActivePlayer();
+        if ($activePlayer['player_id'] !== $playerId) {
+            throw new BgaUserException(self::_("You are not an active player. You can't play now"));
+        }
+        $currentOptions = $this->getCurrentOptions();
+        $isAvailableAction = $this->array_any(
+            $currentOptions,
+            fn(array $option) => !$option['was_used'] && $option['option'] === $action,
+        );
+        if (!$isAvailableAction) {
+            throw new BgaUserException(self::_("This action is not available. You can't use it now"));
+        }
+    }
+
+    function checkRotation(string $taleId, ?string $wallSide)
+    {
+        $metaCharacter = $this->getMetaCharacterById($taleId);
+        if (is_null($metaCharacter)) {
+            throw new BgaUserException(self::_("You can't rotate tale with id = $taleId. It doesn't exist"));
+        }
+
+        $character = $this->getCharacterById($taleId);
+        $canIgnoreRotationCheck = !$character['tale_is_opened'] && $metaCharacter['closed_roads'] === 4;
+        if (!$canIgnoreRotationCheck && $character['wall_side'] === $wallSide) {
+            throw new BgaUserException(self::_("You can't stay tale as it is. You should rotate it"));
+        }
+        if (!$canIgnoreRotationCheck && is_null($wallSide)) {
+            throw new BgaUserException(self::_("You can't stay tale as it is. You should rotate it"));
+        }
+
+        $isValidWallSide = is_null($wallSide) || $this->array_any(
+            $this->wall_sides,
+            fn(string $side) => $side === $wallSide,
+        );
+        if (!$isValidWallSide) {
+            throw new BgaUserException(self::_("You can't rotate tale to $wallSide. This side doesn't exist"));
+        }
+
+        $currentRoundNum = $this->getLastRoundNum();
+        if ($currentRoundNum === $character['last_round_rotated']) {
+            throw new BgaUserException(self::_("You can't rotate this tale. It already was rotated in the current round"));
+        }
+    }
+
+    function checkExchanging(string $taleId1, string $taleId2)
+    {
+    }
+
+    function checkJocker(string $detectiveId, int $newPos)
+    {
+    }
+
+    function checkDetective(string $detectiveId, int $newPos)
+    {
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -476,113 +574,122 @@ class MrJackPocket extends Table
          * 2) rotate
          * 3) go to the state next turn
          */
-        // TODO check
-        $sql = "UPDATE character_status SET wall_side = $wallSide WHERE character_id = $taleId";
+        $action = 'rotation';
+        $this->checkAction($playerId, $action);
+        $this->checkRotation($taleId, $wallSide);
+
+        $currentRound = $this->getLastRoundNum();
+        if (is_null($wallSide)) {
+            $sql = "UPDATE character_status SET wall_side = NULL, last_round_rotated = $currentRound WHERE character_id = $taleId";
+        } else {
+            $sql = "UPDATE character_status SET wall_side = $wallSide, last_round_rotated = $currentRound WHERE character_id = $taleId";
+        }
         self::DbQuery($sql);
-        $this->useOption('rotation');
-        // TODO next state
+
+        $this->useOption($action);
+
+        $this->gamestate->nextState('nextTurn');
     }
 
-    function exchangeTales(int $playerId, $taleId1, $taleId2)
+    function exchangeTales(int $playerId, string $taleId1, string $taleId2)
     {
         /**
          * 1) check ability of player to do it
          * 2) exchange
          * 3) go to the state next turn
          */
-        // TODO check
+        $action = 'exchange';
+        $this->checkAction($playerId, $action);
+        $this->checkExchanging($taleId1, $taleId2);
+
         $sql = "UPDATE character_status SET tale_pos = (SELECT tale_pos from character_status WHERE tale_pos = $taleId2) WHERE tale_pos = $taleId1";
         self::DbQuery($sql);
         $sql = "UPDATE character_status SET tale_pos = (SELECT tale_pos from character_status WHERE tale_pos = $taleId1) WHERE tale_pos = $taleId2";
         self::DbQuery($sql);
 
-        $this->useOption('exchange');
-        // TODO next state
+        $this->useOption($action);
+
+        $this->gamestate->nextState('nextTurn');
     }
 
-    function jocker(int $playerId, $detectiveId, $newPos)
+    function jocker(int $playerId, string $detectiveId, int $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
-        // TODO check
+        $action = 'jocker';
+        $this->checkAction($playerId, $action);
+        $this->checkJocker($detectiveId, $newPos);
 
-        // TODO next state
+        $this->useOption($action);
+
+        $this->gamestate->nextState('nextTurn');
     }
 
-    function holmes(int $playerId, $newPos)
+    function holmes(int $playerId, int $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
-        // TODO check
+        $action = 'holmes';
+        $this->checkAction($playerId, $action);
+        $this->checkDetective($action, $newPos);
 
-        // TODO next state
+        $this->useOption($action);
+
+        $this->gamestate->nextState('nextTurn');
     }
 
-    function watson(int $playerId, $newPos)
+    function watson(int $playerId, int $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
-        // TODO check
+        $action = 'watson';
+        $this->checkAction($playerId, $action);
+        $this->checkDetective($action, $newPos);
 
-        // TODO next state
+        $this->useOption($action);
+
+        $this->gamestate->nextState('nextTurn');
     }
 
-    function dog(int $playerId, $newPos)
+    function dog(int $playerId, int $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
-        // TODO check
+        $action = 'dog';
+        $this->checkAction($playerId, $action);
+        $this->checkDetective($action, $newPos);
+
+        $this->useOption($action);
+
+        $this->gamestate->nextState('nextTurn');
+    }
+
+    function alibi(int $playerId)
+    {
+        /**
+         * 1) check ability of player to do it
+         * 2) pull
+         * 3) go to the state next turn
+         */
+        $action = 'alibi';
+        $this->checkAction($playerId, $action);
+
+        $this->useOption($action);
 
         // TODO next state
     }
-
-    // function jockerHolmes($player_id, $new_pos)
-    // {
-    //     /**
-    //      * 1) check ability of player to do it
-    //      * 2) move
-    //      * 3) go to the state next turn
-    //      */
-    // }
-
-    // function jockerWatson($player_id, $new_pos)
-    // {
-    //     /**
-    //      * 1) check ability of player to do it
-    //      * 2) move
-    //      * 3) go to the state next turn
-    //      */
-    // }
-
-    // function jockerDog($player_id, $new_pos)
-    // {
-    //     /**
-    //      * 1) check ability of player to do it
-    //      * 2) move
-    //      * 3) go to the state next turn
-    //      */
-    // }
-
-    // function jockerNothing($player_id, $new_pos)
-    // {
-    //     /**
-    //      * 1) check ability of player to do it
-    //      * 2) move
-    //      * 3) go to the state next turn
-    //      */
-    // }
 
     /*
     

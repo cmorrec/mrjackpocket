@@ -68,51 +68,52 @@ $machinestates = array(
         "type" => "activeplayer",
         "possibleactions" => array(), // ?
         "transitions" => array(
-            "alibi" => 11,
-            "rotation" => 12,
-            "exchange" => 13,
-            "watson" => 23,
-            "holmes" => 23,
-            "dog" => 23,
+            "nextTurn" => 24,
+            // "alibi" => 11,
+            // "rotation" => 12,
+            // "exchange" => 13,
+            // "watson" => 23,
+            // "holmes" => 23,
+            // "dog" => 23,
             // "watson" => 14,
             // "holmes" => 15,
             // "dog" => 16,
-            "jocker" => 17,
+            // "jocker" => 17,
         ),
     ),
 
-    11 => array(
-        "name" => "alibi",
-        "description" => clienttranslate('${actplayer} obtains alibi card'),
-        "descriptionmyturn" => clienttranslate('${you} obtain alibi card'),
-        "type" => "game",
-        "action" => "stAlibi",
-        "transitions" => array(
-            "nextTurn" => 24,
-        ),
-    ),
+    // 11 => array(
+    //     "name" => "alibi",
+    //     "description" => clienttranslate('${actplayer} obtains alibi card'),
+    //     "descriptionmyturn" => clienttranslate('${you} obtain alibi card'),
+    //     "type" => "game",
+    //     "action" => "stAlibi",
+    //     "transitions" => array(
+    //         "nextTurn" => 24,
+    //     ),
+    // ),
 
-    12 => array(
-        "name" => "rotation",
-        "description" => clienttranslate('${actplayer} must choose a tale to rotate'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a tale to rotate'),
-        "type" => "activeplayer",
-        "possibleactions" => array(), // ?
-        "transitions" => array(
-            "chooseRotationForTale" => 19, // TODO squash into one and separate only for frontend
-        ),
-    ),
+    // 12 => array(
+    //     "name" => "rotation",
+    //     "description" => clienttranslate('${actplayer} must choose a tale to rotate'),
+    //     "descriptionmyturn" => clienttranslate('${you} must choose a tale to rotate'),
+    //     "type" => "activeplayer",
+    //     "possibleactions" => array(), // ?
+    //     "transitions" => array(
+    //         "chooseRotationForTale" => 19, // TODO squash into one and separate only for frontend
+    //     ),
+    // ),
 
-    13 => array(
-        "name" => "exchange",
-        "description" => clienttranslate('${actplayer} must choose a first tale to exhange'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a first tale to exhange'),
-        "type" => "activeplayer",
-        "possibleactions" => array(), // ?
-        "transitions" => array(
-            "chooseSecondTaleToExhange" => 21, // TODO squash into one and separate only for frontend
-        ),
-    ),
+    // 13 => array(
+    //     "name" => "exchange",
+    //     "description" => clienttranslate('${actplayer} must choose a first tale to exhange'),
+    //     "descriptionmyturn" => clienttranslate('${you} must choose a first tale to exhange'),
+    //     "type" => "activeplayer",
+    //     "possibleactions" => array(), // ?
+    //     "transitions" => array(
+    //         "chooseSecondTaleToExhange" => 21, // TODO squash into one and separate only for frontend
+    //     ),
+    // ),
 
     // 14 => array(
     //     "name" => "watson",
@@ -144,50 +145,50 @@ $machinestates = array(
     //     ),
     // ),
 
-    17 => array(
-        "name" => "jocker",
-        "description" => clienttranslate('${actplayer} must choose a person to move'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a person to move'),
-        "type" => "activeplayer",
-        "possibleactions" => array("jockerWatson", "jockerHolmes", "jockerDog", "jockerNothing"),
-        "transitions" => array(
-            // "chooseFinalLocation" => 23,
-            "nextTurn" => 24,
-        ),
-    ),
+    // 17 => array(
+    //     "name" => "jocker",
+    //     "description" => clienttranslate('${actplayer} must choose a person to move'),
+    //     "descriptionmyturn" => clienttranslate('${you} must choose a person to move'),
+    //     "type" => "activeplayer",
+    //     "possibleactions" => array("jockerWatson", "jockerHolmes", "jockerDog", "jockerNothing"),
+    //     "transitions" => array(
+    //         // "chooseFinalLocation" => 23,
+    //         "nextTurn" => 24,
+    //     ),
+    // ),
 
-    19 => array(
-        "name" => "chooseRotationForTale", // TODO squash into one and separate only for frontend
-        "description" => clienttranslate('${actplayer} must choose a rotation for the tale'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a rotation for the tale'),
-        "type" => "activeplayer",
-        "possibleactions" => array(), // ?
-        "transitions" => array(
-            "nextTurn" => 24,
-        ),
-    ),
+    // 19 => array(
+    //     "name" => "chooseRotationForTale", // TODO squash into one and separate only for frontend
+    //     "description" => clienttranslate('${actplayer} must choose a rotation for the tale'),
+    //     "descriptionmyturn" => clienttranslate('${you} must choose a rotation for the tale'),
+    //     "type" => "activeplayer",
+    //     "possibleactions" => array(), // ?
+    //     "transitions" => array(
+    //         "nextTurn" => 24,
+    //     ),
+    // ),
 
-    21 => array(
-        "name" => "chooseSecondTaleToExhange", // TODO squash into one and separate only for frontend
-        "description" => clienttranslate('${actplayer} must choose a second tale to exhange'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a second tale to exhange'),
-        "type" => "activeplayer",
-        "possibleactions" => array(), // ?
-        "transitions" => array(
-            "nextTurn" => 24,
-        ),
-    ),
+    // 21 => array(
+    //     "name" => "chooseSecondTaleToExhange", // TODO squash into one and separate only for frontend
+    //     "description" => clienttranslate('${actplayer} must choose a second tale to exhange'),
+    //     "descriptionmyturn" => clienttranslate('${you} must choose a second tale to exhange'),
+    //     "type" => "activeplayer",
+    //     "possibleactions" => array(), // ?
+    //     "transitions" => array(
+    //         "nextTurn" => 24,
+    //     ),
+    // ),
 
-    23 => array(
-        "name" => "chooseFinalLocation", // TODO squash into one and separate only for frontend
-        "description" => clienttranslate('${actplayer} must choose a final location for the person'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a final location for the person'),
-        "type" => "activeplayer",
-        "possibleactions" => array(), // ?
-        "transitions" => array(
-            "nextTurn" => 24,
-        ),
-    ),
+    // 23 => array(
+    //     "name" => "chooseFinalLocation", // TODO squash into one and separate only for frontend
+    //     "description" => clienttranslate('${actplayer} must choose a final location for the person'),
+    //     "descriptionmyturn" => clienttranslate('${you} must choose a final location for the person'),
+    //     "type" => "activeplayer",
+    //     "possibleactions" => array(), // ?
+    //     "transitions" => array(
+    //         "nextTurn" => 24,
+    //     ),
+    // ),
 
     24 => array(
         "name" => "nextTurn",
