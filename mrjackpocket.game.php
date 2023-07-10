@@ -548,6 +548,19 @@ class MrJackPocket extends Table
 
     function checkExchanging(string $taleId1, string $taleId2)
     {
+        if ($taleId1 === $taleId2) {
+            throw new BgaUserException(self::_("You can't exchange the tale with it. Please, choose the different tales"));
+        }
+
+        $metaCharacter1 = $this->getMetaCharacterById($taleId1);
+        if (is_null($metaCharacter1)) {
+            throw new BgaUserException(self::_("You can't exchange tale with id = $taleId1. It does not exist"));
+        }
+
+        $metaCharacter2 = $this->getMetaCharacterById($taleId2);
+        if (is_null($metaCharacter2)) {
+            throw new BgaUserException(self::_("You can't exchange tale with id = $taleId2. It does not exist"));
+        }
     }
 
     function checkJocker(string $detectiveId, int $newPos)
