@@ -624,7 +624,7 @@ class MrJackPocket extends Table
         $oldPos = $detective['detective_pos'];
         $difference = $this->getDifferencePos($oldPos, $newPos);
         if (!($difference === 1 || $difference === 2)) {
-            throw new BgaUserException(self::_("You can't move detective to $newPos. Jocker allows to move it only for one step ahead"));
+            throw new BgaUserException(self::_("You can't move detective to $newPos. Detective can move only for 1 or 2 steps ahead"));
         }
     }
 
@@ -681,9 +681,13 @@ class MrJackPocket extends Table
         $this->checkAction($playerId, $action);
         $this->checkExchanging($taleId1, $taleId2);
 
-        $sql = "UPDATE character_status SET tale_pos = (SELECT tale_pos from character_status WHERE tale_pos = $taleId2) WHERE tale_pos = $taleId1";
+        $character1 = $this->getCharacterById($taleId1);
+        $character2 = $this->getCharacterById($taleId2);
+        $pos1 = $character1['tale_pos'];
+        $pos2 = $character2['tale_pos'];
+        $sql = "UPDATE character_status SET tale_pos = $pos2 WHERE tale_pos = $taleId1";
         self::DbQuery($sql);
-        $sql = "UPDATE character_status SET tale_pos = (SELECT tale_pos from character_status WHERE tale_pos = $taleId1) WHERE tale_pos = $taleId2";
+        $sql = "UPDATE character_status SET tale_pos = $pos1 WHERE tale_pos = $taleId2";
         self::DbQuery($sql);
 
         $this->useOption($action);
@@ -702,6 +706,11 @@ class MrJackPocket extends Table
         $this->checkAction($playerId, $action);
         $this->checkJocker($playerId, $detectiveId, $newPos);
 
+        if (!is_null($detectiveId) && !is_null($newPos)) {
+            $sql = "UPDATE detective_status SET detective_pos = $newPos WHERE detective_id = '$detectiveId'";
+            self::DbQuery($sql);
+        }
+
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
@@ -709,46 +718,34 @@ class MrJackPocket extends Table
 
     function holmes(int $playerId, int $newPos)
     {
-        /**
-         * 1) check ability of player to do it
-         * 2) move
-         * 3) go to the state next turn
-         */
         $action = 'holmes';
-        $this->checkAction($playerId, $action);
-        $this->checkDetective($action, $newPos);
-
-        $this->useOption($action);
-
-        $this->gamestate->nextState('nextTurn');
+        $this->moveDetective($playerId, $action, $newPos);
     }
 
     function watson(int $playerId, int $newPos)
     {
-        /**
-         * 1) check ability of player to do it
-         * 2) move
-         * 3) go to the state next turn
-         */
         $action = 'watson';
-        $this->checkAction($playerId, $action);
-        $this->checkDetective($action, $newPos);
-
-        $this->useOption($action);
-
-        $this->gamestate->nextState('nextTurn');
+        $this->moveDetective($playerId, $action, $newPos);
     }
 
     function dog(int $playerId, int $newPos)
+    {
+        $action = 'dog';
+        $this->moveDetective($playerId, $action, $newPos);
+    }
+
+    function moveDetective(int $playerId, string $action, int $newPos)
     {
         /**
          * 1) check ability of player to do it
          * 2) move
          * 3) go to the state next turn
          */
-        $action = 'dog';
         $this->checkAction($playerId, $action);
         $this->checkDetective($action, $newPos);
+
+        $sql = "UPDATE detective_status SET detective_pos = $newPos WHERE detective_id = '$action'";
+        self::DbQuery($sql);
 
         $this->useOption($action);
 
@@ -765,9 +762,15 @@ class MrJackPocket extends Table
         $action = 'alibi';
         $this->checkAction($playerId, $action);
 
+        $availableAlibiCards = $this->getAvailableAlibiCards();
+        $randomNum = bga_rand(0, count($availableAlibiCards) - 1);
+        $randomCharacterId = $availableAlibiCards[$randomNum]['character_id'];
+        $sql = "UPDATE character_status SET player_id_with_alibi = $playerId WHERE character_id = '$randomCharacterId'";
+        self::DbQuery($sql);
+
         $this->useOption($action);
 
-        // TODO next state
+        $this->gamestate->nextState('nextTurn');
     }
 
     /*
