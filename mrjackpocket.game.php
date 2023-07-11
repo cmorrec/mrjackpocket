@@ -422,6 +422,11 @@ class MrJackPocket extends Table
         return self::getObjectListFromDB("SELECT * FROM detective_status");
     }
 
+    function getDetectiveById(string $detectiveId): ?array
+    {
+        return self::getObjectFromDB("SELECT * FROM detective_status WHERE detective_id = '$detectiveId'");
+    }
+
     function getCurrentOptions(): array
     {
         $lastRound = $this->getLastRoundNum();
@@ -461,7 +466,18 @@ class MrJackPocket extends Table
 
     function getMetaCharacterById(string $characterId): ?array
     {
-        return null;
+        return $this->array_find(
+            $this->characters,
+            fn(array $character) => $character['id'] === $characterId,
+        );
+    }
+
+    function getMetaDetectiveById(string $detectiveId): ?array
+    {
+        return $this->array_find(
+            $this->detectives,
+            fn(array $detective) => $detective['id'] === $detectiveId,
+        );
     }
 
     function useOption($option)
@@ -480,7 +496,7 @@ class MrJackPocket extends Table
         return false;
     }
 
-    function array_find(array $array, callable $fn): bool
+    function array_find(array $array, callable $fn): ?array
     {
         foreach ($array as $value) {
             if ($fn($value)) {
@@ -549,7 +565,7 @@ class MrJackPocket extends Table
     function checkExchanging(string $taleId1, string $taleId2)
     {
         if ($taleId1 === $taleId2) {
-            throw new BgaUserException(self::_("You can't exchange the tale with it. Please, choose the different tales"));
+            throw new BgaUserException(self::_("You can't exchange the tale with itself. Please, choose the different tales"));
         }
 
         $metaCharacter1 = $this->getMetaCharacterById($taleId1);
@@ -563,12 +579,62 @@ class MrJackPocket extends Table
         }
     }
 
-    function checkJocker(string $detectiveId, int $newPos)
+    function checkJocker(int $playerId, ?string $detectiveId, ?int $newPos)
     {
+        if (is_null($detectiveId) || is_null($newPos)) {
+            $jackPlayer = $this->getJackPlayer();
+            if ($jackPlayer['player_id'] !== $playerId) {
+                throw new BgaUserException(self::_("You can't stay detectives as they are. Only Jack can do it"));
+            }
+
+            return;
+        }
+
+        $metaDetective = $this->getMetaDetectiveById($detectiveId);
+        if (is_null($metaDetective)) {
+            throw new BgaUserException(self::_("You can't move detective with id = $detectiveId. This detective does not exist"));
+        }
+
+        $metaNewPos = $this->detective_pos[$newPos];
+        if (is_null($metaNewPos)) {
+            throw new BgaUserException(self::_("You can't move detective to $newPos. This position doesn't exist"));
+        }
+
+        $detective = $this->getDetectiveById($detectiveId);
+        $oldPos = $detective['detective_pos'];
+        $difference = $this->getDifferencePos($oldPos, $newPos);
+        if ($difference !== 1) {
+            throw new BgaUserException(self::_("You can't move detective to $newPos. Jocker allows to move it only for one step ahead"));
+        }
     }
 
     function checkDetective(string $detectiveId, int $newPos)
     {
+        $metaDetective = $this->getMetaDetectiveById($detectiveId);
+        if (is_null($metaDetective)) {
+            throw new BgaUserException(self::_("You can't move detective with id = $detectiveId. This detective does not exist"));
+        }
+
+        $metaNewPos = $this->detective_pos[$newPos];
+        if (is_null($metaNewPos)) {
+            throw new BgaUserException(self::_("You can't move detective to $newPos. This position doesn't exist"));
+        }
+
+        $detective = $this->getDetectiveById($detectiveId);
+        $oldPos = $detective['detective_pos'];
+        $difference = $this->getDifferencePos($oldPos, $newPos);
+        if (!($difference === 1 || $difference === 2)) {
+            throw new BgaUserException(self::_("You can't move detective to $newPos. Jocker allows to move it only for one step ahead"));
+        }
+    }
+
+    function getDifferencePos($oldPos, $newPos): int
+    {
+        if ($newPos >= $oldPos) {
+            return $newPos - $oldPos;
+        } else {
+            return $newPos - $oldPos + count($this->detective_pos);
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -625,7 +691,7 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
-    function jocker(int $playerId, string $detectiveId, int $newPos)
+    function jocker(int $playerId, ?string $detectiveId, ?int $newPos)
     {
         /**
          * 1) check ability of player to do it
@@ -634,7 +700,7 @@ class MrJackPocket extends Table
          */
         $action = 'jocker';
         $this->checkAction($playerId, $action);
-        $this->checkJocker($detectiveId, $newPos);
+        $this->checkJocker($playerId, $detectiveId, $newPos);
 
         $this->useOption($action);
 
