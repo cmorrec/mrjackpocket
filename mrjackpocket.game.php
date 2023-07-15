@@ -441,25 +441,44 @@ class MrJackPocket extends Table
     function getActivePlayer(): array
     {
         $currentOptions = $this->getCurrentOptions();
+        if ($this->isJackTurn($currentOptions)) {
+            return $this->getJackPlayer();
+        } else {
+            return $this->getDetectivePlayer();
+        }
+    }
+
+    function getNotActivePlayer(): array
+    {
+        $currentOptions = $this->getCurrentOptions();
+        if ($this->isJackTurn($currentOptions)) {
+            return $this->getDetectivePlayer();
+        } else {
+            return $this->getJackPlayer();
+        }
+    }
+
+    function isJackTurn(array $currentOptions): bool
+    {
         $currentRoundNum = $this->getLastRoundNum();
         $usedOptions = count(
             array_filter(
                 $currentOptions,
-                fn(array $option, int $_) => $option['was_used'],
+                fn(array $option) => $option['was_used'],
                 ARRAY_FILTER_USE_BOTH,
             ),
         );
         if ($currentRoundNum % 2 === 1) {
             if ($usedOptions === 0 || $usedOptions === 3) {
-                return $this->getDetectivePlayer();
+                return false;
             } else {
-                return $this->getJackPlayer();
+                return true;
             }
         } else {
             if ($usedOptions === 0 || $usedOptions === 3) {
-                return $this->getJackPlayer();
+                return true;
             } else {
-                return $this->getDetectivePlayer();
+                return false;
             }
         }
     }
@@ -668,6 +687,7 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
+        // TODO notify about rotation
     }
 
     function exchangeTales(int $playerId, string $taleId1, string $taleId2)
@@ -693,6 +713,7 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
+        // TODO notify about exchange
     }
 
     function jocker(int $playerId, ?string $detectiveId, ?int $newPos)
@@ -714,6 +735,7 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
+        // TODO notify about jocker move
     }
 
     function holmes(int $playerId, int $newPos)
@@ -750,6 +772,7 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
+        // TODO notify about detective
     }
 
     function alibi(int $playerId)
@@ -771,6 +794,7 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
+        // TODO notify about alibi (every player by different)
     }
 
     /*
@@ -838,29 +862,40 @@ class MrJackPocket extends Table
 
     // function stGameSetup() {}
 
-    function stAlibi()
-    {
-        /**
-         * 1) define who has asked alibi or get it from params
-         * 2) check if person could ask alibi
-         * 3) get random alibi, knowing db statuses
-         * 4) return it to all players (notifyAllPlayers)
-         * 5) go the next state: nextTurn
-         */
-    }
-
     function stNextTurn()
     {
         /**
          * 1) define is it the end of round. if it is -- go to the state end of round
          * 2) if it is not - determine the next active player and go to the statuus playerTurn 
          */
+        $currentOptions = $this->getCurrentOptions();
+        $availableOptions = array_filter(
+            $currentOptions,
+            fn(array $option) => !$option['was_used'],
+        );
+        $availableOptionsNum = count($availableOptions);
+        if ($availableOptionsNum === 0) {
+            $this->gamestate->nextState('roundEnd');
+            return;
+        }
+
+        if ($availableOptionsNum === 1 || $availableOptionsNum === 3) {
+            $notActivePlayer = $this->getNotActivePlayer();
+            $this->gamestate->changeActivePlayer($notActivePlayer['player_id']);
+            $this->gamestate->nextState('playerTurn');
+        }
+        // TODO notify about next player ???
     }
 
     function stEndOfRound()
     {
         /**
-         * 
+         * 1) isVisible
+         * 2) update round table
+         * 3) do someone character opened (and change wallSide to null if 4-roads)
+         * 4) generate availableOptions
+         * 5) change active player
+         * 6) go to the plauerTurn
          */
     }
 
