@@ -40,7 +40,7 @@
 CREATE TABLE IF NOT EXISTS `character_status` (
   `character_id` varchar(3) NOT NULL,
   `tale_pos` int(3) NOT NULL,
-  `tale_is_opened` BOOLEAN NOT NULL,
+  `tale_is_opened` BOOLEAN NOT NULL DEFAULT true,
   `is_jack` BOOLEAN NOT NULL,
   `wall_side` varchar(10) DEFAULT NULL,
   `player_id_with_alibi` int DEFAULT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `round` (
   `round_num` int(3) unsigned NOT NULL,
   `is_criminal_visible` BOOLEAN DEFAULT NULL,
   `play_until_visibility` BOOLEAN NOT NULL DEFAULT FALSE,
-  `win_player_id` int DEFAULT NULL,
+  `$rounds` int DEFAULT NULL,
   PRIMARY KEY (`round_num`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

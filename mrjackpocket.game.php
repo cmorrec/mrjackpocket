@@ -19,6 +19,13 @@
 
 require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
+enum GAME_END_STATUS
+{
+    case JACK_WIN;
+    case DETECTIVE_WIN;
+    case PLAY_UNTIL_VISIBILITY;
+    case NOT_GAME_END;
+}
 
 class MrJackPocket extends Table
 {
@@ -361,6 +368,11 @@ class MrJackPocket extends Table
         return self::getObjectFromDB("SELECT round_num, play_until_visibility FROM `round` ORDER BY round_num DESC LIMIT 1");
     }
 
+    function getRounds()
+    {
+        return self::getObjectListFromDB("SELECT * FROM `round` ORDER BY round_num ASC");
+    }
+
     function getLastRoundNum()
     {
         $lastRound = $this->getLastRound();
@@ -499,10 +511,41 @@ class MrJackPocket extends Table
         );
     }
 
-    function useOption($option)
+    function useOption(string $option)
     {
         $sql = "UPDATE available_options SET was_used = true WHERE was_used = false AND `option` = '$option' LIMIT 1";
         self::DbQuery($sql);
+    }
+
+    function closeCharacters(array $characters)
+    {
+        if (count($characters) === 0) {
+            return;
+        }
+
+        $characterIds = implode(
+            array_map(
+                fn(array $character) => "'" . $character['character_id'] . ".'",
+                $characters,
+            ),
+            ',',
+        );
+        $sql = "UPDATE character_status SET tale_is_opened = false WHERE character_id in ($characterIds)";
+        self::DbQuery($sql);
+
+        $manyRoadsCharacter = $this->array_find(
+            $this->characters,
+            fn(array $metaCharacter) => $metaCharacter['closed_roads'] === 4,
+        );
+        $manyRoadsCharacterId = $manyRoadsCharacter['id'];
+        $isManyRoadsCharacterClosed = $this->array_any(
+            $characters,
+            fn(array $character) => $manyRoadsCharacterId === $character['character_id'],
+        );
+        if ($isManyRoadsCharacterClosed) {
+            $sql = "UPDATE character_status SET wall_side = NULL WHERE character_id = '$manyRoadsCharacterId'";
+            self::DbQuery($sql);
+        }
     }
 
     function array_any(array $array, callable $fn): bool
@@ -533,6 +576,11 @@ class MrJackPocket extends Table
             }
         }
         return true;
+    }
+
+    function isCharacterVisible(array $character, array $detectives): bool
+    {
+        // TODO
     }
 
     function checkAction(int $playerId, string $action)
@@ -790,11 +838,16 @@ class MrJackPocket extends Table
         $randomCharacterId = $availableAlibiCards[$randomNum]['character_id'];
         $sql = "UPDATE character_status SET player_id_with_alibi = $playerId WHERE character_id = '$randomCharacterId'";
         self::DbQuery($sql);
+        // TODO
+        // if (isJackPlayer) {
+        //     notify only him and everyone as a secret
+        // } else {
+        //     close character and notify all
+        // }
 
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
-        // TODO notify about alibi (every player by different)
     }
 
     /*
@@ -882,8 +935,8 @@ class MrJackPocket extends Table
         if ($availableOptionsNum === 1 || $availableOptionsNum === 3) {
             $notActivePlayer = $this->getNotActivePlayer();
             $this->gamestate->changeActivePlayer($notActivePlayer['player_id']);
-            $this->gamestate->nextState('playerTurn');
         }
+        $this->gamestate->nextState('playerTurn');
         // TODO notify about next player ???
     }
 
@@ -891,12 +944,116 @@ class MrJackPocket extends Table
     {
         /**
          * 1) isVisible
-         * 2) update round table
-         * 3) do someone character opened (and change wallSide to null if 4-roads)
-         * 4) generate availableOptions
-         * 5) change active player
-         * 6) go to the plauerTurn
+         * 2) do some characters closed (and change wallSide to null if 4-roads)
+         * 3) update round table
+         * 4) if end of the game go to the end of game state
+         * 5) generate availableOptions
+         * 6) change active player
+         * 7) go to the playerTurn
          */
+        $characters = $this->getCharacters();
+        $detectives = $this->getDetectives();
+        $jackCharacter = $this->array_find(
+            $characters,
+            fn(array $character) => $character['is_jack'],
+        );
+        $isJackVisible = $this->isCharacterVisible($jackCharacter, $detectives);
+
+        $charactersToClose = array_filter(
+            $characters,
+            fn(array $character) =>
+            $character['tale_is_opened'] && ($this->isCharacterVisible($character, $detectives) !== $isJackVisible),
+            ARRAY_FILTER_USE_BOTH,
+        );
+        $this->closeCharacters($charactersToClose);
+        // TODO notify about visiblity and closed characters
+
+        $detectivePlayer = $this->getDetectivePlayer();
+        $detectivePlayerId = $detectivePlayer['player_id'];
+        $jackPlayer = $this->getJackPlayer();
+        $jackPlayerId = $jackPlayer['player_id'];
+        if ($isJackVisible) {
+            $winPlayerId = $detectivePlayerId;
+        } else {
+            $winPlayerId = $jackPlayerId;
+        }
+        $currentRoundNum = $this->getLastRoundNum();
+        $sql = "UPDATE `round` SET is_criminal_visible = $isJackVisible, win_player_id = $winPlayerId WHERE round_num = $currentRoundNum;";
+        self::DbQuery($sql);
+
+
+        $gameEndStatus = $this->getGameEndStatus($isJackVisible, $jackPlayerId);
+        if ($gameEndStatus === GAME_END_STATUS::PLAY_UNTIL_VISIBILITY) {
+            $sql = "UPDATE `round` SET play_until_visibility = true WHERE round_num = $currentRoundNum;";
+            self::DbQuery($sql);
+        }
+
+        if ($gameEndStatus === GAME_END_STATUS::DETECTIVE_WIN) {
+            // TODO end of game
+        }
+
+        if ($gameEndStatus === GAME_END_STATUS::JACK_WIN) {
+            // TODO end of game
+        }
+
+        // TODO 5) generate availableOptions
+        // TODO 6) change active player
+        // TODO 7) go to the playerTurn
+    }
+
+    function getGameEndStatus(
+        bool $isJackVisible,
+        string $jackPlayerId,
+    ): GAME_END_STATUS {
+        $characters = $this->getCharacters();
+        $rounds = $this->getRounds();
+        $currentRoundNum = count($rounds);
+        $jackWinRounds = count(
+            array_filter(
+                $rounds,
+                fn(array $round) => $round['win_player_id'] === $jackPlayerId,
+                ARRAY_FILTER_USE_BOTH,
+            ),
+        );
+        $jackAlibiCharacters = array_filter(
+            $characters,
+            fn(array $character) => $character['player_id_with_alibi'] === $jackPlayerId,
+            ARRAY_FILTER_USE_BOTH,
+        );
+        $jackAlibiBonuses = array_reduce(
+            $jackAlibiCharacters,
+            function (int $acc, array $character) {
+                $metaCharacter = $this->getMetaCharacterById($character['character_id']);
+                return $acc + $metaCharacter['points'];
+            },
+            0,
+        );
+        $isJackWin = ($jackWinRounds + $jackAlibiBonuses) >= 6;
+        $openedCharacters = array_filter(
+            $characters,
+            fn(array $character) => $character['tale_is_opened'],
+            ARRAY_FILTER_USE_BOTH,
+        );
+        $isDetectiveWin = count($openedCharacters) === 1;
+        if ($isDetectiveWin && $isJackWin) {
+            if ($isJackVisible) {
+                return GAME_END_STATUS::DETECTIVE_WIN;
+            } else if ($currentRoundNum === $this->round_num) {
+                return GAME_END_STATUS::JACK_WIN;
+            } else {
+                return GAME_END_STATUS::PLAY_UNTIL_VISIBILITY;
+            }
+        }
+
+        if ($isDetectiveWin) {
+            return GAME_END_STATUS::DETECTIVE_WIN;
+        }
+
+        if ($isJackWin || $currentRoundNum === $this->round_num) {
+            return GAME_END_STATUS::JACK_WIN;
+        }
+
+        return GAME_END_STATUS::NOT_GAME_END;
     }
 
     /*
