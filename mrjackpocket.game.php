@@ -578,7 +578,7 @@ class MrJackPocket extends Table
         return true;
     }
 
-    function isCharacterVisible(array $character, array $detectives): bool
+    function getVisibleCharacters(array $characters, array $detectives): array
     {
         // TODO
     }
@@ -947,26 +947,38 @@ class MrJackPocket extends Table
          * 2) do some characters closed (and change wallSide to null if 4-roads)
          * 3) update round table
          * 4) if end of the game go to the end of game state
+         * 5) add round
          * 5) generate availableOptions
          * 6) change active player
          * 7) go to the playerTurn
          */
         $characters = $this->getCharacters();
         $detectives = $this->getDetectives();
-        $jackCharacter = $this->array_find(
-            $characters,
+        $visibleCharacters = $this->getVisibleCharacters($characters, $detectives);
+        $isJackVisible = $this->array_any(
+            $visibleCharacters,
             fn(array $character) => $character['is_jack'],
         );
-        $isJackVisible = $this->isCharacterVisible($jackCharacter, $detectives);
 
-        $charactersToClose = array_filter(
-            $characters,
-            fn(array $character) =>
-            $character['tale_is_opened'] && ($this->isCharacterVisible($character, $detectives) !== $isJackVisible),
-            ARRAY_FILTER_USE_BOTH,
-        );
+        if (!$isJackVisible) {
+            $charactersToClose = array_filter(
+                $visibleCharacters,
+                fn(array $character) => $character['tale_is_opened'],
+                ARRAY_FILTER_USE_BOTH,
+            );
+        } else {
+            $charactersToClose = array_filter(
+                $characters,
+                fn(array $character) => $character['tale_is_opened']
+                && !$this->array_any(
+                    $visibleCharacters,
+                    fn(array $visibleCharacter) => $visibleCharacter['character_id'] === $character['character_id'],
+                ),
+                ARRAY_FILTER_USE_BOTH,
+            );
+        }
+
         $this->closeCharacters($charactersToClose);
-        // TODO notify about visiblity and closed characters
 
         $detectivePlayer = $this->getDetectivePlayer();
         $detectivePlayerId = $detectivePlayer['player_id'];
@@ -988,17 +1000,26 @@ class MrJackPocket extends Table
             self::DbQuery($sql);
         }
 
-        if ($gameEndStatus === GAME_END_STATUS::DETECTIVE_WIN) {
-            // TODO end of game
+        if ($gameEndStatus === GAME_END_STATUS::DETECTIVE_WIN || $gameEndStatus === GAME_END_STATUS::JACK_WIN) {
+            $this->gamestate->nextState('gameEnd');
+            // TODO notify about changin player, end of round, new options, 
         }
 
-        if ($gameEndStatus === GAME_END_STATUS::JACK_WIN) {
-            // TODO end of game
-        }
+        $this->addRound();
+        $this->saveOptionsInDB(
+            $currentRoundNum + 1,
+            $this->getRandomOptions(),
+        );
 
-        // TODO 5) generate availableOptions
-        // TODO 6) change active player
-        // TODO 7) go to the playerTurn
+        if (($currentRoundNum + 1) % 2 === 0) {
+            $nextActivePlayerId = $jackPlayerId;
+        } else {
+            $nextActivePlayerId = $detectivePlayerId;
+        }
+        $this->gamestate->changeActivePlayer($nextActivePlayerId);
+        // TODO notify about changin player, end of round, new options, visiblity and closed characters
+
+        $this->gamestate->nextState('playerTurn');
     }
 
     function getGameEndStatus(
