@@ -863,6 +863,7 @@ class MrJackPocket extends Table
         $this->checkAction($playerId, $action);
         $this->checkRotation($taleId, $wallSide);
 
+        $metaCharacter = $this->getMetaCharacterById($taleId);
         $currentRound = $this->getLastRoundNum();
         if (is_null($wallSide)) {
             $sql = "UPDATE character_status SET wall_side = NULL, last_round_rotated = $currentRound WHERE character_id = $taleId";
@@ -874,7 +875,18 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
-        // TODO notify about rotation
+
+        self::notifyAllPlayers(
+            "rotateTale",
+            clienttranslate('${playerName} rotates ${characterName} to the ${wallSide || "other side"}'),
+            array(
+                'playerId' => $playerId,
+                'playerName' => self::getActivePlayerName(),
+                'characterName' => $metaCharacter['name'],
+                'characterId' => $taleId,
+                'wallSide' => $wallSide,
+            ),
+        );
     }
 
     function exchangeTales(int $playerId, string $taleId1, string $taleId2)
@@ -890,6 +902,8 @@ class MrJackPocket extends Table
 
         $character1 = $this->getCharacterById($taleId1);
         $character2 = $this->getCharacterById($taleId2);
+        $metaCharacter1 = $this->getMetaCharacterById($taleId1);
+        $metaCharacter2 = $this->getMetaCharacterById($taleId2);
         $pos1 = $character1['tale_pos'];
         $pos2 = $character2['tale_pos'];
         $sql = "UPDATE character_status SET tale_pos = $pos2 WHERE tale_pos = $taleId1";
@@ -900,7 +914,19 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
-        // TODO notify about exchange
+
+        self::notifyAllPlayers(
+            "exchangeTales",
+            clienttranslate('${playerName} exchanges ${characterName1} to the ${characterName2}'),
+            array(
+                'playerId' => $playerId,
+                'playerName' => self::getActivePlayerName(),
+                'characterName1' => $metaCharacter1['name'],
+                'characterName2' => $metaCharacter2['name'],
+                'characterId1' => $taleId1,
+                'characterId2' => $taleId2,
+            ),
+        );
     }
 
     function jocker(int $playerId, ?string $detectiveId, ?int $newPos)
@@ -922,7 +948,26 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
-        // TODO notify about jocker move
+
+        if (!is_null($detectiveId) && !is_null($newPos)) {
+            $clientMessage = '${playerName} uses jocker to move ${detectiveName}';
+            $metaDetective = $this->getMetaDetectiveById($detectiveId);
+            $detectiveName = $metaDetective['name'];
+        } else {
+            $clientMessage = '${playerName} uses jocker to save detectives where they are';
+            $detectiveName = null;
+        }
+        self::notifyAllPlayers(
+            "jocker",
+            clienttranslate($clientMessage),
+            array(
+                'playerId' => $playerId,
+                'playerName' => self::getActivePlayerName(),
+                'detectiveId' => $detectiveId,
+                'detectiveName' => $detectiveName,
+                'newPos' => $newPos,
+            ),
+        );
     }
 
     function holmes(int $playerId, int $newPos)
@@ -959,7 +1004,20 @@ class MrJackPocket extends Table
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
-        // TODO notify about detective
+
+        $metaDetective = $this->getMetaDetectiveById($action);
+        $detectiveName = $metaDetective['name'];
+        self::notifyAllPlayers(
+            $action,
+            clienttranslate('${playerName} uses jocker to move ${detectiveName}'),
+            array(
+                'playerId' => $playerId,
+                'playerName' => self::getActivePlayerName(),
+                'detectiveId' => $action,
+                'detectiveName' => $detectiveName,
+                'newPos' => $newPos,
+            ),
+        );
     }
 
     function alibi(int $playerId)
@@ -975,20 +1033,53 @@ class MrJackPocket extends Table
         $availableAlibiCards = $this->getAvailableAlibiCards();
         $randomNum = bga_rand(0, count($availableAlibiCards) - 1);
         $alibiCharacter = $availableAlibiCards[$randomNum];
-        $randomCharacterId = $alibiCharacter['character_id'];
-        $sql = "UPDATE character_status SET player_id_with_alibi = $playerId WHERE character_id = '$randomCharacterId'";
+        $alibiCharacterId = $alibiCharacter['character_id'];
+        $alibiMetaCharacter = $this->getMetaCharacterById($alibiCharacterId);
+        $sql = "UPDATE character_status SET player_id_with_alibi = $playerId WHERE character_id = '$alibiCharacterId'";
         self::DbQuery($sql);
         $jackPlayer = $this->getJackPlayer();
-        if ($jackPlayer['player_id'] === $playerId) {
-            // TODO notify only him and everyone as a secret
-        } else {
+        if ($jackPlayer['player_id'] !== $playerId) {
             $this->closeCharacters([$alibiCharacter]);
-            // TODO notify all
         }
 
         $this->useOption($action);
 
         $this->gamestate->nextState('nextTurn');
+
+        if ($jackPlayer['player_id'] === $playerId) {
+            self::notifyPlayer(
+                $playerId,
+                "alibiJack",
+                clienttranslate('${playerName} opens alibi card for ${alibiName}'),
+                array(
+                    'playerId' => $playerId,
+                    'playerName' => self::getActivePlayerName(),
+                    'alibiId' => $alibiCharacterId,
+                    'alibiName' => $alibiMetaCharacter['name'],
+                    'points' => $alibiMetaCharacter['points'],
+                ),
+            );
+            self::notifyAllPlayers(
+                "alibiAllExceptJack",
+                clienttranslate('${playerName} opens alibi card'),
+                array(
+                    'playerId' => $playerId,
+                    'playerName' => self::getActivePlayerName(),
+                ),
+            );
+        } else {
+            self::notifyAllPlayers(
+                "alibiAll",
+                clienttranslate('${playerName} opens alibi card for ${alibiName}'),
+                array(
+                    'playerId' => $playerId,
+                    'playerName' => self::getActivePlayerName(),
+                    'alibiId' => $alibiCharacterId,
+                    'alibiName' => $alibiMetaCharacter['name'],
+                    'close' => $alibiCharacter['tale_is_opened'],
+                ),
+            );
+        }
     }
 
     /*
@@ -1139,14 +1230,12 @@ class MrJackPocket extends Table
 
         if ($gameEndStatus === GAME_END_STATUS::DETECTIVE_WIN || $gameEndStatus === GAME_END_STATUS::JACK_WIN) {
             $this->gamestate->nextState('gameEnd');
-            // TODO notify about changin player, end of round, new options, 
+            // TODO notify about game over ???
         }
 
         $this->addRound();
-        $this->saveOptionsInDB(
-            $currentRoundNum + 1,
-            $this->getRandomOptions(),
-        );
+        $newOptions = $this->getRandomOptions();
+        $this->saveOptionsInDB($currentRoundNum + 1, $newOptions);
 
         if (($currentRoundNum + 1) % 2 === 0) {
             $nextActivePlayerId = $jackPlayerId;
@@ -1154,9 +1243,20 @@ class MrJackPocket extends Table
             $nextActivePlayerId = $detectivePlayerId;
         }
         $this->gamestate->changeActivePlayer($nextActivePlayerId);
-        // TODO notify about changin player, end of round, new options, visiblity and closed characters
 
         $this->gamestate->nextState('playerTurn');
+
+        self::notifyAllPlayers(
+            "roundEnd",
+            clienttranslate('Round ${newRoundNum - 1} is over'),
+            array(
+                'nextActivePlayerId' => $nextActivePlayerId,
+                'newRoundNum' => $currentRoundNum + 1,
+                'newOptions' => $newOptions,
+                'charactersToClose' => $charactersToClose,
+                'isVisible' => $isJackVisible,
+            ),
+        );
     }
 
     function getGameEndStatus(
