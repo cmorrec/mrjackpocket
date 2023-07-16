@@ -1098,22 +1098,22 @@ class MrJackPocket extends Table
         );
 
         if (!$isJackVisible) {
-            $charactersToClose = array_filter(
-                $visibleCharacters,
-                fn(array $character) => $character['tale_is_opened'],
-                ARRAY_FILTER_USE_BOTH,
-            );
+            $charactersToClose = $visibleCharacters;
         } else {
             $charactersToClose = array_filter(
                 $characters,
-                fn(array $character) => $character['tale_is_opened']
-                && !$this->array_any(
+                fn(array $character) => !$this->array_any(
                     $visibleCharacters,
                     fn(array $visibleCharacter) => $visibleCharacter['character_id'] === $character['character_id'],
                 ),
                 ARRAY_FILTER_USE_BOTH,
             );
         }
+        $charactersToClose = array_filter(
+            $charactersToClose,
+            fn(array $character) => $character['tale_is_opened'],
+            ARRAY_FILTER_USE_BOTH,
+        );
 
         $this->closeCharacters($charactersToClose);
 
