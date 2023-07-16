@@ -604,41 +604,51 @@ class MrJackPocket extends Table
 
     function getVisibleCharactersForColumn(array $characters, int $column, bool $isUpper): array
     {
-        $columnCharacters = array_filter(
+        $columnCharacters = $this->getCharactersForLine(
             $characters,
-            fn(array $character) => $this->character_pos[$character['tale_pos']]['x'] === $column,
-            ARRAY_FILTER_USE_BOTH,
-        );
-        usort(
-            $columnCharacters,
-            fn($a, $b) => ($this->character_pos[$a['tale_pos']]['y'] - $this->character_pos[$b['tale_pos']]['y']) * $this->getSortKef($isUpper),
+            $isUpper,
+            'x',
+            'y',
+            $column,
         );
 
-        return $this->getVisibleCharactersForCommon(
+        if ($isUpper) {
+            $closestWall = 'up';
+            $farthestWall = 'down';
+        } else {
+            $closestWall = 'down';
+            $farthestWall = 'up';
+        }
+
+        return $this->getVisibleCharactersForLine(
             $columnCharacters,
-            'up',
-            'down',
-            $isUpper,
+            $closestWall,
+            $farthestWall,
         );
     }
 
     function getVisibleCharactersForRow(array $characters, int $row, bool $isLefter): array
     {
-        $rowCharacters = array_filter(
+        $rowCharacters = $this->getCharactersForLine(
             $characters,
-            fn(array $character) => $this->character_pos[$character['tale_pos']]['y'] === $row,
-            ARRAY_FILTER_USE_BOTH,
-        );
-        usort(
-            $rowCharacters,
-            fn($a, $b) => ($this->character_pos[$a['tale_pos']]['x'] - $this->character_pos[$b['tale_pos']]['x']) * $this->getSortKef($isLefter),
+            $isLefter,
+            'y',
+            'x',
+            $row,
         );
 
-        return $this->getVisibleCharactersForCommon(
+        if ($isLefter) {
+            $closestWall = 'left';
+            $farthestWall = 'right';
+        } else {
+            $closestWall = 'right';
+            $farthestWall = 'left';
+        }
+
+        return $this->getVisibleCharactersForLine(
             $rowCharacters,
-            'left',
-            'right',
-            $isLefter,
+            $closestWall,
+            $farthestWall,
         );
     }
 
@@ -651,25 +661,47 @@ class MrJackPocket extends Table
         return -1;
     }
 
-    function getVisibleCharactersForCommon(
+    function getCharactersForLine(
         array $characters,
-        string $upWall,
-        string $downWall,
-        bool $isUpper
+        bool $asc,
+        string $axis,
+        string $normalAxis,
+        int $lineNumber,
+    ): array {
+        $lineCharacters = array_filter(
+            $characters,
+            fn(array $character) => (
+                $this->character_pos[$character['tale_pos']][$axis] === $lineNumber
+            ),
+            ARRAY_FILTER_USE_BOTH,
+        );
+        usort(
+            $lineCharacters,
+            fn($a, $b) => (
+                $this->character_pos[$a['tale_pos']][$normalAxis]
+                - $this->character_pos[$b['tale_pos']][$normalAxis]
+            ) * $this->getSortKef($asc),
+        );
+
+        return $lineCharacters;
+    }
+
+    function getVisibleCharactersForLine(
+        array $lineCharacters,
+        string $closestWall,
+        string $farthestWall
     ) {
         $result = array();
-        foreach ($characters as $character) {
+        foreach ($lineCharacters as $character) {
             $wallSide = $character['wall_side'];
-            $isUpWall = $wallSide === $upWall;
-            $isDownWall = $wallSide === $downWall;
 
-            if (($isUpWall && $isUpper) || ($isDownWall && !$isUpper)) {
+            if ($wallSide === $closestWall) {
                 return $result;
             }
 
             $result[] = $character;
 
-            if (($isDownWall && $isUpper) || ($isUpWall && !$isUpper)) {
+            if ($wallSide === $farthestWall) {
                 return $result;
             }
         }
