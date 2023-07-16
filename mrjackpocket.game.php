@@ -1354,26 +1354,80 @@ class MrJackPocket extends Table
          *  watson, dog, holmes -- random 1 or 2 steps
          *  joker -- random detective or nothing, if detective -- random 1 or 0
          */
-        $statename = $state['name'];
+        if ($state['type'] !== "activeplayer") {
+            return;
+        }
 
-        if ($state['type'] === "activeplayer") {
-            switch ($statename) {
-                default:
-                    $this->gamestate->nextState("zombiePass");
-                    break;
+        $playerId = $active_player['player_id'];
+        $availableOptions = $this->getCurrentAvailableOptions();
+        $randomOptionNum = bga_rand(0, count($availableOptions) - 1);
+        $optionToMove = $availableOptions[$randomOptionNum];
+        $optionToMoveName = $optionToMove['option'];
+
+        if ($optionToMoveName === 'alibi') {
+            $this->alibi($playerId);
+        }
+
+        if ($optionToMoveName === 'watson' || $optionToMoveName === 'holmes' || $optionToMoveName === 'dog') {
+            $steps = bga_rand(1, 2);
+            $newPos = $this->getNewPosFor($optionToMoveName, $steps);
+            $this->moveDetective($playerId, $optionToMoveName, $newPos);
+        }
+
+        if ($optionToMoveName === 'jocker') {
+            $detectiveIndex = bga_rand(0, count($this->detectives));
+            if ($detectiveIndex === count($this->detectives)) {
+                $this->jocker($playerId, null, null);
+            } else {
+                $metaDetective = $this->detectives[$detectiveIndex];
+                $detectiveId = $metaDetective['id'];
+                $newPos = $this->getNewPosFor($detectiveId, 1);
+                $this->jocker($playerId, $detectiveId, $newPos);
             }
-
-            return;
         }
 
-        if ($state['type'] === "multipleactiveplayer") {
-            // Make sure player is in a non blocking status for role turn
-            $this->gamestate->setPlayerNonMultiactive($active_player, '');
-
-            return;
+        if ($optionToMoveName === 'rotation') {
+            $randomCharacterIndex = bga_rand(0, count($this->characters) - 1);
+            $metaCharacter = $this->characters[$randomCharacterIndex];
+            $characterId = $metaCharacter['id'];
+            $character = $this->getCharacterById($characterId);
+            $currentWallSide = $character['wall_side'];
+            if (is_null($currentWallSide)) {
+                $wallSide = null;
+            } else {
+                do {
+                    $wallIndex = bga_rand(1, 4);
+                    $wallSide = $this->wall_sides[$wallIndex];
+                } while ($currentWallSide === $wallSide);
+            }
+            $this->rotateTale($playerId, $characterId, $wallSide);
         }
 
-        throw new feException("Zombie mode not supported at this game state: " . $statename);
+        if ($optionToMoveName === 'exchange') {
+            $randomCharacterIndex1 = bga_rand(0, count($this->characters) - 1);
+            do {
+                $randomCharacterIndex2 = bga_rand(0, count($this->characters) - 1);
+            } while ($randomCharacterIndex1 === $randomCharacterIndex2);
+            $metaCharacter1 = $this->characters[$randomCharacterIndex1];
+            $metaCharacter2 = $this->characters[$randomCharacterIndex2];
+            $characterId1 = $metaCharacter1['id'];
+            $characterId2 = $metaCharacter2['id'];
+            $this->exchangeTales($playerId, $characterId1, $characterId2);
+        }
+
+        // throw new feException("Zombie mode not supported at this game state: " . $statename);
+    }
+
+    function getNewPosFor(string $detectiveId, int $steps): int
+    {
+        $detective = $this->getDetectiveById($detectiveId);
+        $currentPos = $detective['detective_pos'];
+        $newPos = $currentPos + $steps;
+        if ($newPos > 12) {
+            return $newPos - 12;
+        } else {
+            return $newPos;
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////:
