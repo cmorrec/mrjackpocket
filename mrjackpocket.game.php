@@ -961,15 +961,17 @@ class MrJackPocket extends Table
 
         $availableAlibiCards = $this->getAvailableAlibiCards();
         $randomNum = bga_rand(0, count($availableAlibiCards) - 1);
-        $randomCharacterId = $availableAlibiCards[$randomNum]['character_id'];
+        $alibiCharacter = $availableAlibiCards[$randomNum];
+        $randomCharacterId = $alibiCharacter['character_id'];
         $sql = "UPDATE character_status SET player_id_with_alibi = $playerId WHERE character_id = '$randomCharacterId'";
         self::DbQuery($sql);
-        // TODO
-        // if (isJackPlayer) {
-        //     notify only him and everyone as a secret
-        // } else {
-        //     close character and notify all
-        // }
+        $jackPlayer = $this->getJackPlayer();
+        if ($jackPlayer['player_id'] === $playerId) {
+            // TODO notify only him and everyone as a secret
+        } else {
+            $this->closeCharacters([$alibiCharacter]);
+            // TODO notify all
+        }
 
         $this->useOption($action);
 
