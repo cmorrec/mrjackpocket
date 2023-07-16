@@ -580,7 +580,101 @@ class MrJackPocket extends Table
 
     function getVisibleCharacters(array $characters, array $detectives): array
     {
-        // TODO
+        $result = array();
+        foreach ($detectives as $detective) {
+            $detectivePos = $this->detective_pos[$detective['detective_id']];
+            if ($detectivePos['x'] !== 0 && $detectivePos['x'] !== 4) {
+                $visibleCharacters = $this->getVisibleCharactersForColumn($characters, $detectivePos['x'], $detectivePos['y'] === 0);
+            } else {
+                $visibleCharacters = $this->getVisibleCharactersForRow($characters, $detectivePos['y'], $detectivePos['x'] === 0);
+            }
+            foreach ($visibleCharacters as $visibleCharacter) {
+                $isCharacterFoundAlready = $this->array_any(
+                    $result,
+                    fn(array $character) => $character['character_id'] === $visibleCharacter['character_id'],
+                );
+                if (!$isCharacterFoundAlready) {
+                    $result[] = $visibleCharacter;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    function getVisibleCharactersForColumn(array $characters, int $column, bool $isUpper): array
+    {
+        $columnCharacters = array_filter(
+            $characters,
+            fn(array $character) => $this->character_pos[$character['tale_pos']]['x'] === $column,
+            ARRAY_FILTER_USE_BOTH,
+        );
+        usort(
+            $columnCharacters,
+            fn($a, $b) => ($this->character_pos[$a['tale_pos']]['y'] - $this->character_pos[$b['tale_pos']]['y']) * $this->getSortKef($isUpper),
+        );
+
+        return $this->getVisibleCharactersForCommon(
+            $columnCharacters,
+            'up',
+            'down',
+            $isUpper,
+        );
+    }
+
+    function getVisibleCharactersForRow(array $characters, int $row, bool $isLefter): array
+    {
+        $rowCharacters = array_filter(
+            $characters,
+            fn(array $character) => $this->character_pos[$character['tale_pos']]['y'] === $row,
+            ARRAY_FILTER_USE_BOTH,
+        );
+        usort(
+            $rowCharacters,
+            fn($a, $b) => ($this->character_pos[$a['tale_pos']]['x'] - $this->character_pos[$b['tale_pos']]['x']) * $this->getSortKef($isLefter),
+        );
+
+        return $this->getVisibleCharactersForCommon(
+            $rowCharacters,
+            'left',
+            'right',
+            $isLefter,
+        );
+    }
+
+    function getSortKef(bool $asc): int
+    {
+        if ($asc) {
+            return 1;
+        }
+
+        return -1;
+    }
+
+    function getVisibleCharactersForCommon(
+        array $characters,
+        string $upWall,
+        string $downWall,
+        bool $isUpper
+    ) {
+        $result = array();
+        foreach ($characters as $character) {
+            $wallSide = $character['wall_side'];
+            $isUpWall = $wallSide === $upWall;
+            $isDownWall = $wallSide === $downWall;
+
+            if (($isUpWall && $isUpper) || ($isDownWall && !$isUpper)) {
+                return $result;
+            }
+
+            $result[] = $character;
+
+            if (($isDownWall && $isUpper) || ($isUpWall && !$isUpper)) {
+                return $result;
+            }
+        }
+
+        return $result;
     }
 
     function checkAction(int $playerId, string $action)
