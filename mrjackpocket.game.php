@@ -282,9 +282,11 @@ class MrJackPocket extends Table
     function getGameProgression()
     {
         $currentRound = $this->getLastRound();
-        return (int) (($currentRound['round_num'] / $this->round_num) * 100);
+        $availableOptions = $this->getCurrentAvailableOptions();
+        return (int) ((
+            ($currentRound['round_num'] * 4 + count($availableOptions)) / $this->round_num)
+            * 100);
     }
-
 
     //////////////////////////////////////////////////////////////////////////////
 //////////// Utility functions
@@ -333,6 +335,17 @@ class MrJackPocket extends Table
             fn(int $pos): string => $this->options_to_move[$pos][bga_rand(0, 1)],
             $randomPoses
         );
+    }
+
+    function getCurrentAvailableOptions(): array
+    {
+        $currentOptions = $this->getCurrentOptions();
+        $availableOptions = array_filter(
+            $currentOptions,
+            fn(array $option) => !$option['was_used'],
+        );
+
+        return $availableOptions;
     }
 
     function saveOptionsInDB(int $roundNum, array $options): void
@@ -1049,11 +1062,7 @@ class MrJackPocket extends Table
          * 1) define is it the end of round. if it is -- go to the state end of round
          * 2) if it is not - determine the next active player and go to the statuus playerTurn 
          */
-        $currentOptions = $this->getCurrentOptions();
-        $availableOptions = array_filter(
-            $currentOptions,
-            fn(array $option) => !$option['was_used'],
-        );
+        $availableOptions = $this->getCurrentAvailableOptions();
         $availableOptionsNum = count($availableOptions);
         if ($availableOptionsNum === 0) {
             $this->gamestate->nextState('roundEnd');
