@@ -970,25 +970,7 @@ class MrJackPocket extends Table
         );
     }
 
-    function holmes(int $playerId, int $newPos)
-    {
-        $action = 'holmes';
-        $this->moveDetective($playerId, $action, $newPos);
-    }
-
-    function watson(int $playerId, int $newPos)
-    {
-        $action = 'watson';
-        $this->moveDetective($playerId, $action, $newPos);
-    }
-
-    function dog(int $playerId, int $newPos)
-    {
-        $action = 'dog';
-        $this->moveDetective($playerId, $action, $newPos);
-    }
-
-    function moveDetective(int $playerId, string $action, int $newPos)
+    function detective(int $playerId, string $action, int $newPos)
     {
         /**
          * 1) check ability of player to do it
@@ -1371,7 +1353,7 @@ class MrJackPocket extends Table
         if ($optionToMoveName === 'watson' || $optionToMoveName === 'holmes' || $optionToMoveName === 'dog') {
             $steps = bga_rand(1, 2);
             $newPos = $this->getNewPosFor($optionToMoveName, $steps);
-            $this->moveDetective($playerId, $optionToMoveName, $newPos);
+            $this->detective($playerId, $optionToMoveName, $newPos);
         }
 
         if ($optionToMoveName === 'jocker') {
