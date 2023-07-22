@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS `character_status` (
 CREATE TABLE IF NOT EXISTS `available_options` (
   `round_num` int(3) unsigned NOT NULL,
   `option` varchar(16) NOT NULL,
+  `index` int (3) unsigned NOT NULL,
   `was_used` BOOLEAN NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -70,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `round` (
   `round_num` int(3) unsigned NOT NULL,
   `is_criminal_visible` BOOLEAN DEFAULT NULL,
   `play_until_visibility` BOOLEAN NOT NULL DEFAULT FALSE,
-  `$rounds` int DEFAULT NULL,
+  `win_player_id` int DEFAULT NULL,
   PRIMARY KEY (`round_num`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

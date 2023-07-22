@@ -227,6 +227,19 @@ class MrJackPocket extends Table
             ),
             $currentOptions,
         );
+        $currentRound = $this->getLastRound();
+        $currentRoundNum = $currentRound['round_num'];
+
+        if ($currentRoundNum % 2 === 1) {
+            $nextOptions = $this->getRevertOptions();
+            $result['nextOptions'] = array_map(
+                fn(array $option): array => array(
+                    'ability' => $option['option'],
+                    'wasUsed' => $option['was_used'],
+                ),
+                $nextOptions,
+            );
+        }
 
         $previousRounds = $this->getPreviousRounds();
         $result['previousRounds'] = array_map(
@@ -237,14 +250,21 @@ class MrJackPocket extends Table
             $previousRounds,
         );
 
-        $currentRound = $this->getLastRound();
         $availableALibiCards = $this->getAvailableAlibiCards();
         $activePlayer = $this->getActivePlayer();
         $result['currentRound'] = array(
-            'num' => $currentRound['round_num'],
+            'num' => $currentRoundNum,
             'playUntilVisibility' => $currentRound['play_until_visibility'],
             'availableALibiCards' => count($availableALibiCards),
             'activePlayerId' => $activePlayer['player_id'],
+        );
+
+        $result['meta'] = array(
+            'roundNum' => $this->round_num,
+            'characterPos' => $this->character_pos,
+            'detectivePos' => $this->detective_pos,
+            'characters' => $this->characters,
+            'detectives' => $this->detectives,
         );
 
         return $result;
@@ -329,11 +349,22 @@ class MrJackPocket extends Table
 
     function getRandomOptions(): array
     {
-        $randomPoses = $this->getRandomPosArray(count($this->options_to_move));
-
         return array_map(
-            fn(int $pos): string => $this->options_to_move[$pos][bga_rand(0, 1)],
-            $randomPoses
+            fn(array $options): string => $options[bga_rand(0, 1)],
+            $this->options_to_move,
+        );
+    }
+
+    function getRevertOptions(): array
+    {
+        $currentOptions = $this->getCurrentOptions();
+        return array_map(
+            fn(int $index, array $options) => $this->array_find(
+                $options,
+                fn(string $option) => $option !== $currentOptions[$index],
+            ),
+            array_keys($this->options_to_move),
+            array_values($this->options_to_move)
         );
     }
 
@@ -350,12 +381,12 @@ class MrJackPocket extends Table
 
     function saveOptionsInDB(int $roundNum, array $options): void
     {
-        $sql = "INSERT INTO available_options (round_num, `option`, was_used) VALUES ";
+        $sql = "INSERT INTO available_options (round_num, `option`, `index`, was_used) VALUES ";
         $values = array();
 
-        foreach ($options as $option) {
+        foreach ($options as $index => $option) {
             $wasUsed = 0;
-            $values[] = "('" . $roundNum . "','" . $option . "','" . $wasUsed . "')";
+            $values[] = "('" . $roundNum . "','" . $option . "'," . $index . ",'" . $wasUsed . "')";
         }
         $sql .= implode($values, ',');
         self::DbQuery($sql);
@@ -455,7 +486,7 @@ class MrJackPocket extends Table
     function getCurrentOptions(): array
     {
         $lastRound = $this->getLastRoundNum();
-        return self::getObjectListFromDB("SELECT * FROM available_options where round_num = $lastRound");
+        return self::getObjectListFromDB("SELECT * FROM available_options where round_num = $lastRound ORDER BY `index` ASC");
     }
 
     function getPreviousRounds(): array
@@ -1215,8 +1246,12 @@ class MrJackPocket extends Table
             // TODO notify about game over ???
         }
 
+        if ($currentRoundNum % 2 === 1) {
+            $newOptions = $this->getRandomOptions();
+        } else {
+            $newOptions = $this->getRevertOptions();
+        }
         $this->addRound();
-        $newOptions = $this->getRandomOptions();
         $this->saveOptionsInDB($currentRoundNum + 1, $newOptions);
 
         if (($currentRoundNum + 1) % 2 === 0) {
