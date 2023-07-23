@@ -267,14 +267,15 @@ class MrJackPocket extends Table
             'detectives' => $this->detectives,
         );
 
-        $visibleCharacters = $this->getVisibleCharacters($characters, $detectives);
-        $isJackVisible = $this->array_any(
-            $visibleCharacters,
-            fn(array $character) => $character['is_jack'],
+        $result['visibleCharacters'] = array_map(
+            fn(array $character): array => array(
+                'id' => $character['character_id'],
+                'pos' => $character['tale_pos'],
+                'isOpened' => $character['tale_is_opened'],
+                'wallSide' => $character['wall_side'],
+            ),
+            $this->getVisibleCharacters($characters, $detectives),
         );
-        $jackPlayer = $this->getJackPlayer();
-        $jackPlayerId = $jackPlayer['player_id'];
-        $result['playUntilVisibility'] = $this->getGameEndStatus($isJackVisible, $jackPlayerId) === GAME_END_STATUS::PLAY_UNTIL_VISIBILITY;
 
         return $result;
     }

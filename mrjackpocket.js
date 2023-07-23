@@ -15,6 +15,12 @@
  *
  */
 
+function range(length) {
+    return [...Array(length).keys()];
+};
+
+
+
 define([
     "dojo","dojo/_base/declare",
     "ebg/core/gamegui",
@@ -24,11 +30,15 @@ function (dojo, declare) {
     return declare("bgagame.mrjackpocket", ebg.core.gamegui, {
         constructor: function(){
             console.log('mrjackpocket constructor');
-              
+            this.boardPos = range(25).map((n) => ({
+                id: String(n + 1),
+                pos: n + 1,
+                x: n % 5,
+                y: Math.floor(n / 5),
+            }));
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
-
         },
         
         /*
@@ -46,20 +56,73 @@ function (dojo, declare) {
         
         setup: function( gamedatas )
         {
+            this.currentData = gamedatas;
             console.log( "Starting game setup" );
-            
-            // Setting up player boards
-            for( var player_id in gamedatas.players )
-            {
-                var player = gamedatas.players[player_id];
-                         
-                // TODO: Setting up players boards if needed
+
+            for (const index in gamedatas.currentOptions) {
+                const option = gamedatas.currentOptions[index];
+                const nextOption = gamedatas.nextOptions?.[index];
+                const availableId = `available_option_${index}`;
+                const nextId = `next_option_${index}`;
+                if (option.wasUsed) {
+                    dojo.addClass(availableId, 'option-was-used');
+                }
+                // TODO add option picture
+                $(availableId).innerText = option.ability;
+
+                if (!nextOption) {
+                    dojo.addClass(nextId, 'next-option-disable');
+                } else {
+                    // TODO add next option picture
+                    $(nextId).innerText = nextOption.ability;
+                }
             }
-            
-            // TODO: Set up your game interface here, according to "gamedatas"
-            
- 
-            // Setup game notifications to handle (see "setupNotifications" method below)
+
+            const currentRoundNum = gamedatas.currentRound.num;
+            const rounds = range(gamedatas.meta.roundNum).map((n) => n + 1);
+            for (const round of rounds) {
+                const roundId = `round_${round}`;
+                if (round < currentRoundNum) {
+                    dojo.destroy(roundId);
+                    continue;
+                } else if (round === currentRoundNum) {
+                    dojo.addClass(roundId, 'current-round');
+                }
+                // TODO add round picture
+                $(roundId).innerText = round;
+            }
+
+            const isJackPlayer = Boolean(gamedatas.jackId);
+            const { playUntilVisibility } = gamedatas.currentRound;
+            const goalElement = $('goal-info');
+            // TODO change it to text and beautiful picture (maybe tooltip)
+            goalElement.innerText = isJackPlayer && playUntilVisibility
+                ? 'isJackPlayer && playUntilVisibility'
+                : isJackPlayer && !playUntilVisibility
+                ? 'isJackPlayer && !playUntilVisibility'
+                : !isJackPlayer && playUntilVisibility
+                ? '!isJackPlayer && playUntilVisibility'
+                : '!isJackPlayer && !playUntilVisibility';
+
+            for (const character of gamedatas.characters) {
+                const bePos = gamedatas.meta.characterPos[character.pos];
+                const fePos = this.getFEPosByBEpos(bePos);
+                const taleId = `tale_${fePos.id}`;
+                const metaCharacter = gamedatas.meta.characters.find(({ id }) =>  id === character.id);
+                // TODO add picture for character
+                $(taleId).innerText = metaCharacter.name + ', opened = ' + character.isOpened + ', wallSide = ' + character.wallSide;
+                // TODO add class for visibility
+            }
+
+            for (const detective of gamedatas.detectives) {
+                const bePos = gamedatas.meta.detectivePos[detective.pos];
+                const fePos = this.getFEPosByBEpos(bePos);
+                const taleId = `tale_${fePos.id}`;
+                const metaDetective = gamedatas.meta.detective.find(({ id }) =>  id === detective.id);
+                // TODO add picture for detective
+                $(taleId).innerText = metaDetective.name;
+            }
+
             this.setupNotifications();
 
             console.log( "Ending game setup" );
@@ -151,12 +214,7 @@ function (dojo, declare) {
         ///////////////////////////////////////////////////
         //// Utility methods
         
-        /*
         
-            Here, you can defines some utility methods that you can use everywhere in your javascript
-            script.
-        
-        */
 
 
         ///////////////////////////////////////////////////
@@ -236,6 +294,10 @@ function (dojo, declare) {
             // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
             // 
         },  
+   
+        getFEPosByBEpos(bePos) {
+            return this.boardPos.find((pos) => pos.x === bePos.x && pos.y === bePos.y);
+        },
         
         // TODO: from this point and below, you can write your game notifications handling methods
         
@@ -253,5 +315,5 @@ function (dojo, declare) {
         },    
         
         */
-   });             
+   });   
 });
