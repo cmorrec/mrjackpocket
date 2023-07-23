@@ -23,9 +23,9 @@
  * Note: if the HTML of your game interface is always the same, you don't have to place anything here.
  *
  */
-  
-require_once( APP_BASE_PATH."view/common/game.view.php" );
-  
+
+require_once(APP_BASE_PATH . "view/common/game.view.php");
+
 class view_mrjackpocket_mrjackpocket extends game_view
 {
     protected function getGameName()
@@ -33,12 +33,12 @@ class view_mrjackpocket_mrjackpocket extends game_view
         // Used for translations and stuff. Please do not modify.
         return "mrjackpocket";
     }
-    
-  	function build_page( $viewArgs )
-  	{		
-  	    // Get players & players number
+
+    function build_page($viewArgs)
+    {
+        // Get players & players number
         $players = $this->game->loadPlayersBasicInfos();
-        $players_nbr = count( $players );
+        $players_nbr = count($players);
 
         /*********** Place your code below:  ************/
 
@@ -57,30 +57,49 @@ class view_mrjackpocket_mrjackpocket extends game_view
         $this->tpl['MY_VARIABLE_ELEMENT'] = self::raw( $some_html_code );
         
         */
-        
-        /*
-        
+
+
+
         // Example: display a specific HTML block for each player in this game.
         // (note: the block is defined in your .tpl file like this:
         //      <!-- BEGIN myblock --> 
         //          ... my HTML code ...
         //      <!-- END myblock --> 
-        
 
-        $this->page->begin_block( "mrjackpocket_mrjackpocket", "myblock" );
-        foreach( $players as $player )
-        {
-            $this->page->insert_block( "myblock", array( 
-                                                    "PLAYER_NAME" => $player['player_name'],
-                                                    "SOME_VARIABLE" => $some_value
-                                                    ...
-                                                     ) );
+
+        $this->page->begin_block("mrjackpocket_mrjackpocket", "available_option");
+        foreach ($this->options_to_move as $index => $_) {
+            $this->page->insert_block(
+                "available_option",
+                array("index" => $index),
+            );
         }
-        
-        */
+
+        $this->page->begin_block("mrjackpocket_mrjackpocket", "round");
+        foreach (range(1, $this->round_num) as $roundNum) {
+            $this->page->insert_block(
+                "round",
+                array("round_num" => $roundNum),
+            );
+        }
+
+        $this->page->begin_block("mrjackpocket_mrjackpocket", "tale");
+        foreach (range(1, 25) as $pos) {
+            if (($pos - 1) / 5 < 1 || ($pos - 1) / 5 >= 4) {
+                $status = 'detective-field';
+            } else if (($pos - 1) % 5 === 0 || ($pos - 1) % 5 === 4) {
+                $status = 'detective-field';
+            } else {
+                $status = 'character-field';
+            }
+            $this->page->insert_block(
+                "tale",
+                array("pos" => $pos, "status" => $status),
+            );
+        }
 
 
 
         /*********** Do not change anything below this line  ************/
-  	}
+    }
 }
