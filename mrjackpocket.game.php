@@ -19,13 +19,13 @@
 
 require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
-enum GAME_END_STATUS
-{
-    case JACK_WIN;
-    case DETECTIVE_WIN;
-    case PLAY_UNTIL_VISIBILITY;
-    case NOT_GAME_END;
-}
+// enum GAME_END_STATUS
+// {
+//     case JACK_WIN;
+//     case DETECTIVE_WIN;
+//     case PLAY_UNTIL_VISIBILITY;
+//     case NOT_GAME_END;
+// }
 
 class MrJackPocket extends Table
 {
@@ -991,16 +991,16 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
 
         if (!is_null($detectiveId) && !is_null($newPos)) {
-            $clientMessage = '${playerName} uses jocker to move ${detectiveName}';
+            $clientMessage = clienttranslate('${playerName} uses jocker to move ${detectiveName}');
             $metaDetective = $this->getMetaDetectiveById($detectiveId);
             $detectiveName = $metaDetective['name'];
         } else {
-            $clientMessage = '${playerName} uses jocker to save detectives where they are';
+            $clientMessage = clienttranslate('${playerName} uses jocker to save detectives where they are');
             $detectiveName = null;
         }
         self::notifyAllPlayers(
             "jocker",
-            clienttranslate($clientMessage),
+            $clientMessage,
             array(
                 'playerId' => $playerId,
                 'playerName' => self::getActivePlayerName(),
@@ -1246,12 +1246,12 @@ class MrJackPocket extends Table
 
 
         $gameEndStatus = $this->getGameEndStatus($isJackVisible, $jackPlayerId);
-        if ($gameEndStatus === GAME_END_STATUS::PLAY_UNTIL_VISIBILITY) {
+        if ($gameEndStatus === 'PLAY_UNTIL_VISIBILITY') {
             $sql = "UPDATE `round` SET play_until_visibility = true WHERE round_num = $currentRoundNum;";
             self::DbQuery($sql);
         }
 
-        if ($gameEndStatus === GAME_END_STATUS::DETECTIVE_WIN || $gameEndStatus === GAME_END_STATUS::JACK_WIN) {
+        if ($gameEndStatus === 'DETECTIVE_WIN' || $gameEndStatus === 'JACK_WIN') {
             $this->gamestate->nextState('gameEnd');
             // TODO notify about game over ???
         }
@@ -1289,7 +1289,7 @@ class MrJackPocket extends Table
     function getGameEndStatus(
         bool $isJackVisible,
         int $jackPlayerId,
-    ): GAME_END_STATUS {
+    ): string {
         $characters = $this->getCharacters();
         $rounds = $this->getRounds();
         $currentRoundNum = count($rounds);
@@ -1322,23 +1322,23 @@ class MrJackPocket extends Table
         $isDetectiveWin = count($openedCharacters) === 1;
         if ($isDetectiveWin && $isJackWin) {
             if ($isJackVisible) {
-                return GAME_END_STATUS::DETECTIVE_WIN;
+                return 'DETECTIVE_WIN';
             } else if ($currentRoundNum === $this->round_num) {
-                return GAME_END_STATUS::JACK_WIN;
+                return 'JACK_WIN';
             } else {
-                return GAME_END_STATUS::PLAY_UNTIL_VISIBILITY;
+                return 'PLAY_UNTIL_VISIBILITY';
             }
         }
 
         if ($isDetectiveWin) {
-            return GAME_END_STATUS::DETECTIVE_WIN;
+            return 'DETECTIVE_WIN';
         }
 
         if ($isJackWin || $currentRoundNum === $this->round_num) {
-            return GAME_END_STATUS::JACK_WIN;
+            return 'JACK_WIN';
         }
 
-        return GAME_END_STATUS::NOT_GAME_END;
+        return 'NOT_GAME_END';
     }
 
     /*
