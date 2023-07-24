@@ -66,9 +66,18 @@ class view_mrjackpocket_mrjackpocket extends game_view
         //          ... my HTML code ...
         //      <!-- END myblock --> 
 
+        $round_num = 8;
+
+        $options_to_move = [
+            ['rotation', 'exchange'],
+            ['rotation', 'jocker'],
+            ['alibi', 'holmes'],
+            ['watson', 'dog'],
+        ];
+
 
         $this->page->begin_block("mrjackpocket_mrjackpocket", "available_option");
-        foreach ($this->options_to_move as $index => $_) {
+        foreach ($options_to_move as $index => $_) {
             $this->page->insert_block(
                 "available_option",
                 array("index" => $index),
@@ -76,7 +85,7 @@ class view_mrjackpocket_mrjackpocket extends game_view
         }
 
         $this->page->begin_block("mrjackpocket_mrjackpocket", "round");
-        foreach (range(1, $this->round_num) as $roundNum) {
+        foreach (range(1, $round_num) as $roundNum) {
             $this->page->insert_block(
                 "round",
                 array("round_num" => $roundNum),

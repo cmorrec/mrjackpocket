@@ -59,6 +59,7 @@ function (dojo, declare) {
             this.currentData = gamedatas;
             console.log( "Starting game setup" );
 
+            console.log(gamedatas.currentOptions, gamedatas.nextOptions);
             for (const index in gamedatas.currentOptions) {
                 const option = gamedatas.currentOptions[index];
                 const nextOption = gamedatas.nextOptions?.[index];
@@ -118,7 +119,7 @@ function (dojo, declare) {
                 const bePos = gamedatas.meta.detectivePos[detective.pos];
                 const fePos = this.getFEPosByBEpos(bePos);
                 const taleId = `tale_${fePos.id}`;
-                const metaDetective = gamedatas.meta.detective.find(({ id }) =>  id === detective.id);
+                const metaDetective = gamedatas.meta.detectives.find(({ id }) =>  id === detective.id);
                 // TODO add picture for detective
                 $(taleId).innerText = metaDetective.name;
             }

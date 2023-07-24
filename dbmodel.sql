@@ -38,28 +38,28 @@
     -- player_id_with_alibi
     -- wall_side(null, right, left, up, down)
 CREATE TABLE IF NOT EXISTS `character_status` (
-  `character_id` varchar(3) NOT NULL,
-  `tale_pos` int(3) NOT NULL,
+  `character_id` varchar(10) NOT NULL,
+  `tale_pos` int(10) NOT NULL,
   `tale_is_opened` BOOLEAN NOT NULL DEFAULT true,
   `is_jack` BOOLEAN NOT NULL,
   `wall_side` varchar(10) DEFAULT NULL,
   `player_id_with_alibi` int DEFAULT NULL,
-  `last_round_rotated` int DEFAULT NULL
+  `last_round_rotated` int DEFAULT NULL,
   PRIMARY KEY (`character_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- available_options: round_num, option, was_used
 CREATE TABLE IF NOT EXISTS `available_options` (
-  `round_num` int(3) unsigned NOT NULL,
+  `round_num` int(10) unsigned NOT NULL,
   `option` varchar(16) NOT NULL,
-  `index` int (3) unsigned NOT NULL,
+  `index` int (10) unsigned NOT NULL,
   `was_used` BOOLEAN NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- detective_status: detective_id, detective_pos(?x,y?)
 CREATE TABLE IF NOT EXISTS `detective_status` (
   `detective_id` varchar(10) NOT NULL,
-  `detective_pos` int(3) NOT NULL
+  `detective_pos` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- round:
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `detective_status` (
     -- is_criminal_visible
     -- play until visibility (default false, after draw before 8 round true)
 CREATE TABLE IF NOT EXISTS `round` (
-  `round_num` int(3) unsigned NOT NULL,
+  `round_num` int(10) unsigned NOT NULL,
   `is_criminal_visible` BOOLEAN DEFAULT NULL,
   `play_until_visibility` BOOLEAN NOT NULL DEFAULT FALSE,
   `win_player_id` int DEFAULT NULL,

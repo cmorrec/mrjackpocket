@@ -78,17 +78,19 @@ class MrJackPocket extends Table
 
         $jackId = (string) bga_rand(1, 9);
         $jackIndex = bga_rand(0, 1);
-        $jackPlayerId = $players[$jackIndex]['player_id'];
+        // $jackPlayerId = $players[$jackIndex]['player_id'];
 
         // saving player in db
         $default_color = array("ff0000", "008000", "0000ff", "ffa500");
         $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar, player_is_jack, player_no) VALUES ";
         $values = array();
+        $index = 0;
         foreach ($players as $player_id => $player) {
-            $playerIsJack = (int) $player_id === $jackPlayerId;
+            $playerIsJack = (int) $index === $jackIndex;
             $color = array_shift($default_color);
             $player_no = ((int) $playerIsJack === 1) + 1;
             $values[] = "('" . $player_id . "','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "','" . $playerIsJack . "','" . $player_no . "')";
+            $index += 1;
         }
         $sql .= implode($values, ',');
         self::DbQuery($sql);
@@ -100,21 +102,20 @@ class MrJackPocket extends Table
         // { character_id, tale_pos, tale_is_opened, is_criminal, player_id_with_alibi }
         $posArray = $this->getRandomPosArray(count($this->characters));
         foreach ($this->characters as $index => $character) {
+            $pos = $posArray[$index] + 1;
             $tales[] = array(
                 'character_id' => $character['id'],
-                'tale_pos' => $posArray[$index],
-                'tale_is_opened' => true,
-                'is_criminal' => $character['id'] === $jackId,
-                'player_id_with_alibi' => null,
-                'wall_side' => $this->getInitialWallSide($posArray[$index]),
+                'tale_pos' => $pos,
+                'is_jack' => (int) ($character['id'] === $jackId),
+                'wall_side' => $this->getInitialWallSide($pos),
             );
         }
 
         // saving character_status in db
-        $sql = "INSERT INTO character_status (character_id, tale_pos, tale_is_opened, is_jack, wall_side) VALUES ";
+        $sql = "INSERT INTO character_status (character_id, tale_pos, is_jack, wall_side) VALUES ";
         $values = array();
         foreach ($tales as $tale) {
-            $values[] = "('" . $tale['character_id'] . "','" . $tale['tale_pos'] . "','" . $tale['tale_is_opened'] . "','" . $tale['is_jack'] . "','" . $tale['wall_side'] . "')";
+            $values[] = "('" . $tale['character_id'] . "','" . $tale['tale_pos'] . "','" . $tale['is_jack'] . "','" . $tale['wall_side'] . "')";
         }
         $sql .= implode($values, ',');
         self::DbQuery($sql);
@@ -233,9 +234,9 @@ class MrJackPocket extends Table
         if ($currentRoundNum % 2 === 1) {
             $nextOptions = $this->getRevertOptions();
             $result['nextOptions'] = array_map(
-                fn(array $option): array => array(
-                    'ability' => $option['option'],
-                    'wasUsed' => $option['was_used'],
+                fn(string $option): array => array(
+                    'ability' => $option,
+                    'wasUsed' => '0',
                 ),
                 $nextOptions,
             );
@@ -328,7 +329,7 @@ class MrJackPocket extends Table
 
     function getInitialWallSide($tale_pos)
     {
-        if (array_key_exists($this->init_tale_rotations, $tale_pos)) {
+        if (array_key_exists($tale_pos, $this->init_tale_rotations)) {
             return $this->init_tale_rotations[$tale_pos];
         }
 
@@ -340,16 +341,21 @@ class MrJackPocket extends Table
     function getRandomPosArray(int $length): array
     {
         $result = array();
-        $numbers = range(1, $length);
+        $numbers = range(0, $length - 1);
         foreach ($numbers as $number) {
-            $rand = bga_rand(0, $length - $number);
-            foreach ($numbers as $randNumber) {
-                if (array_key_exists($randNumber, $result)) {
-                    if ($rand === 0) {
-                        $result[$randNumber] = $number;
+            $rand = bga_rand(0, $length - 1 - $number);
+            foreach ($numbers as $randIndex) {
+                // . . . . 
+                // . . 0 . rand = 2 
+                // . . 0 1 rand = 2
+                if ($rand === 0) {
+                    if (array_key_exists($randIndex, $result)) {
+                        continue;
                     } else {
-                        $rand--;
+                        $result[$randIndex] = $number;
                     }
+                } else {
+                    $rand--;
                 }
             }
         }
@@ -369,9 +375,12 @@ class MrJackPocket extends Table
     {
         $currentOptions = $this->getCurrentOptions();
         return array_map(
+            // fn(int $index, array $options): string => $options[0] === $currentOptions[$index] ? $options[1] : $options[0],
+            // array_keys($this->options_to_move),
+            // array_values($this->options_to_move)
             fn(int $index, array $options) => $this->array_find(
                 $options,
-                fn(string $option) => $option !== $currentOptions[$index],
+                fn(string $option) => $option !== $currentOptions[$index]['option'],
             ),
             array_keys($this->options_to_move),
             array_values($this->options_to_move)
@@ -383,7 +392,7 @@ class MrJackPocket extends Table
         $currentOptions = $this->getCurrentOptions();
         $availableOptions = array_filter(
             $currentOptions,
-            fn(array $option) => !$option['was_used'],
+            fn(array $option) => $option['was_used'] === '0',
         );
 
         return $availableOptions;
@@ -391,12 +400,11 @@ class MrJackPocket extends Table
 
     function saveOptionsInDB(int $roundNum, array $options): void
     {
-        $sql = "INSERT INTO available_options (round_num, `option`, `index`, was_used) VALUES ";
+        $sql = "INSERT INTO available_options (round_num, `option`, `index`) VALUES ";
         $values = array();
 
         foreach ($options as $index => $option) {
-            $wasUsed = 0;
-            $values[] = "('" . $roundNum . "','" . $option . "'," . $index . ",'" . $wasUsed . "')";
+            $values[] = "('" . $roundNum . "','" . $option . "','" . $index . "')";
         }
         $sql .= implode($values, ',');
         self::DbQuery($sql);
@@ -407,13 +415,13 @@ class MrJackPocket extends Table
         $lastRound = $this->getLastRound();
         if (is_null($lastRound)) {
             $roundNum = 1;
-            $playUntilVisibility = false;
+            $playUntilVisibility = 0;
         } else {
             $roundNum = $lastRound['round_num'] + 1;
-            $playUntilVisibility = $lastRound['play_until_visibility'];
+            $playUntilVisibility = (int) $lastRound['play_until_visibility'];
         }
 
-        $sql = "INSERT INTO `round` (round_num, play_until_visibility) VALUES ($roundNum, $playUntilVisibility)";
+        $sql = "INSERT INTO `round` (round_num, play_until_visibility) VALUES ('$roundNum', '$playUntilVisibility')";
         self::DbQuery($sql);
     }
 
@@ -470,7 +478,7 @@ class MrJackPocket extends Table
 
     function getJackCharacter(): array
     {
-        return self::getObjectFromDB("SELECT * FROM character_status WHERE is_jack = true");
+        return self::getObjectFromDB("SELECT * FROM character_status WHERE is_jack = '1'");
     }
 
     function getCharacters(): array
@@ -530,7 +538,7 @@ class MrJackPocket extends Table
         $usedOptions = count(
             array_filter(
                 $currentOptions,
-                fn(array $option) => $option['was_used'],
+                fn(array $option) => $option['was_used'] !== '0',
                 ARRAY_FILTER_USE_BOTH,
             ),
         );
@@ -567,7 +575,7 @@ class MrJackPocket extends Table
 
     function useOption(string $option)
     {
-        $sql = "UPDATE available_options SET was_used = true WHERE was_used = false AND `option` = '$option' LIMIT 1";
+        $sql = "UPDATE available_options SET was_used = '1' WHERE was_used = '0' AND `option` = '$option' LIMIT 1";
         self::DbQuery($sql);
     }
 
@@ -612,7 +620,7 @@ class MrJackPocket extends Table
         return false;
     }
 
-    function array_find(array $array, callable $fn): ?array
+    function array_find(array $array, callable $fn)
     {
         foreach ($array as $value) {
             if ($fn($value)) {
@@ -636,7 +644,7 @@ class MrJackPocket extends Table
     {
         $result = array();
         foreach ($detectives as $detective) {
-            $detectivePos = $this->detective_pos[$detective['detective_id']];
+            $detectivePos = $this->detective_pos[$detective['detective_pos']];
             if ($detectivePos['x'] !== 0 && $detectivePos['x'] !== 4) {
                 $visibleCharacters = $this->getVisibleCharactersForColumn($characters, $detectivePos['x'], $detectivePos['y'] === 0);
             } else {
@@ -720,7 +728,7 @@ class MrJackPocket extends Table
         bool $asc,
         string $axis,
         string $normalAxis,
-        int $lineNumber,
+        int $lineNumber
     ): array {
         $lineCharacters = array_filter(
             $characters,
@@ -763,7 +771,7 @@ class MrJackPocket extends Table
         return $result;
     }
 
-    function checkAction(int $playerId, string $action)
+    function checkActionCustom(int $playerId, string $action)
     {
         $activePlayer = $this->getActivePlayer();
         if ($activePlayer['player_id'] !== $playerId) {
@@ -772,7 +780,7 @@ class MrJackPocket extends Table
         $currentOptions = $this->getCurrentOptions();
         $isAvailableAction = $this->array_any(
             $currentOptions,
-            fn(array $option) => !$option['was_used'] && $option['option'] === $action,
+            fn(array $option) => $option['was_used'] === '0' && $option['option'] === $action,
         );
         if (!$isAvailableAction) {
             throw new BgaUserException(self::_("This action is not available. You can't use it now"));
@@ -901,7 +909,7 @@ class MrJackPocket extends Table
          * 3) go to the state next turn
          */
         $action = 'rotation';
-        $this->checkAction($playerId, $action);
+        $this->checkActionCustom($playerId, $action);
         $this->checkRotation($taleId, $wallSide);
 
         $metaCharacter = $this->getMetaCharacterById($taleId);
@@ -938,7 +946,7 @@ class MrJackPocket extends Table
          * 3) go to the state next turn
          */
         $action = 'exchange';
-        $this->checkAction($playerId, $action);
+        $this->checkActionCustom($playerId, $action);
         $this->checkExchanging($taleId1, $taleId2);
 
         $character1 = $this->getCharacterById($taleId1);
@@ -978,7 +986,7 @@ class MrJackPocket extends Table
          * 3) go to the state next turn
          */
         $action = 'jocker';
-        $this->checkAction($playerId, $action);
+        $this->checkActionCustom($playerId, $action);
         $this->checkJocker($playerId, $detectiveId, $newPos);
 
         if (!is_null($detectiveId) && !is_null($newPos)) {
@@ -1018,7 +1026,7 @@ class MrJackPocket extends Table
          * 2) move
          * 3) go to the state next turn
          */
-        $this->checkAction($playerId, $action);
+        $this->checkActionCustom($playerId, $action);
         $this->checkDetective($action, $newPos);
 
         $sql = "UPDATE detective_status SET detective_pos = $newPos WHERE detective_id = '$action'";
@@ -1051,7 +1059,7 @@ class MrJackPocket extends Table
          * 3) go to the state next turn
          */
         $action = 'alibi';
-        $this->checkAction($playerId, $action);
+        $this->checkActionCustom($playerId, $action);
 
         $availableAlibiCards = $this->getAvailableAlibiCards();
         $randomNum = bga_rand(0, count($availableAlibiCards) - 1);
@@ -1288,7 +1296,7 @@ class MrJackPocket extends Table
 
     function getGameEndStatus(
         bool $isJackVisible,
-        int $jackPlayerId,
+        int $jackPlayerId
     ): string {
         $characters = $this->getCharacters();
         $rounds = $this->getRounds();
