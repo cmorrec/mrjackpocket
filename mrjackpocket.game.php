@@ -205,7 +205,7 @@ class MrJackPocket extends Table
             fn(array $character): array => array(
                 'id' => $character['character_id'],
                 'pos' => $character['tale_pos'],
-                'isOpened' => $character['tale_is_opened'],
+                'isOpened' => $character['tale_is_opened'] === '1',
                 'wallSide' => $character['wall_side'],
             ),
             $characters,
@@ -224,7 +224,7 @@ class MrJackPocket extends Table
         $result['currentOptions'] = array_map(
             fn(array $option): array => array(
                 'ability' => $option['option'],
-                'wasUsed' => $option['was_used'],
+                'wasUsed' => $option['was_used'] === '1',
             ),
             $currentOptions,
         );
@@ -236,7 +236,7 @@ class MrJackPocket extends Table
             $result['nextOptions'] = array_map(
                 fn(string $option): array => array(
                     'ability' => $option,
-                    'wasUsed' => '0',
+                    'wasUsed' => false,
                 ),
                 $nextOptions,
             );
@@ -255,7 +255,7 @@ class MrJackPocket extends Table
         $activePlayer = $this->getActivePlayer();
         $result['currentRound'] = array(
             'num' => $currentRoundNum,
-            'playUntilVisibility' => $currentRound['play_until_visibility'],
+            'playUntilVisibility' => $currentRound['play_until_visibility'] === '1',
             'availableALibiCards' => count($availableALibiCards),
             'activePlayerId' => $activePlayer['player_id'],
         );
@@ -272,7 +272,7 @@ class MrJackPocket extends Table
             fn(array $character): array => array(
                 'id' => $character['character_id'],
                 'pos' => $character['tale_pos'],
-                'isOpened' => $character['tale_is_opened'],
+                'isOpened' => $character['tale_is_opened'] === '1',
                 'wallSide' => $character['wall_side'],
             ),
             $this->getVisibleCharacters($characters, $detectives),
@@ -292,7 +292,7 @@ class MrJackPocket extends Table
         $result['alibiCards'] = $this->getAlibiCardsByPlayerId($playerId);
         $result['winnedRounds'] = $this->getWinnedRoundsByPlayerId($playerId); // TODO remove it ???
         $player = $this->getPlayer($playerId);
-        if ($player['player_is_jack']) {
+        if ($player['player_is_jack'] === '1') {
             $jackCharacter = $this->getJackCharacter();
             $result['jackId'] = $jackCharacter['character_id'];
         }
@@ -449,7 +449,7 @@ class MrJackPocket extends Table
 
     function getAvailableAlibiCards(): array
     {
-        return self::getObjectListFromDB("SELECT * FROM character_status WHERE player_id_with_alibi IS NULL AND is_jack = FALSE");
+        return self::getObjectListFromDB("SELECT * FROM character_status WHERE player_id_with_alibi IS NULL AND is_jack = '0'");
     }
 
     function getWinnedRoundsByPlayerId(int $playerId): array
@@ -464,12 +464,12 @@ class MrJackPocket extends Table
 
     function getJackPlayer(): array
     {
-        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = true");
+        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = '1'");
     }
 
     function getDetectivePlayer(): array
     {
-        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = false");
+        return self::getObjectFromDB("SELECT * FROM player WHERE player_is_jack = '0'");
     }
 
     function getPlayers(): array
@@ -593,7 +593,7 @@ class MrJackPocket extends Table
             ),
             ',',
         );
-        $sql = "UPDATE character_status SET tale_is_opened = false WHERE character_id in ($characterIds)";
+        $sql = "UPDATE character_status SET tale_is_opened = '0' WHERE character_id in ($characterIds)";
         self::DbQuery($sql);
 
         $manyRoadsCharacter = $this->array_find(
@@ -796,7 +796,7 @@ class MrJackPocket extends Table
         }
 
         $character = $this->getCharacterById($taleId);
-        $canIgnoreRotationCheck = !$character['tale_is_opened'] && $metaCharacter['closed_roads'] === 4;
+        $canIgnoreRotationCheck = $character['tale_is_opened'] === '0' && $metaCharacter['closed_roads'] === 4;
         if (!$canIgnoreRotationCheck && $character['wall_side'] === $wallSide) {
             throw new BgaUserException(self::_("You can't stay tale as it is. You should rotate it"));
         }
@@ -1108,7 +1108,7 @@ class MrJackPocket extends Table
                     'playerName' => self::getActivePlayerName(),
                     'alibiId' => $alibiCharacterId,
                     'alibiName' => $alibiMetaCharacter['name'],
-                    'close' => $alibiCharacter['tale_is_opened'],
+                    'close' => $alibiCharacter['tale_is_opened'] === '1',
                 ),
             );
         }
@@ -1217,7 +1217,7 @@ class MrJackPocket extends Table
         $visibleCharacters = $this->getVisibleCharacters($characters, $detectives);
         $isJackVisible = $this->array_any(
             $visibleCharacters,
-            fn(array $character) => $character['is_jack'],
+            fn(array $character) => $character['is_jack'] === '1',
         );
 
         if (!$isJackVisible) {
@@ -1234,7 +1234,7 @@ class MrJackPocket extends Table
         }
         $charactersToClose = array_filter(
             $charactersToClose,
-            fn(array $character) => $character['tale_is_opened'],
+            fn(array $character) => $character['tale_is_opened'] === '1',
             ARRAY_FILTER_USE_BOTH,
         );
 
@@ -1256,7 +1256,7 @@ class MrJackPocket extends Table
 
         $gameEndStatus = $this->getGameEndStatus($isJackVisible, $jackPlayerId);
         if ($gameEndStatus === 'PLAY_UNTIL_VISIBILITY') {
-            $sql = "UPDATE `round` SET play_until_visibility = true WHERE round_num = $currentRoundNum;";
+            $sql = "UPDATE `round` SET play_until_visibility = '1' WHERE round_num = $currentRoundNum;";
             self::DbQuery($sql);
         }
 
@@ -1325,7 +1325,7 @@ class MrJackPocket extends Table
         $isJackWin = ($jackWinRounds + $jackAlibiBonuses) >= 6;
         $openedCharacters = array_filter(
             $characters,
-            fn(array $character) => $character['tale_is_opened'],
+            fn(array $character) => $character['tale_is_opened'] === '1',
             ARRAY_FILTER_USE_BOTH,
         );
         $isDetectiveWin = count($openedCharacters) === 1;

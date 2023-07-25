@@ -40,7 +40,7 @@
 CREATE TABLE IF NOT EXISTS `character_status` (
   `character_id` varchar(10) NOT NULL,
   `tale_pos` int(10) NOT NULL,
-  `tale_is_opened` BOOLEAN NOT NULL DEFAULT true,
+  `tale_is_opened` BOOLEAN NOT NULL DEFAULT '1',
   `is_jack` BOOLEAN NOT NULL,
   `wall_side` varchar(10) DEFAULT NULL,
   `player_id_with_alibi` int DEFAULT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `available_options` (
   `round_num` int(10) unsigned NOT NULL,
   `option` varchar(16) NOT NULL,
   `index` int (10) unsigned NOT NULL,
-  `was_used` BOOLEAN NOT NULL DEFAULT FALSE
+  `was_used` BOOLEAN NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- detective_status: detective_id, detective_pos(?x,y?)
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `detective_status` (
 CREATE TABLE IF NOT EXISTS `round` (
   `round_num` int(10) unsigned NOT NULL,
   `is_criminal_visible` BOOLEAN DEFAULT NULL,
-  `play_until_visibility` BOOLEAN NOT NULL DEFAULT FALSE,
+  `play_until_visibility` BOOLEAN NOT NULL DEFAULT '0',
   `win_player_id` int DEFAULT NULL,
   PRIMARY KEY (`round_num`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
