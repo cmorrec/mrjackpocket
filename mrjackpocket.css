@@ -67,16 +67,84 @@
     }
 */
 
-.option-was-used {
+#container {
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+    grid-template-areas: 
+        "options round round round round round goal"
+        "options board board board board board goal"
+        "options board board board board board ."
+        "options board board board board board ."
+        "options board board board board board ."
+        "options board board board board board .";
+}
 
+#available-options {
+    grid-area: options;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.available-option {
+    /* width: 60px;
+    height: 90px; */
+}
+
+.next-option {
+    /* width: 20px;
+    height: 20px; */
+}
+
+#round-info {
+    grid-area: round;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.round {
+    /* width: 40px;
+    height: 40px; */
+}
+
+#goal-info {
+    grid-area: goal;
+}
+
+#board {
+    grid-area: board;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+    justify-items: center;
+    align-items: center;
+}
+
+.tale {
+    border: 1px solid black;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-was-used {
+    color: gray;
+    border: 5px dotted gray;
 }
 
 .next-option-disable {
-
+    visibility: hidden;
 }
 
 .current-round {
-
+    box-shadow: 3px 3px red, -1em 0 .4em olive;
 }
 
 .character-field {
@@ -84,5 +152,9 @@
 }
 
 .detective-field {
-    
+    border: 0px;
+}
+
+.is-visible-tale {
+    box-shadow: 3px 3px red, -1em 0 .4em olive;
 }

@@ -59,7 +59,6 @@ function (dojo, declare) {
             this.currentData = gamedatas;
             console.log( "Starting game setup" );
 
-            console.log(gamedatas.currentOptions, gamedatas.nextOptions);
             for (const index in gamedatas.currentOptions) {
                 const option = gamedatas.currentOptions[index];
                 const nextOption = gamedatas.nextOptions?.[index];
@@ -105,7 +104,6 @@ function (dojo, declare) {
                 ? '!isJackPlayer && playUntilVisibility'
                 : '!isJackPlayer && !playUntilVisibility';
 
-            console.log(gamedatas.characters)
             for (const character of gamedatas.characters) {
                 const bePos = gamedatas.meta.characterPos[character.pos];
                 const fePos = this.getFEPosByBEpos(bePos);
@@ -113,7 +111,10 @@ function (dojo, declare) {
                 const metaCharacter = gamedatas.meta.characters.find(({ id }) =>  id === character.id);
                 // TODO add picture for character
                 $(taleId).innerText = metaCharacter.name + ', opened = ' + character.isOpened + ', wallSide = ' + character.wallSide;
-                // TODO add class for visibility
+                const isVisible = gamedatas.visibleCharacters.some((e) => e.id === character.id);
+                if (isVisible) {
+                    dojo.addClass(taleId, 'is-visible-tale');
+                }
             }
 
             for (const detective of gamedatas.detectives) {

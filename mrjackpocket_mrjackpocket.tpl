@@ -9,30 +9,31 @@
 -- See http://en.boardgamearena.com/#!doc/Studio for more information.
 -------
 -->
+<div id="container">
+
+    <div id="available-options">
+        <!-- BEGIN available_option -->
+            <div id="available_option_{index}" class="available-option"></div>
+            <div id="next_option_{index}" class="next-option"></div>
+        <!-- END available_option -->
+    </div>
 
 
-<div id="available-options" class="available-options">
-    <!-- BEGIN available_option -->
-        <div id="available_option_{index}" class="available-option"></div>
-        <div id="next_option_{index}" class="next-option"></div>
-    <!-- END available_option -->
-</div>
+
+    <div id="round-info">
+        <!-- BEGIN round -->
+            <div id="round_{round_num}" class="round"></div>
+        <!-- END round -->
+    </div>
 
 
+    <div id="goal-info"></div>
 
-<div id="round-info">
-    <!-- BEGIN round -->
-        <div id="round_{round_num}" class="round"></div>
-    <!-- END round -->
-</div>
-
-
-<div id="goal-info"></div>
-
-<div id="board">
-    <!-- BEGIN tale -->
-        <div id="tale_{pos}" class="tale {status}"></div>
-    <!-- END tale -->
+    <div id="board">
+        <!-- BEGIN tale -->
+            <div id="tale_{pos}" class="tale {status}"></div>
+        <!-- END tale -->
+    </div>
 </div>
 
 <script type="text/javascript">
