@@ -1040,7 +1040,7 @@ class MrJackPocket extends Table
         $metaDetective = $this->getMetaDetectiveById($action);
         $detectiveName = $metaDetective['name'];
         self::notifyAllPlayers(
-            $action,
+            "detective",
             clienttranslate('${playerName} uses jocker to move ${detectiveName}'),
             array(
                 'playerId' => $playerId,
