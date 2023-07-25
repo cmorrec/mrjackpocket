@@ -353,6 +353,7 @@ class MrJackPocket extends Table
                         continue;
                     } else {
                         $result[$randIndex] = $number;
+                        break;
                     }
                 } else {
                     $rand--;

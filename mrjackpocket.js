@@ -105,6 +105,7 @@ function (dojo, declare) {
                 ? '!isJackPlayer && playUntilVisibility'
                 : '!isJackPlayer && !playUntilVisibility';
 
+            console.log(gamedatas.characters)
             for (const character of gamedatas.characters) {
                 const bePos = gamedatas.meta.characterPos[character.pos];
                 const fePos = this.getFEPosByBEpos(bePos);
