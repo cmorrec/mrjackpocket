@@ -74,8 +74,8 @@
     grid-template-areas: 
         "options round round round round round goal"
         "options board board board board board goal"
-        "options board board board board board ."
-        "options board board board board board ."
+        "options board board board board board alibi"
+        "options board board board board board alibi"
         "options board board board board board ."
         "options board board board board board .";
 }
@@ -126,12 +126,17 @@
     align-items: center;
 }
 
+#alibi-deck {
+    grid-area: alibi;
+}
+
 .tale {
     border: 1px solid black;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .option-was-used {
@@ -141,6 +146,10 @@
 
 .next-option-disable {
     visibility: hidden;
+}
+
+.tale-to-choose {
+    box-shadow: 3px 3px red, -1em 0 .4em olive;
 }
 
 .current-round {
@@ -158,3 +167,27 @@
 .is-visible-tale {
     box-shadow: 3px 3px red, -1em 0 .4em olive;
 }
+
+#clockwise {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+#counter-clockwise {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+}
+
+#rotate-approve {
+    position: absolute;
+    bottom: 10px;
+    left: auto;
+    right: auto;
+}
+
+.rotate-approve-disable {
+    color: gray;
+}
+

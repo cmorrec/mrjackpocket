@@ -34,6 +34,8 @@
             <div id="tale_{pos}" class="tale {status}"></div>
         <!-- END tale -->
     </div>
+
+    <div id="alibi-deck"></div>
 </div>
 
 <script type="text/javascript">

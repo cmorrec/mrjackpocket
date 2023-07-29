@@ -207,6 +207,7 @@ class MrJackPocket extends Table
                 'pos' => $character['tale_pos'],
                 'isOpened' => $character['tale_is_opened'] === '1',
                 'wallSide' => $character['wall_side'],
+                'lastRoundRotated' => $character['last_round_rotated'],
             ),
             $characters,
         );
@@ -902,8 +903,9 @@ class MrJackPocket extends Table
         (note: each method below must match an input method in mrjackpocket.action.php)
     */
 
-    function rotateTale(int $playerId, string $taleId, ?string $wallSide)
+    function rotateTale(string $taleId, ?string $wallSide)
     {
+        $playerId = self::getActivePlayerId();
         /**
          * 1) check ability of player to do it
          * 2) rotate
@@ -939,8 +941,9 @@ class MrJackPocket extends Table
         );
     }
 
-    function exchangeTales(int $playerId, string $taleId1, string $taleId2)
+    function exchangeTales(string $taleId1, string $taleId2)
     {
+        $playerId = self::getActivePlayerId();
         /**
          * 1) check ability of player to do it
          * 2) exchange
@@ -979,8 +982,9 @@ class MrJackPocket extends Table
         );
     }
 
-    function jocker(int $playerId, ?string $detectiveId, ?int $newPos)
+    function jocker(?string $detectiveId, ?int $newPos)
     {
+        $playerId = self::getActivePlayerId();
         /**
          * 1) check ability of player to do it
          * 2) move
@@ -1020,8 +1024,9 @@ class MrJackPocket extends Table
         );
     }
 
-    function detective(int $playerId, string $action, int $newPos)
+    function detective(string $action, int $newPos)
     {
+        $playerId = self::getActivePlayerId();
         /**
          * 1) check ability of player to do it
          * 2) move
@@ -1052,8 +1057,9 @@ class MrJackPocket extends Table
         );
     }
 
-    function alibi(int $playerId)
+    function alibi()
     {
+        $playerId = self::getActivePlayerId();
         /**
          * 1) check ability of player to do it
          * 2) pull
@@ -1255,8 +1261,9 @@ class MrJackPocket extends Table
 
 
         $gameEndStatus = $this->getGameEndStatus($isJackVisible, $jackPlayerId);
-        if ($gameEndStatus === 'PLAY_UNTIL_VISIBILITY') {
-            $sql = "UPDATE `round` SET play_until_visibility = '1' WHERE round_num = $currentRoundNum;";
+        $playUntilVisibility = $gameEndStatus === 'PLAY_UNTIL_VISIBILITY';
+        if ($playUntilVisibility) {
+            $sql = "UPDATE `round` SET play_until_visibility = '1' WHERE round_num = $currentRoundNum";
             self::DbQuery($sql);
         }
 
@@ -1266,13 +1273,18 @@ class MrJackPocket extends Table
         }
 
         if ($currentRoundNum % 2 === 1) {
-            $newOptions = $this->getRandomOptions();
-        } else {
             $newOptions = $this->getRevertOptions();
+        } else {
+            $newOptions = $this->getRandomOptions();
         }
         $this->addRound();
         $this->saveOptionsInDB($currentRoundNum + 1, $newOptions);
 
+        if ($currentRoundNum % 2 === 1) {
+            $nextOptions = null;
+        } else {
+            $nextOptions = $this->getRevertOptions();
+        }
         if (($currentRoundNum + 1) % 2 === 0) {
             $nextActivePlayerId = $jackPlayerId;
         } else {
@@ -1289,8 +1301,14 @@ class MrJackPocket extends Table
                 'nextActivePlayerId' => $nextActivePlayerId,
                 'newRoundNum' => $currentRoundNum + 1,
                 'newOptions' => $newOptions,
-                'charactersToClose' => $charactersToClose,
+                'newNextOptions' => $nextOptions,
+                'characterIdsToClose' => array_map(
+                    fn(array $character): string => $character['character_id'],
+                    $charactersToClose,
+                ),
                 'isVisible' => $isJackVisible,
+                'playUntilVisibility' => $playUntilVisibility,
+                'winPlayerId' => $winPlayerId,
             ),
         );
     }

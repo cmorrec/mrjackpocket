@@ -40,11 +40,10 @@ class action_mrjackpocket extends APP_GameAction
   {
     self::setAjaxMode();
 
-    $playerId = self::getArg("playerId", AT_int, true);
     $detectiveId = self::getArg("detectiveId", AT_enum, true, null, ['holmes', 'watson', 'dog']);
     $newPos = self::getArg("newPos", AT_posint, true);
 
-    $this->game->detective($playerId, $detectiveId, $newPos);
+    $this->game->detective($detectiveId, $newPos);
 
     self::ajaxResponse();
   }
@@ -53,11 +52,10 @@ class action_mrjackpocket extends APP_GameAction
   {
     self::setAjaxMode();
 
-    $playerId = self::getArg("playerId", AT_int, true);
     $detectiveId = self::getArg("detectiveId", AT_enum, false, null, ['holmes', 'watson', 'dog']);
     $newPos = self::getArg("newPos", AT_posint, false, null);
 
-    $this->game->jocker($playerId, $detectiveId, $newPos);
+    $this->game->jocker($detectiveId, $newPos);
 
     self::ajaxResponse();
   }
@@ -66,9 +64,7 @@ class action_mrjackpocket extends APP_GameAction
   {
     self::setAjaxMode();
 
-    $playerId = self::getArg("playerId", AT_int, true);
-
-    $this->game->alibi($playerId);
+    $this->game->alibi();
 
     self::ajaxResponse();
   }
@@ -77,11 +73,10 @@ class action_mrjackpocket extends APP_GameAction
   {
     self::setAjaxMode();
 
-    $playerId = self::getArg("playerId", AT_int, true);
     $taleId1 = self::getArg("taleId1", AT_alphanum, true);
     $taleId2 = self::getArg("taleId2", AT_alphanum, true);
 
-    $this->game->exchangeTales($playerId, $taleId1, $taleId2);
+    $this->game->exchangeTales($taleId1, $taleId2);
 
     self::ajaxResponse();
   }
@@ -90,11 +85,10 @@ class action_mrjackpocket extends APP_GameAction
   {
     self::setAjaxMode();
 
-    $playerId = self::getArg("playerId", AT_int, true);
     $taleId = self::getArg("taleId", AT_alphanum, true);
     $wallSide = self::getArg("wallSide", AT_alphanum, false, null);
 
-    $this->game->rotateTale($playerId, $taleId, $wallSide);
+    $this->game->rotateTale($taleId, $wallSide);
 
     self::ajaxResponse();
   }
