@@ -777,7 +777,7 @@ class MrJackPocket extends Table
     function checkActionCustom(int $playerId, string $action)
     {
         $activePlayer = $this->getActivePlayer();
-        if ($activePlayer['player_id'] !== $playerId) {
+        if (((int) $activePlayer['player_id']) !== ((int) $playerId)) {
             throw new BgaUserException(self::_("You are not an active player. You can't play now"));
         }
         $currentOptions = $this->getCurrentOptions();

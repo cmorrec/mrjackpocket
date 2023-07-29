@@ -260,7 +260,7 @@ function (dojo, declare) {
         rotateTaleListener() {
             this.clickOnAction('rotation');
             this.currentData.characters
-                .filter((e) => e.lastRoundRotated !== this.currentRound.num)
+                .filter((e) => e.lastRoundRotated !== this.currentData.currentRound.num)
                 .forEach(
                     (e) => this.setTaleListener(e.id, 'rotateTaleListenerTale')
                 );
@@ -618,8 +618,8 @@ function (dojo, declare) {
             const taleId = this.getTaleIdByCharacterId(characterId);
             const degree = this.getDegree({ oldWallSide, newWallSide });
             const character = this.getCharacterById(characterId);
-            $(taleId).innerText = this.getCharacterImage({ ...character, wallSide: newWallSide });
-            dojo.rotateTo(taleId, degree);
+            $(taleId).children[0] = this.getCharacterImage({ ...character, wallSide: newWallSide });
+            this.rotateTo(taleId, degree);
         },
 
         getDegree({ oldWallSide, newWallSide }) {

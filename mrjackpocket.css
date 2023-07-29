@@ -139,6 +139,8 @@
     align-items: center;
     justify-content: center;
     position: relative;
+    height: 100px;
+    width: 100px;
 }
 
 .option-was-used {
