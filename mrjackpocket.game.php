@@ -278,6 +278,7 @@ class MrJackPocket extends Table
             ),
             $this->getVisibleCharacters($characters, $detectives),
         );
+        $result['detectiveAlibiCards'] = $this->getDetectiveAlibiCards();
 
         return $result;
     }
@@ -290,12 +291,12 @@ class MrJackPocket extends Table
          *      winnedRounds: number[]; // maybe to public???
          */
         $result = array();
-        $result['alibiCards'] = $this->getAlibiCardsByPlayerId($playerId);
         $result['winnedRounds'] = $this->getWinnedRoundsByPlayerId($playerId); // TODO remove it ???
         $player = $this->getPlayer($playerId);
         if ($player['player_is_jack'] === '1') {
             $jackCharacter = $this->getJackCharacter();
             $result['jackId'] = $jackCharacter['character_id'];
+            $result['jackAlibiCards'] = $this->getAlibiCardsByPlayerId($playerId);
         }
 
         return $result;
@@ -446,6 +447,13 @@ class MrJackPocket extends Table
     function getAlibiCardsByPlayerId(int $playerId): array
     {
         return self::getObjectListFromDB("SELECT character_id FROM character_status WHERE player_id_with_alibi = $playerId", true);
+    }
+
+    function getDetectiveAlibiCards(): array
+    {
+        $playerDetective = $this->getDetectivePlayer();
+        $playerDetectiveId = $playerDetective['player_id'];
+        return $this->getAlibiCardsByPlayerId($playerDetectiveId);
     }
 
     function getAvailableAlibiCards(): array

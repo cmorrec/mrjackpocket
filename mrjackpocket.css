@@ -76,8 +76,8 @@
         "options board board board board board goal"
         "options board board board board board alibi"
         "options board board board board board alibi"
-        "options board board board board board ."
-        "options board board board board board .";
+        "options board board board board board dAlibi"
+        "options board board board board board dAlibi";
 }
 
 #available-options {
@@ -91,11 +91,13 @@
 .available-option {
     /* width: 60px;
     height: 90px; */
+    cursor: pointer;
 }
 
 .next-option {
     /* width: 20px;
     height: 20px; */
+    margin-left: 10px;
 }
 
 #round-info {
@@ -142,6 +144,7 @@
 .option-was-used {
     color: gray;
     border: 5px dotted gray;
+    cursor: default;
 }
 
 .next-option-disable {
@@ -150,6 +153,7 @@
 
 .tale-to-choose {
     box-shadow: 3px 3px red, -1em 0 .4em olive;
+    cursor: pointer;
 }
 
 .current-round {
@@ -172,12 +176,16 @@
     position: absolute;
     right: 10px;
     top: 10px;
+    cursor: pointer;
+    z-index: 1;
 }
 
 #counter-clockwise {
     position: absolute;
     left: 10px;
     top: 10px;
+    cursor: pointer;
+    z-index: 1;
 }
 
 #rotate-approve {
@@ -185,9 +193,21 @@
     bottom: 10px;
     left: auto;
     right: auto;
+    cursor: pointer;
+    z-index: 1;
 }
 
 .rotate-approve-disable {
     color: gray;
+    cursor: default;
+}
+
+#detective-alibi {
+    grid-area: dAlibi;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 

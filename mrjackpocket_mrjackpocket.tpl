@@ -36,6 +36,8 @@
     </div>
 
     <div id="alibi-deck"></div>
+
+    <div id="detective-alibi></div>
 </div>
 
 <script type="text/javascript">

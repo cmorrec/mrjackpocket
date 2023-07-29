@@ -119,6 +119,8 @@ function (dojo, declare) {
 
             this.reduceAvailableAlibiCards();
 
+            this.updateAlibiCards();
+
             this.setupNotifications();
 
             console.log( "Ending game setup" );
@@ -461,6 +463,33 @@ function (dojo, declare) {
             // TODO add styles to active and inactive options
         },
 
+        updateAlibiCards() {
+            const el = $('detective-alibi');
+            el.innerHTML = '';
+            this.currentData.detectiveAlibiCards.forEach(
+                (e, i) => el.appendChild(
+                    Object.assign(
+                        document.createElement('div'),
+                        {
+                            id: `detective-alibi_${i}`,
+                            innerText: `detective alibi: ${e}`,
+                        },
+                    ),
+                ),
+            );
+            (this.currentData.jackAlibiCards ?? []).forEach(
+                (e, i) => el.appendChild(
+                    Object.assign(
+                        document.createElement('div'),
+                        {
+                            id: `jack-alibi_${i}`,
+                            innerText: `jack alibi ${e}`,
+                        },
+                    ),
+                ),
+            );
+        },
+
         ///////////////////////////////////////////////////
         //// Game & client states
         
@@ -641,7 +670,7 @@ function (dojo, declare) {
             characterIdsToClose,
             winPlayerId,
         }) {
-            // TODO move current round to the winned person
+            // TODO animate move + increase counter current round to the winned person
             const oldRound = this.currentData.currentRound.num;
             const oldRoundId = `round_${oldRound}`;
             const newRoundId = `round_${oldRound + 1}`;
@@ -654,7 +683,7 @@ function (dojo, declare) {
             // TODO increase winners rounds
             alert(`winPlayerId = ${winPlayerId}`);
 
-            // TODO close characters to close simultaneously
+            // TODO animate characters to close simultaneously
             this.currentData.characters
                 .filter(e => characterIdsToClose.includes(e.id))
                 .forEach(e => this.closeCharacter(e.id));
@@ -866,6 +895,7 @@ function (dojo, declare) {
             this.removeOptionEventListener('jocker');
             if (!detectiveId || !newPos) {
                 // TODO notify player what jack skip step by jocker
+                alert('Jack skipped by jocker');
             } else {
                 this.detective({ detectiveId, newPos });
             }
@@ -894,9 +924,10 @@ function (dojo, declare) {
             this.removeOptionEventListener('alibi');
             this.alibiJack({ alibiId, points });
             // TODO say player about alibi + points
-            this.currentData.alibiCards.push(alibiId);
+            this.currentData.jackAlibiCards.push(alibiId);
 
             this.currentData.currentRound.availableALibiCards -= 1;
+            this.updateAlibiCards();
         },
 
         notif_alibiAllExceptJack(notif) {
@@ -905,6 +936,9 @@ function (dojo, declare) {
 
             // TODO if jack ignore it
             const playerisJack = Boolean(this.currentData.jackId);
+            if (playerisJack) {
+                return;
+            }
             this.removeOptionEventListener('alibi');
             this.alibiAllExceptJack();
             // TODO say that jack took alibi card
@@ -924,8 +958,10 @@ function (dojo, declare) {
                 const character = this.getCharacterById(alibiId);
                 character.isOpened = false;
             }
+            this.currentData.detectiveAlibiCards.push(alibiId);
             // todo reduce it in the interface
             this.currentData.currentRound.availableALibiCards -= 1;
+            this.updateAlibiCards();
         },
 
         notif_roundEnd(notif) {
