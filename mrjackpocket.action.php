@@ -86,7 +86,7 @@ class action_mrjackpocket extends APP_GameAction
     self::setAjaxMode();
 
     $taleId = self::getArg("taleId", AT_alphanum, true);
-    $wallSide = self::getArg("wallSide", AT_alphanum, false, null);
+    $wallSide = self::getArg("wallSide", AT_alphanum, true);
 
     $this->game->rotateTale($taleId, $wallSide);
 

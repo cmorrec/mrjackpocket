@@ -596,20 +596,6 @@ class MrJackPocket extends Table
         );
         $sql = "UPDATE character_status SET tale_is_opened = '0' WHERE character_id in ($characterIds)";
         self::DbQuery($sql);
-
-        $manyRoadsCharacter = $this->array_find(
-            $this->characters,
-            fn(array $metaCharacter) => $metaCharacter['closed_roads'] === 4,
-        );
-        $manyRoadsCharacterId = $manyRoadsCharacter['id'];
-        $isManyRoadsCharacterClosed = $this->array_any(
-            $characters,
-            fn(array $character) => $manyRoadsCharacterId === $character['character_id'],
-        );
-        if ($isManyRoadsCharacterClosed) {
-            $sql = "UPDATE character_status SET wall_side = NULL WHERE character_id = '$manyRoadsCharacterId'";
-            self::DbQuery($sql);
-        }
     }
 
     function array_any(array $array, callable $fn): bool
@@ -758,14 +744,21 @@ class MrJackPocket extends Table
         $result = array();
         foreach ($lineCharacters as $character) {
             $wallSide = $character['wall_side'];
+            $manyRoadsCharacter = $this->array_find(
+                $this->characters,
+                fn(array $metaCharacter) => $metaCharacter['closed_roads'] === 4,
+            );
+            $manyRoadsCharacterId = $manyRoadsCharacter['id'];
+            $isManyRoadsCharacter = $character['character_id'] === $manyRoadsCharacterId
+                && $character['tale_is_opened'] === '0';
 
-            if ($wallSide === $closestWall) {
+            if ($wallSide === $closestWall && !$isManyRoadsCharacter) {
                 return $result;
             }
 
             $result[] = $character;
 
-            if ($wallSide === $farthestWall) {
+            if ($wallSide === $farthestWall && !$isManyRoadsCharacter) {
                 return $result;
             }
         }
@@ -797,15 +790,14 @@ class MrJackPocket extends Table
         }
 
         $character = $this->getCharacterById($taleId);
-        $canIgnoreRotationCheck = $character['tale_is_opened'] === '0' && $metaCharacter['closed_roads'] === 4;
-        if (!$canIgnoreRotationCheck && $character['wall_side'] === $wallSide) {
+        if ($character['wall_side'] === $wallSide) {
             throw new BgaUserException(self::_("You can't stay tale as it is. You should rotate it"));
         }
-        if (!$canIgnoreRotationCheck && is_null($wallSide)) {
+        if (is_null($wallSide)) {
             throw new BgaUserException(self::_("You can't stay tale as it is. You should rotate it"));
         }
 
-        $isValidWallSide = is_null($wallSide) || $this->array_any(
+        $isValidWallSide = $this->array_any(
             $this->wall_sides,
             fn(string $side) => $side === $wallSide,
         );
@@ -903,7 +895,7 @@ class MrJackPocket extends Table
         (note: each method below must match an input method in mrjackpocket.action.php)
     */
 
-    function rotateTale(string $taleId, ?string $wallSide)
+    function rotateTale(string $taleId, string $wallSide)
     {
         $playerId = self::getActivePlayerId();
         /**
@@ -917,11 +909,7 @@ class MrJackPocket extends Table
 
         $metaCharacter = $this->getMetaCharacterById($taleId);
         $currentRound = $this->getLastRoundNum();
-        if (is_null($wallSide)) {
-            $sql = "UPDATE character_status SET wall_side = NULL, last_round_rotated = $currentRound WHERE character_id = $taleId";
-        } else {
-            $sql = "UPDATE character_status SET wall_side = $wallSide, last_round_rotated = $currentRound WHERE character_id = $taleId";
-        }
+        $sql = "UPDATE character_status SET wall_side = $wallSide, last_round_rotated = $currentRound WHERE character_id = $taleId";
         self::DbQuery($sql);
 
         $this->useOption($action);
@@ -1419,24 +1407,24 @@ class MrJackPocket extends Table
         $optionToMoveName = $optionToMove['option'];
 
         if ($optionToMoveName === 'alibi') {
-            $this->alibi($playerId);
+            $this->alibi();
         }
 
         if ($optionToMoveName === 'watson' || $optionToMoveName === 'holmes' || $optionToMoveName === 'dog') {
             $steps = bga_rand(1, 2);
             $newPos = $this->getNewPosFor($optionToMoveName, $steps);
-            $this->detective($playerId, $optionToMoveName, $newPos);
+            $this->detective($optionToMoveName, $newPos);
         }
 
         if ($optionToMoveName === 'jocker') {
             $detectiveIndex = bga_rand(0, count($this->detectives));
             if ($detectiveIndex === count($this->detectives)) {
-                $this->jocker($playerId, null, null);
+                $this->jocker(null, null);
             } else {
                 $metaDetective = $this->detectives[$detectiveIndex];
                 $detectiveId = $metaDetective['id'];
                 $newPos = $this->getNewPosFor($detectiveId, 1);
-                $this->jocker($playerId, $detectiveId, $newPos);
+                $this->jocker($detectiveId, $newPos);
             }
         }
 
@@ -1446,15 +1434,11 @@ class MrJackPocket extends Table
             $characterId = $metaCharacter['id'];
             $character = $this->getCharacterById($characterId);
             $currentWallSide = $character['wall_side'];
-            if (is_null($currentWallSide)) {
-                $wallSide = null;
-            } else {
-                do {
-                    $wallIndex = bga_rand(1, 4);
-                    $wallSide = $this->wall_sides[$wallIndex];
-                } while ($currentWallSide === $wallSide);
-            }
-            $this->rotateTale($playerId, $characterId, $wallSide);
+            do {
+                $wallIndex = bga_rand(1, 4);
+                $wallSide = $this->wall_sides[$wallIndex];
+            } while ($currentWallSide === $wallSide);
+            $this->rotateTale($characterId, $wallSide);
         }
 
         if ($optionToMoveName === 'exchange') {
@@ -1466,7 +1450,7 @@ class MrJackPocket extends Table
             $metaCharacter2 = $this->characters[$randomCharacterIndex2];
             $characterId1 = $metaCharacter1['id'];
             $characterId2 = $metaCharacter2['id'];
-            $this->exchangeTales($playerId, $characterId1, $characterId2);
+            $this->exchangeTales($characterId1, $characterId2);
         }
 
         // throw new feException("Zombie mode not supported at this game state: " . $statename);

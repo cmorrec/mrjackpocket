@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `character_status` (
   `tale_pos` int(10) NOT NULL,
   `tale_is_opened` BOOLEAN NOT NULL DEFAULT '1',
   `is_jack` BOOLEAN NOT NULL,
-  `wall_side` varchar(10) DEFAULT NULL,
+  `wall_side` varchar(10) NOT NULL,
   `player_id_with_alibi` int DEFAULT NULL,
   `last_round_rotated` int DEFAULT NULL,
   PRIMARY KEY (`character_id`)
