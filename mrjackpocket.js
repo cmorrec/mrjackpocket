@@ -156,7 +156,7 @@ function (dojo, declare) {
 
         removeOptionEventListener(option) {
             // TODO add card inactive by styles
-            const e = this.eventListeners.options.find((e) => e.option = option);
+            const e = this.eventListeners.options.find((e) => e.option === option);
             $(e.id).removeEventListener(e.type, e.listener);
             dojo.addClass(e.id, 'option-was-used');
             this.eventListeners.options = this.eventListeners.options.filter((item) => item.id !== e.id);
@@ -183,11 +183,14 @@ function (dojo, declare) {
         },
 
         detectiveListener(detectiveId, isJocker = false) {
+            console.log('detectiveListener', detectiveId, isJocker)
             if (!isJocker) {
                 this.clickOnAction(detectiveId);
             }
 
             const detective = this.getDetectiveById(detectiveId);
+            console.log(detective, detectiveId)
+            // TODO can't read propos of undefined
             const currentPos = detective.pos;
             const availablePoses = this.getAvailablePoses(currentPos, isJocker ? 1 : 2);
             this.optionActions[isJocker ? 'jocker' : 'detective'].detectiveId = detectiveId;
@@ -229,7 +232,7 @@ function (dojo, declare) {
             this.currentData.detectives.forEach((e) => {
                 const taleId = this.getTaleIdByDetectiveId(e.id);
                 const type = 'click';
-                const listener = (e) => {
+                const listener = (event) => {
                     this.detectiveListener(e.id, true);
                 };
                 $(taleId).addEventListener(type, listener);
@@ -840,6 +843,7 @@ function (dojo, declare) {
             dojo.subscribe('jocker', this, 'notif_jocker');
             dojo.subscribe('detective', this, 'notif_detective');
             dojo.subscribe('alibiJack', this, 'notif_alibiJack');
+            // todo     this.notifqueue.setIgnoreNotificationCheck( 'dealCard', (notif) => (notif.args.player_id == this.player_id) );
             dojo.subscribe('alibiAllExceptJack', this, 'notif_alibiAllExceptJack');
             dojo.subscribe('alibiAll', this, 'notif_alibiAll');
             dojo.subscribe('roundEnd', this, 'notif_roundEnd');
@@ -869,7 +873,7 @@ function (dojo, declare) {
                 });
             }
             character.wallSide = wallSide;
-            character.lastRoundRotated = this.currentRound.num;
+            character.lastRoundRotated = this.currentData.currentRound.num;
         },
 
         notif_exchangeTales(notif) {

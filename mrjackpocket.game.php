@@ -204,10 +204,10 @@ class MrJackPocket extends Table
         $result['characters'] = array_map(
             fn(array $character): array => array(
                 'id' => $character['character_id'],
-                'pos' => $character['tale_pos'],
+                'pos' => (int) $character['tale_pos'],
                 'isOpened' => $character['tale_is_opened'] === '1',
                 'wallSide' => $character['wall_side'],
-                'lastRoundRotated' => $character['last_round_rotated'],
+                'lastRoundRotated' => (int) $character['last_round_rotated'],
             ),
             $characters,
         );
@@ -216,7 +216,7 @@ class MrJackPocket extends Table
         $result['detectives'] = array_map(
             fn(array $detective): array => array(
                 'id' => $detective['detective_id'],
-                'pos' => $detective['detective_pos'],
+                'pos' => (int) $detective['detective_pos'],
             ),
             $detectives,
         );
@@ -230,7 +230,7 @@ class MrJackPocket extends Table
             $currentOptions,
         );
         $currentRound = $this->getLastRound();
-        $currentRoundNum = $currentRound['round_num'];
+        $currentRoundNum = (int) $currentRound['round_num'];
 
         if ($currentRoundNum % 2 === 1) {
             $nextOptions = $this->getRevertOptions();
@@ -258,7 +258,7 @@ class MrJackPocket extends Table
             'num' => $currentRoundNum,
             'playUntilVisibility' => $currentRound['play_until_visibility'] === '1',
             'availableALibiCards' => count($availableALibiCards),
-            'activePlayerId' => $activePlayer['player_id'],
+            'activePlayerId' => (int) $activePlayer['player_id'],
         );
 
         $result['meta'] = array(
@@ -272,7 +272,7 @@ class MrJackPocket extends Table
         $result['visibleCharacters'] = array_map(
             fn(array $character): array => array(
                 'id' => $character['character_id'],
-                'pos' => $character['tale_pos'],
+                'pos' => (int) $character['tale_pos'],
                 'isOpened' => $character['tale_is_opened'] === '1',
                 'wallSide' => $character['wall_side'],
             ),
@@ -317,7 +317,7 @@ class MrJackPocket extends Table
         $currentRound = $this->getLastRound();
         $availableOptions = $this->getCurrentAvailableOptions();
         return (int) ((
-            ($currentRound['round_num'] * 4 + count($availableOptions)) / $this->round_num)
+            (((int) $currentRound['round_num']) * 4 + count($availableOptions)) / $this->round_num)
             * 100);
     }
 
@@ -420,7 +420,7 @@ class MrJackPocket extends Table
             $roundNum = 1;
             $playUntilVisibility = 0;
         } else {
-            $roundNum = $lastRound['round_num'] + 1;
+            $roundNum = ((int) $lastRound['round_num']) + 1;
             $playUntilVisibility = (int) $lastRound['play_until_visibility'];
         }
 
@@ -441,7 +441,7 @@ class MrJackPocket extends Table
     function getLastRoundNum()
     {
         $lastRound = $this->getLastRound();
-        return $lastRound['round_num'];
+        return (int) $lastRound['round_num'];
     }
 
     function getAlibiCardsByPlayerId(int $playerId): array
@@ -452,7 +452,7 @@ class MrJackPocket extends Table
     function getDetectiveAlibiCards(): array
     {
         $playerDetective = $this->getDetectivePlayer();
-        $playerDetectiveId = $playerDetective['player_id'];
+        $playerDetectiveId = (int) $playerDetective['player_id'];
         return $this->getAlibiCardsByPlayerId($playerDetectiveId);
     }
 
@@ -552,18 +552,10 @@ class MrJackPocket extends Table
                 ARRAY_FILTER_USE_BOTH,
             ),
         );
-        if ($currentRoundNum % 2 === 1) {
-            if ($usedOptions === 0 || $usedOptions === 3) {
-                return false;
-            } else {
-                return true;
-            }
+        if ($usedOptions === 0 || $usedOptions === 3) {
+            return $currentRoundNum % 2 === 0;
         } else {
-            if ($usedOptions === 0 || $usedOptions === 3) {
-                return true;
-            } else {
-                return false;
-            }
+            return $currentRoundNum % 2 === 1;
         }
     }
 
@@ -597,7 +589,7 @@ class MrJackPocket extends Table
 
         $characterIds = implode(
             array_map(
-                fn(array $character) => "'" . $character['character_id'] . ".'",
+                fn(array $character) => "'" . $character['character_id'] . "'",
                 $characters,
             ),
             ',',
@@ -640,7 +632,7 @@ class MrJackPocket extends Table
     {
         $result = array();
         foreach ($detectives as $detective) {
-            $detectivePos = $this->detective_pos[$detective['detective_pos']];
+            $detectivePos = $this->detective_pos[(int) $detective['detective_pos']];
             if ($detectivePos['x'] !== 0 && $detectivePos['x'] !== 4) {
                 $visibleCharacters = $this->getVisibleCharactersForColumn($characters, $detectivePos['x'], $detectivePos['y'] === 0);
             } else {
@@ -729,15 +721,15 @@ class MrJackPocket extends Table
         $lineCharacters = array_filter(
             $characters,
             fn(array $character) => (
-                $this->character_pos[$character['tale_pos']][$axis] === $lineNumber
+                $this->character_pos[(int) $character['tale_pos']][$axis] === $lineNumber
             ),
             ARRAY_FILTER_USE_BOTH,
         );
         usort(
             $lineCharacters,
             fn($a, $b) => (
-                $this->character_pos[$a['tale_pos']][$normalAxis]
-                - $this->character_pos[$b['tale_pos']][$normalAxis]
+                $this->character_pos[(int) $a['tale_pos']][$normalAxis]
+                - $this->character_pos[(int) $b['tale_pos']][$normalAxis]
             ) * $this->getSortKef($asc),
         );
 
@@ -756,8 +748,7 @@ class MrJackPocket extends Table
                 $this->characters,
                 fn(array $metaCharacter) => $metaCharacter['closed_roads'] === 4,
             );
-            $manyRoadsCharacterId = $manyRoadsCharacter['id'];
-            $isManyRoadsCharacter = $character['character_id'] === $manyRoadsCharacterId
+            $isManyRoadsCharacter = $character['character_id'] === $manyRoadsCharacter['id']
                 && $character['tale_is_opened'] === '0';
 
             if ($wallSide === $closestWall && !$isManyRoadsCharacter) {
@@ -814,7 +805,7 @@ class MrJackPocket extends Table
         }
 
         $currentRoundNum = $this->getLastRoundNum();
-        if ($currentRoundNum === $character['last_round_rotated']) {
+        if ($currentRoundNum === ((int) $character['last_round_rotated'])) {
             throw new BgaUserException(self::_("You can't rotate this tale. It already was rotated in the current round"));
         }
     }
@@ -840,7 +831,7 @@ class MrJackPocket extends Table
     {
         if (is_null($detectiveId) || is_null($newPos)) {
             $jackPlayer = $this->getJackPlayer();
-            if ($jackPlayer['player_id'] !== $playerId) {
+            if (((int) $jackPlayer['player_id']) !== ((int) $playerId)) {
                 throw new BgaUserException(self::_("You can't stay detectives as they are. Only Jack can do it"));
             }
 
@@ -858,7 +849,7 @@ class MrJackPocket extends Table
         }
 
         $detective = $this->getDetectiveById($detectiveId);
-        $oldPos = $detective['detective_pos'];
+        $oldPos = (int) $detective['detective_pos'];
         $difference = $this->getDifferencePos($oldPos, $newPos);
         if ($difference !== 1) {
             throw new BgaUserException(self::_("You can't move detective to $newPos. Jocker allows to move it only for one step ahead"));
@@ -878,14 +869,14 @@ class MrJackPocket extends Table
         }
 
         $detective = $this->getDetectiveById($detectiveId);
-        $oldPos = $detective['detective_pos'];
+        $oldPos = (int) $detective['detective_pos'];
         $difference = $this->getDifferencePos($oldPos, $newPos);
         if (!($difference === 1 || $difference === 2)) {
             throw new BgaUserException(self::_("You can't move detective to $newPos. Detective can move only for 1 or 2 steps ahead"));
         }
     }
 
-    function getDifferencePos($oldPos, $newPos): int
+    function getDifferencePos(int $oldPos, int $newPos): int
     {
         if ($newPos >= $oldPos) {
             return $newPos - $oldPos;
@@ -912,12 +903,12 @@ class MrJackPocket extends Table
          * 3) go to the state next turn
          */
         $action = 'rotation';
-        $this->checkActionCustom($playerId, $action);
+        $this->checkActionCustom((int) $playerId, $action);
         $this->checkRotation($taleId, $wallSide);
 
         $metaCharacter = $this->getMetaCharacterById($taleId);
         $currentRound = $this->getLastRoundNum();
-        $sql = "UPDATE character_status SET wall_side = $wallSide, last_round_rotated = $currentRound WHERE character_id = $taleId";
+        $sql = "UPDATE character_status SET wall_side = '$wallSide', last_round_rotated = '$currentRound' WHERE character_id = '$taleId'";
         self::DbQuery($sql);
 
         $this->useOption($action);
@@ -955,9 +946,9 @@ class MrJackPocket extends Table
         $metaCharacter2 = $this->getMetaCharacterById($taleId2);
         $pos1 = $character1['tale_pos'];
         $pos2 = $character2['tale_pos'];
-        $sql = "UPDATE character_status SET tale_pos = $pos2 WHERE tale_pos = $taleId1";
+        $sql = "UPDATE character_status SET tale_pos = '$pos2' WHERE character_id = '$taleId1'";
         self::DbQuery($sql);
-        $sql = "UPDATE character_status SET tale_pos = $pos1 WHERE tale_pos = $taleId2";
+        $sql = "UPDATE character_status SET tale_pos = '$pos1' WHERE character_id = '$taleId2'";
         self::DbQuery($sql);
 
         $this->useOption($action);
@@ -987,11 +978,11 @@ class MrJackPocket extends Table
          * 3) go to the state next turn
          */
         $action = 'jocker';
-        $this->checkActionCustom($playerId, $action);
-        $this->checkJocker($playerId, $detectiveId, $newPos);
+        $this->checkActionCustom((int) $playerId, $action);
+        $this->checkJocker((int) $playerId, $detectiveId, $newPos);
 
         if (!is_null($detectiveId) && !is_null($newPos)) {
-            $sql = "UPDATE detective_status SET detective_pos = $newPos WHERE detective_id = '$detectiveId'";
+            $sql = "UPDATE detective_status SET detective_pos = '$newPos' WHERE detective_id = '$detectiveId'";
             self::DbQuery($sql);
         }
 
@@ -1031,7 +1022,7 @@ class MrJackPocket extends Table
         $this->checkActionCustom($playerId, $action);
         $this->checkDetective($action, $newPos);
 
-        $sql = "UPDATE detective_status SET detective_pos = $newPos WHERE detective_id = '$action'";
+        $sql = "UPDATE detective_status SET detective_pos = '$newPos' WHERE detective_id = '$action'";
         self::DbQuery($sql);
 
         $this->useOption($action);
@@ -1055,7 +1046,7 @@ class MrJackPocket extends Table
 
     function alibi()
     {
-        $playerId = self::getActivePlayerId();
+        $playerId = (int) self::getActivePlayerId();
         /**
          * 1) check ability of player to do it
          * 2) pull
@@ -1069,10 +1060,10 @@ class MrJackPocket extends Table
         $alibiCharacter = $availableAlibiCards[$randomNum];
         $alibiCharacterId = $alibiCharacter['character_id'];
         $alibiMetaCharacter = $this->getMetaCharacterById($alibiCharacterId);
-        $sql = "UPDATE character_status SET player_id_with_alibi = $playerId WHERE character_id = '$alibiCharacterId'";
+        $sql = "UPDATE character_status SET player_id_with_alibi = '$playerId' WHERE character_id = '$alibiCharacterId'";
         self::DbQuery($sql);
         $jackPlayer = $this->getJackPlayer();
-        if ($jackPlayer['player_id'] !== $playerId) {
+        if (((int) $jackPlayer['player_id']) !== $playerId) {
             $this->closeCharacters([$alibiCharacter]);
         }
 
@@ -1080,7 +1071,7 @@ class MrJackPocket extends Table
 
         $this->gamestate->nextState('nextTurn');
 
-        if ($jackPlayer['player_id'] === $playerId) {
+        if (((int) $jackPlayer['player_id']) === $playerId) {
             self::notifyPlayer(
                 $playerId,
                 "alibiJack",
@@ -1195,8 +1186,9 @@ class MrJackPocket extends Table
         }
 
         if ($availableOptionsNum === 1 || $availableOptionsNum === 3) {
-            $notActivePlayer = $this->getNotActivePlayer();
-            $this->gamestate->changeActivePlayer($notActivePlayer['player_id']);
+            self::activeNextPlayer();
+            // $notActivePlayer = $this->getNotActivePlayer();
+            // $this->gamestate->changeActivePlayer((int) $notActivePlayer['player_id']);
         }
         $this->gamestate->nextState('playerTurn');
         // TODO notify about next player ???
@@ -1243,23 +1235,24 @@ class MrJackPocket extends Table
         $this->closeCharacters($charactersToClose);
 
         $detectivePlayer = $this->getDetectivePlayer();
-        $detectivePlayerId = $detectivePlayer['player_id'];
+        $detectivePlayerId = (int) $detectivePlayer['player_id'];
         $jackPlayer = $this->getJackPlayer();
-        $jackPlayerId = $jackPlayer['player_id'];
+        $jackPlayerId = (int) $jackPlayer['player_id'];
         if ($isJackVisible) {
             $winPlayerId = $detectivePlayerId;
         } else {
             $winPlayerId = $jackPlayerId;
         }
         $currentRoundNum = $this->getLastRoundNum();
-        $sql = "UPDATE `round` SET is_criminal_visible = $isJackVisible, win_player_id = $winPlayerId WHERE round_num = $currentRoundNum;";
+        $sqlIsJackVisible = (int) $isJackVisible;
+        $sql = "UPDATE `round` SET is_criminal_visible = '$sqlIsJackVisible', win_player_id = '$winPlayerId' WHERE round_num = '$currentRoundNum';";
         self::DbQuery($sql);
 
 
         $gameEndStatus = $this->getGameEndStatus($isJackVisible, $jackPlayerId);
         $playUntilVisibility = $gameEndStatus === 'PLAY_UNTIL_VISIBILITY';
         if ($playUntilVisibility) {
-            $sql = "UPDATE `round` SET play_until_visibility = '1' WHERE round_num = $currentRoundNum";
+            $sql = "UPDATE `round` SET play_until_visibility = '1' WHERE round_num = '$currentRoundNum'";
             self::DbQuery($sql);
         }
 
@@ -1278,15 +1271,13 @@ class MrJackPocket extends Table
 
         if ($currentRoundNum % 2 === 1) {
             $nextOptions = null;
+            $nextActivePlayerId = (int) $jackPlayerId;
         } else {
             $nextOptions = $this->getRevertOptions();
+            $nextActivePlayerId = (int) $detectivePlayerId;
         }
-        if (($currentRoundNum + 1) % 2 === 0) {
-            $nextActivePlayerId = $jackPlayerId;
-        } else {
-            $nextActivePlayerId = $detectivePlayerId;
-        }
-        $this->gamestate->changeActivePlayer($nextActivePlayerId);
+        self::activeNextPlayer();
+        //$this->gamestate->changeActivePlayer($nextActivePlayerId);
 
         $this->gamestate->nextState('playerTurn');
 
@@ -1319,13 +1310,13 @@ class MrJackPocket extends Table
         $jackWinRounds = count(
             array_filter(
                 $rounds,
-                fn(array $round) => $round['win_player_id'] === $jackPlayerId,
+                fn(array $round) => ((int) $round['win_player_id']) === ((int) $jackPlayerId),
                 ARRAY_FILTER_USE_BOTH,
             ),
         );
         $jackAlibiCharacters = array_filter(
             $characters,
-            fn(array $character) => $character['player_id_with_alibi'] === $jackPlayerId,
+            fn(array $character) => ((int) $character['player_id_with_alibi']) === ((int) $jackPlayerId),
             ARRAY_FILTER_USE_BOTH,
         );
         $jackAlibiBonuses = array_reduce(
@@ -1342,7 +1333,7 @@ class MrJackPocket extends Table
             fn(array $character) => $character['tale_is_opened'] === '1',
             ARRAY_FILTER_USE_BOTH,
         );
-        $isDetectiveWin = count($openedCharacters) === 1;
+        $isDetectiveWin = count($openedCharacters) <= 1;
         if ($isDetectiveWin && $isJackWin) {
             if ($isJackVisible) {
                 return 'DETECTIVE_WIN';
@@ -1408,7 +1399,7 @@ class MrJackPocket extends Table
             return;
         }
 
-        $playerId = $active_player['player_id'];
+        $playerId = (int) $active_player['player_id'];
         $availableOptions = $this->getCurrentAvailableOptions();
         $randomOptionNum = bga_rand(0, count($availableOptions) - 1);
         $optionToMove = $availableOptions[$randomOptionNum];
