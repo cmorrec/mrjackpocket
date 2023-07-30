@@ -54,18 +54,18 @@ $this->wall_sides = array(
 );
 
 $this->detective_pos = array(
-  1 => array('x' => 1, 'y' => 0),
-  2 => array('x' => 2, 'y' => 0),
-  3 => array('x' => 3, 'y' => 0),
-  4 => array('x' => 4, 'y' => 1),
-  5 => array('x' => 4, 'y' => 2),
-  6 => array('x' => 4, 'y' => 3),
-  7 => array('x' => 3, 'y' => 4),
-  8 => array('x' => 2, 'y' => 4),
-  9 => array('x' => 1, 'y' => 4),
-  10 => array('x' => 0, 'y' => 3),
-  11 => array('x' => 0, 'y' => 2),
-  12 => array('x' => 0, 'y' => 1),
+  1 => array('x' => 1, 'y' => 0, 'index' => 1),
+  2 => array('x' => 2, 'y' => 0, 'index' => 2),
+  3 => array('x' => 3, 'y' => 0, 'index' => 3),
+  4 => array('x' => 4, 'y' => 1, 'index' => 4),
+  5 => array('x' => 4, 'y' => 2, 'index' => 5),
+  6 => array('x' => 4, 'y' => 3, 'index' => 6),
+  7 => array('x' => 3, 'y' => 4, 'index' => 7),
+  8 => array('x' => 2, 'y' => 4, 'index' => 8),
+  9 => array('x' => 1, 'y' => 4, 'index' => 9),
+  10 => array('x' => 0, 'y' => 3, 'index' => 10),
+  11 => array('x' => 0, 'y' => 2, 'index' => 11),
+  12 => array('x' => 0, 'y' => 1, 'index' => 12),
 );
 
 $this->characters = [

@@ -179,7 +179,7 @@ function (dojo, declare) {
                 return this.jockerListener.bind(this);
             }
 
-            return this.detectiveListener.bind(this, option);
+            return this.detectiveListener.bind(this, option, false);
         },
 
         detectiveListener(detectiveId, isJocker = false) {
@@ -195,11 +195,13 @@ function (dojo, declare) {
             const availablePoses = this.getAvailablePoses(currentPos, isJocker ? 1 : 2);
             this.optionActions[isJocker ? 'jocker' : 'detective'].detectiveId = detectiveId;
 
-            availablePoses.forEach((e, index) => {
-                const taleId = `tale_${e.id}`;
+            console.log(availablePoses)
+            availablePoses.forEach(({ fePos, bePos }) => {
+                const taleId = `tale_${fePos.id}`;
+                console.log(fePos, bePos, taleId, $(taleId))
                 dojo.addClass(taleId, 'tale-to-choose');
                 const type = 'click';
-                const listener = this.onNewPosClick(detectiveId, index + 1, isJocker);
+                const listener = this.onNewPosClick(detectiveId, bePos.index, isJocker);
                 $(taleId).addEventListener(type, listener);
                 this.eventListeners.detectiveTales.push({ id: taleId, type, listener });
             });
@@ -209,7 +211,9 @@ function (dojo, declare) {
         },
 
         onNewPosClick(detectiveId, pos, isJocker) {
+            console.log(detectiveId, pos, isJocker);
             return (e) => {
+                console.log('onNewPosClick', detectiveId, pos, isJocker);
                 this.optionActions[isJocker ? 'jocker' : 'detective'].newPos = pos;
                 if (isJocker) {
                     this.action_jocker();
@@ -252,7 +256,11 @@ function (dojo, declare) {
             return range(steps)
                 .map((n) => n + 1)
                 .map((n) => (n + currentPos) % this.availableDetectivePos.length)
-                .map((i) => this.availableDetectivePos[i]);
+                .map((i) => {
+                    const bePos = this.currentData.meta.detectivePos[i];
+                    const fePos = this.availableDetectivePos.find((e) => e.x === bePos.x && e.y === bePos.y);
+                    return { bePos, fePos };
+                });
         },
 
         alibiListener() {
