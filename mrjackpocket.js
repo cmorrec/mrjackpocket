@@ -184,13 +184,10 @@ function (dojo, declare) {
 
         detectiveListener(detectiveId, isJocker = false) {
             console.log('detectiveListener', detectiveId, isJocker)
-            if (!isJocker) {
-                this.clickOnAction(detectiveId);
-            }
+            this.clickOnAction(detectiveId);
 
             const detective = this.getDetectiveById(detectiveId);
             console.log(detective, detectiveId)
-            // TODO can't read propos of undefined
             const currentPos = detective.pos;
             const availablePoses = this.getAvailablePoses(currentPos, isJocker ? 1 : 2);
             this.optionActions[isJocker ? 'jocker' : 'detective'].detectiveId = detectiveId;
@@ -205,9 +202,6 @@ function (dojo, declare) {
                 $(taleId).addEventListener(type, listener);
                 this.eventListeners.detectiveTales.push({ id: taleId, type, listener });
             });
-            if (isJocker) {
-                this.clearDetectiveEventListeners();
-            }
         },
 
         onNewPosClick(detectiveId, pos, isJocker) {
@@ -239,6 +233,7 @@ function (dojo, declare) {
                 const listener = (event) => {
                     this.detectiveListener(e.id, true);
                 };
+                dojo.addClass(taleId, 'tale-to-choose');
                 $(taleId).addEventListener(type, listener);
                 this.eventListeners.detectiveTales.push({ id: taleId, type, listener });
             });
@@ -622,14 +617,14 @@ function (dojo, declare) {
 
         getCharacterImage(character) {
             const metaCharacter = this.getMetaCharacterById(character.id);
-            return  metaCharacter.name + ', opened = ' + character.isOpened + ', wallSide = ' + character.wallSide;
+            return  metaCharacter.name + ', opened = ' + character.isOpened;
         },
 
         rotateTale({ characterId, oldWallSide, newWallSide }) {
             const taleId = this.getTaleIdByCharacterId(characterId);
             const degree = this.getDegree({ oldWallSide, newWallSide });
             const character = this.getCharacterById(characterId);
-            $(taleId).children[0] = this.getCharacterImage({ ...character, wallSide: newWallSide });
+            // $(taleId).children[0] = this.getCharacterImage({ ...character, wallSide: newWallSide });
             this.rotateTo(taleId, degree);
         },
 

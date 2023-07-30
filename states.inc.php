@@ -206,7 +206,7 @@ $machinestates = array(
         "type" => "game",
         "action" => "stEndOfRound",
         "transitions" => array(
-            "nextTurn" => 24,
+            "playerTurn" => 24,
             "gameEnd" => 99,
         ),
     ),
