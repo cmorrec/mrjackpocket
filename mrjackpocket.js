@@ -698,7 +698,10 @@ function (dojo, declare) {
                 this.updateGoal(playUntilVisibility);
             }
 
-            this.initOptions(newOptions, newNextOptions);
+            this.initOptions(
+                newOptions,
+                newNextOptions,
+            );
         },
 
         initOptions(currentOptions, nextOptions) {
@@ -978,11 +981,12 @@ function (dojo, declare) {
                 newRoundNum,
                 newOptions,
                 newNextOptions,
-                characterIdsToClose,
+                characterIdsToClose: closeCharactersObj,
                 isVisible,
                 playUntilVisibility,
                 winPlayerId,
             } = notif.args;
+            const characterIdsToClose = Object.values(closeCharactersObj);
             console.log(
                 'nextActivePlayerId =', nextActivePlayerId, '\n',
                 'newRoundNum =', newRoundNum, '\n',
@@ -994,11 +998,14 @@ function (dojo, declare) {
                 'winPlayerId =', winPlayerId, '\n',
             );
 
+            const currentOptions = newOptions.map(e => ({ ability: e, wasUsed: false }));
+            const nextOptions = newNextOptions?.map(e => ({ ability: e, wasUsed: false }));
+
             this.endRound({
                 isVisible,
                 playUntilVisibility,
-                newOptions,
-                newNextOptions,
+                newOptions: currentOptions,
+                newNextOptions: nextOptions,
                 characterIdsToClose,
                 winPlayerId,
             });
@@ -1016,8 +1023,8 @@ function (dojo, declare) {
             this.currentData.characters
                 .filter(e => characterIdsToClose.includes(e.id))
                 .forEach((e) => { e.isOpened = false; });
-            this.currentData.currentOptions = newOptions.map(e => ({ ability: e, wasUsed: false }));
-            this.currentData.nextOptions = newNextOptions?.map(e => ({ ability: e, wasUsed: false }));
+            this.currentData.currentOptions = currentOptions;
+            this.currentData.nextOptions = nextOptions;
         },
    });   
 });

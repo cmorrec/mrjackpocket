@@ -1257,8 +1257,8 @@ class MrJackPocket extends Table
         }
 
         if ($gameEndStatus === 'DETECTIVE_WIN' || $gameEndStatus === 'JACK_WIN') {
+            // TODO set end game
             $this->gamestate->nextState('gameEnd');
-            // TODO notify about game over ???
         }
 
         if ($currentRoundNum % 2 === 1) {
