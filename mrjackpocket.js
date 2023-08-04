@@ -49,7 +49,7 @@ function (dojo, declare) {
                 detective: {},
                 jocker: {},
             };
-            this.sideDict = { up: 0, right: 1, down: 2, left: 3 };
+            this.sideDict = { down: 0, left: 1, up: 2, right: 3 };
             this.availableDetectivePos = this.boardPos.filter((e) => {
                 const isRowCorner = Number(e.y === 0 || e.y === 4);
                 const isColumnCorner = Number(e.x === 0 || e.x === 4);
@@ -249,8 +249,8 @@ function (dojo, declare) {
 
         getAvailablePoses(currentPos, steps) {
             return range(steps)
-                .map((n) => n + 1)
-                .map((n) => (n + currentPos) % this.availableDetectivePos.length)
+                .map((n) => n + currentPos)
+                .map((n) => (n % this.availableDetectivePos.length) + 1)
                 .map((i) => {
                     const bePos = this.currentData.meta.detectivePos[i];
                     const fePos = this.availableDetectivePos.find((e) => e.x === bePos.x && e.y === bePos.y);
@@ -280,7 +280,7 @@ function (dojo, declare) {
                 this.optionActions.rotation.taleId = characterId;
                 this.clearCharacterEventListeners();
                 const character = this.getCharacterById(characterId);
-                const taleId = this.getTaleIdByCharacterId(characterId);
+                const taleId = this.getTaleIdByCharacterId(characterId, true);
                 const tale = $(taleId);
 
                 this.optionActions.rotation.wallSide = character.wallSide;
@@ -351,11 +351,19 @@ function (dojo, declare) {
         updateNewWallSide(direction, characterId) {
             const { wallSide: oldWallSide } = this.optionActions.rotation;
             const wallIndex = this.sideDict[oldWallSide];
-            const newWallIndex = (wallIndex + direction) % 4;
+            const temp = wallIndex + direction;
+            const newWallIndex = temp === -1 ? 3 : temp % 4;
 
             const newWallSide = Object.entries(this.sideDict)
                 .find(([_, v]) => v === newWallIndex)
                 [0];
+            // console.log(
+            //     'oldWallSide', oldWallSide,
+            //     '\nwallIndex', wallIndex,
+            //     '\nnewWallIndex', newWallIndex,
+            //     '\nnewWallSide', newWallSide,
+            //     '\nthis.sideDict', this.sideDict,
+            // );
             this.updateRotateApproveButtonStatus();
             this.rotateTale({ characterId, oldWallSide, newWallSide });
             this.optionActions.rotation.wallSide = newWallSide;
@@ -601,11 +609,11 @@ function (dojo, declare) {
             return this.currentData.meta.detectives.find(e => e.id === characterId)
         },
 
-        getTaleIdByCharacterId(characterId) {
+        getTaleIdByCharacterId(characterId, isOuter = false) {
             const character = this.getCharacterById(characterId);
             const bePos = this.currentData.meta.characterPos[character.pos];
             const fePos = this.getFEPosByBEpos(bePos);
-            return `tale_${fePos.id}`;
+            return isOuter ? `tale_outer_${fePos.id}` : `tale_${fePos.id}`;
         },
 
         getTaleIdByDetectiveId(detectiveId) {
@@ -629,10 +637,8 @@ function (dojo, declare) {
         },
 
         getDegree({ oldWallSide, newWallSide }) {
-            if (!newWallSide) {
-                return 90;
-            }
-            return (this.sideDict[newWallSide] - this.sideDict[oldWallSide]) * 90;
+            return this.sideDict[newWallSide] * 90;
+            // return (this.sideDict[newWallSide] - this.sideDict[oldWallSide]) * 90;
         },
         
         exchangeTales({ characterId1, characterId2 }) {
@@ -711,6 +717,7 @@ function (dojo, declare) {
                 const nextOption = nextOptions?.[index];
                 const availableId = `available_option_${index}`;
                 const nextId = `next_option_${index}`;
+                dojo.removeClass(availableId, 'option-was-used');
                 if (option.wasUsed) {
                     dojo.addClass(availableId, 'option-was-used');
                 }
@@ -722,6 +729,7 @@ function (dojo, declare) {
                     dojo.addClass(nextId, 'next-option-disable');
                 } else {
                     // TODO add next option picture
+                    dojo.removeClass(nextId, 'next-option-disable');
                     $(nextId).innerText = nextOption.ability;
                 }
 
@@ -844,6 +852,9 @@ function (dojo, declare) {
         setupNotifications: function()
         {
             console.log( 'notifications subscriptions setup' );
+            dojo.subscribe('roundEnd', this, 'notif_roundEnd');
+            // this.notifqueue.setSynchronous('roundEnd', 3000);
+
             dojo.subscribe('rotateTale', this, 'notif_rotateTale');
             dojo.subscribe('exchangeTales', this, 'notif_exchangeTales');
             dojo.subscribe('jocker', this, 'notif_jocker');
@@ -851,15 +862,7 @@ function (dojo, declare) {
             dojo.subscribe('alibiJack', this, 'notif_alibiJack');
             // todo     this.notifqueue.setIgnoreNotificationCheck( 'dealCard', (notif) => (notif.args.player_id == this.player_id) );
             dojo.subscribe('alibiAllExceptJack', this, 'notif_alibiAllExceptJack');
-            dojo.subscribe('alibiAll', this, 'notif_alibiAll');
-            dojo.subscribe('roundEnd', this, 'notif_roundEnd');
-
-            // Example 2: standard notification handling + tell the user interface to wait
-            //            during 3 seconds after calling the method in order to let the players
-            //            see what is happening in the game.
-            // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-            // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
-            // 
+            dojo.subscribe('alibiAll', this, 'notif_alibiAll');            
         },
 
         // TODO: from this point and below, you can write your game notifications handling methods
@@ -975,56 +978,61 @@ function (dojo, declare) {
         },
 
         notif_roundEnd(notif) {
-            console.log('notif_roundEnd');
-            const {
-                nextActivePlayerId,
-                newRoundNum,
-                newOptions,
-                newNextOptions,
-                characterIdsToClose: closeCharactersObj,
-                isVisible,
-                playUntilVisibility,
-                winPlayerId,
-            } = notif.args;
-            const characterIdsToClose = Object.values(closeCharactersObj);
-            console.log(
-                'nextActivePlayerId =', nextActivePlayerId, '\n',
-                'newRoundNum =', newRoundNum, '\n',
-                'newOptions =', newOptions, '\n',
-                'newNextOptions =', newNextOptions, '\n',
-                'characterIdsToClose =', characterIdsToClose, '\n',
-                'isVisible =', isVisible, '\n',
-                'playUntilVisibility =', playUntilVisibility, '\n',
-                'winPlayerId =', winPlayerId, '\n',
+            setTimeout(
+                () => {
+                    console.log('notif_roundEnd');
+                    const {
+                        nextActivePlayerId,
+                        newRoundNum,
+                        newOptions,
+                        newNextOptions,
+                        characterIdsToClose: closeCharactersObj,
+                        isVisible,
+                        playUntilVisibility,
+                        winPlayerId,
+                    } = notif.args;
+                    const characterIdsToClose = Object.values(closeCharactersObj);
+                    console.log(
+                        'nextActivePlayerId =', nextActivePlayerId, '\n',
+                        'newRoundNum =', newRoundNum, '\n',
+                        'newOptions =', newOptions, '\n',
+                        'newNextOptions =', newNextOptions, '\n',
+                        'characterIdsToClose =', characterIdsToClose, '\n',
+                        'isVisible =', isVisible, '\n',
+                        'playUntilVisibility =', playUntilVisibility, '\n',
+                        'winPlayerId =', winPlayerId, '\n',
+                    );
+        
+                    const currentOptions = newOptions.map(e => ({ ability: e, wasUsed: false }));
+                    const nextOptions = newNextOptions?.map(e => ({ ability: e, wasUsed: false }));
+        
+                    this.endRound({
+                        isVisible,
+                        playUntilVisibility,
+                        newOptions: currentOptions,
+                        newNextOptions: nextOptions,
+                        characterIdsToClose,
+                        winPlayerId,
+                    });
+        
+                    this.currentData.previousRounds.push({
+                        num: newRoundNum - 1,
+                        winPlayerId,
+                    });
+                    this.currentData.currentRound = {
+                        ...this.currentData.currentRound,
+                        num: newRoundNum,
+                        playUntilVisibility,
+                        activePlayerId: nextActivePlayerId,
+                    };
+                    this.currentData.characters
+                        .filter(e => characterIdsToClose.includes(e.id))
+                        .forEach((e) => { e.isOpened = false; });
+                    this.currentData.currentOptions = currentOptions;
+                    this.currentData.nextOptions = nextOptions;
+                },
+                1000,
             );
-
-            const currentOptions = newOptions.map(e => ({ ability: e, wasUsed: false }));
-            const nextOptions = newNextOptions?.map(e => ({ ability: e, wasUsed: false }));
-
-            this.endRound({
-                isVisible,
-                playUntilVisibility,
-                newOptions: currentOptions,
-                newNextOptions: nextOptions,
-                characterIdsToClose,
-                winPlayerId,
-            });
-
-            this.currentData.previousRounds.push({
-                num: newRoundNum - 1,
-                winPlayerId,
-            });
-            this.currentData.currentRound = {
-                ...this.currentData.currentRound,
-                num: newRoundNum,
-                playUntilVisibility,
-                activePlayerId: nextActivePlayerId,
-            };
-            this.currentData.characters
-                .filter(e => characterIdsToClose.includes(e.id))
-                .forEach((e) => { e.isOpened = false; });
-            this.currentData.currentOptions = currentOptions;
-            this.currentData.nextOptions = nextOptions;
         },
    });   
 });

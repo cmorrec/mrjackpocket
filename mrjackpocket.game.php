@@ -896,7 +896,7 @@ class MrJackPocket extends Table
 
     function rotateTale(string $taleId, string $wallSide)
     {
-        $playerId = self::getActivePlayerId();
+        $playerId = $this->getCurrentPlayerId();
         /**
          * 1) check ability of player to do it
          * 2) rotate
@@ -913,8 +913,6 @@ class MrJackPocket extends Table
 
         $this->useOption($action);
 
-        $this->gamestate->nextState('nextTurn');
-
         self::notifyAllPlayers(
             "rotateTale",
             clienttranslate('${playerName} rotates ${characterName} to the ${wallSide || "other side"}'),
@@ -926,11 +924,13 @@ class MrJackPocket extends Table
                 'wallSide' => $wallSide,
             ),
         );
+
+        $this->gamestate->nextState('nextTurn');
     }
 
     function exchangeTales(string $taleId1, string $taleId2)
     {
-        $playerId = self::getActivePlayerId();
+        $playerId = $this->getCurrentPlayerId();
         /**
          * 1) check ability of player to do it
          * 2) exchange
@@ -953,8 +953,6 @@ class MrJackPocket extends Table
 
         $this->useOption($action);
 
-        $this->gamestate->nextState('nextTurn');
-
         self::notifyAllPlayers(
             "exchangeTales",
             clienttranslate('${playerName} exchanges ${characterName1} to the ${characterName2}'),
@@ -967,11 +965,13 @@ class MrJackPocket extends Table
                 'characterId2' => $taleId2,
             ),
         );
+
+        $this->gamestate->nextState('nextTurn');
     }
 
     function jocker(?string $detectiveId, ?int $newPos)
     {
-        $playerId = self::getActivePlayerId();
+        $playerId = $this->getCurrentPlayerId();
         /**
          * 1) check ability of player to do it
          * 2) move
@@ -987,8 +987,6 @@ class MrJackPocket extends Table
         }
 
         $this->useOption($action);
-
-        $this->gamestate->nextState('nextTurn');
 
         if (!is_null($detectiveId) && !is_null($newPos)) {
             $clientMessage = clienttranslate('${playerName} uses jocker to move ${detectiveName}');
@@ -1009,11 +1007,13 @@ class MrJackPocket extends Table
                 'newPos' => $newPos,
             ),
         );
+
+        $this->gamestate->nextState('nextTurn');
     }
 
     function detective(string $action, int $newPos)
     {
-        $playerId = self::getActivePlayerId();
+        $playerId = $this->getCurrentPlayerId();
         /**
          * 1) check ability of player to do it
          * 2) move
@@ -1026,8 +1026,6 @@ class MrJackPocket extends Table
         self::DbQuery($sql);
 
         $this->useOption($action);
-
-        $this->gamestate->nextState('nextTurn');
 
         $metaDetective = $this->getMetaDetectiveById($action);
         $detectiveName = $metaDetective['name'];
@@ -1042,11 +1040,13 @@ class MrJackPocket extends Table
                 'newPos' => $newPos,
             ),
         );
+
+        $this->gamestate->nextState('nextTurn');
     }
 
     function alibi()
     {
-        $playerId = (int) self::getActivePlayerId();
+        $playerId = (int) $this->getCurrentPlayerId();
         /**
          * 1) check ability of player to do it
          * 2) pull
@@ -1068,8 +1068,6 @@ class MrJackPocket extends Table
         }
 
         $this->useOption($action);
-
-        $this->gamestate->nextState('nextTurn');
 
         if (((int) $jackPlayer['player_id']) === $playerId) {
             self::notifyPlayer(
@@ -1105,6 +1103,8 @@ class MrJackPocket extends Table
                 ),
             );
         }
+
+        $this->gamestate->nextState('nextTurn');
     }
 
     /*
@@ -1186,7 +1186,7 @@ class MrJackPocket extends Table
         }
 
         if ($availableOptionsNum === 1 || $availableOptionsNum === 3) {
-            self::activeNextPlayer();
+            $this->activeNextPlayer();
             // $notActivePlayer = $this->getNotActivePlayer();
             // $this->gamestate->changeActivePlayer((int) $notActivePlayer['player_id']);
         }
@@ -1258,6 +1258,15 @@ class MrJackPocket extends Table
 
         if ($gameEndStatus === 'DETECTIVE_WIN' || $gameEndStatus === 'JACK_WIN') {
             // TODO set end game
+            if ($gameEndStatus === 'DETECTIVE_WIN') {
+                $winnerId = $detectivePlayerId;
+            } else {
+                $winnerId = $jackPlayerId;
+            }
+            self::DbQuery("UPDATE player
+                              SET player_score = 1,
+                                  player_score_aux = 1
+                            WHERE player_id='$winnerId' ");
             $this->gamestate->nextState('gameEnd');
         }
 
@@ -1276,7 +1285,7 @@ class MrJackPocket extends Table
             $nextOptions = $this->getRevertOptions();
             $nextActivePlayerId = (int) $detectivePlayerId;
         }
-        self::activeNextPlayer();
+        $this->activeNextPlayer();
         //$this->gamestate->changeActivePlayer($nextActivePlayerId);
 
         $this->gamestate->nextState('playerTurn');

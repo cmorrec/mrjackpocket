@@ -143,6 +143,14 @@
     width: 100px;
 }
 
+.tale-outer {
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 100px;
+    width: 100px;
+}
+
 .option-was-used {
     color: gray;
     border: 5px dotted gray;
@@ -177,7 +185,7 @@
 
 #clockwise {
     position: absolute;
-    right: 10px;
+    right: -50px;
     top: 10px;
     cursor: pointer;
     z-index: 1;
@@ -185,7 +193,7 @@
 
 #counter-clockwise {
     position: absolute;
-    left: 10px;
+    left: -60px;
     top: 10px;
     cursor: pointer;
     z-index: 1;
@@ -193,7 +201,7 @@
 
 #rotate-approve {
     position: absolute;
-    bottom: 10px;
+    bottom: -20px;
     left: auto;
     right: auto;
     cursor: pointer;

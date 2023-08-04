@@ -31,7 +31,9 @@
 
     <div id="board">
         <!-- BEGIN tale -->
-            <div id="tale_{pos}" class="tale {status}"></div>
+            <div id="tale_outer_{pos}" class="tale-outer">
+                <div id="tale_{pos}" class="tale {status}"></div>
+            </div>
         <!-- END tale -->
     </div>
 
