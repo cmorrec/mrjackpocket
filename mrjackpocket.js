@@ -75,7 +75,10 @@ function (dojo, declare) {
             this.currentData = gamedatas;
             console.log( "Starting game setup" );
 
-            this.initOptions(gamedatas.currentOptions, gamedatas.nextOptions);
+            this.initOptions(
+                gamedatas.currentOptions,
+                gamedatas.nextOptions,
+            );
 
             const currentRoundNum = gamedatas.currentRound.num;
             const rounds = range(gamedatas.meta.roundNum).map((n) => n + 1);
@@ -135,7 +138,45 @@ function (dojo, declare) {
             };
             this.clearCharacterEventListeners();
             this.clearDetectiveEventListeners();
+            this.clearActionEventListeners();
             dojo.query(`.tale-to-choose`).removeClass('tale-to-choose');
+            const cancelButton = $('cancel-button');
+            if (!cancelButton) {
+                this.addActionButton('cancel-button', _('Cancel'), 'clickOnCancelButton', null, false, 'red');
+            }
+        },
+
+        clickOnCancelButton() {
+            if (this.optionActions.rotation.taleId) {
+                const character = this.getCharacterById(this.optionActions.rotation.taleId);
+                if (this.optionActions.rotation.wallSide && this.optionActions.rotation.wallSide !== character.wallSide) {
+                    this.rotateTale({
+                        characterId: this.optionActions.rotation.taleId,
+                        oldWallSide: this.optionActions.rotation.wallSide,
+                        newWallSide: character.wallSide,
+                    });
+                }
+                this.destroyRotationButtons();
+            }
+
+            this.clearActionEventListeners();
+            this.clearCharacterEventListeners();
+            this.clearDetectiveEventListeners();
+            // - clear all css check TODO
+            
+            this.optionActions = {
+                rotation: {},
+                exchange: {},
+                detective: {},
+                jocker: {},
+            };
+            if (this.isCurrentPlayerActive()) {
+                this.initOptions(
+                    this.currentData.currentOptions,
+                    this.currentData.nextOptions,
+                );
+            }
+            this.removeActionButtons();
         },
 
         clearCharacterEventListeners() {
@@ -152,6 +193,11 @@ function (dojo, declare) {
                 dojo.removeClass(e.id, 'tale-to-choose');
             });
             this.eventListeners.detectiveTales = [];
+        },
+
+        clearActionEventListeners() {
+            const options = this.eventListeners.options.map((e) => e.option);
+            options.forEach((option) => this.removeOptionEventListener(option));
         },
 
         removeOptionEventListener(option) {
@@ -278,6 +324,7 @@ function (dojo, declare) {
                 // 'counter-clockwise'
                 // 'rotate-approve'
                 this.optionActions.rotation.taleId = characterId;
+                // TODO clear the new after click on another tale
                 this.clearCharacterEventListeners();
                 const character = this.getCharacterById(characterId);
                 const taleId = this.getTaleIdByCharacterId(characterId, true);
@@ -429,7 +476,12 @@ function (dojo, declare) {
             dojo.addClass(taleId, 'tale-to-choose');
         },
 
+        actionDone() {
+            this.removeActionButtons();
+        },
+
         action_exchangeTales() {
+            this.actionDone();
             const { taleId1, taleId2 } = this.optionActions.exchange;
             this.ajaxcall( "/mrjackpocket/mrjackpocket/exchange.html", {
                 taleId1: taleId1,
@@ -438,6 +490,7 @@ function (dojo, declare) {
         },
 
         action_rotateTale() {
+            this.actionDone();
             const { taleId, wallSide } = this.optionActions.rotation;
             this.ajaxcall( "/mrjackpocket/mrjackpocket/rotate.html", {
                 taleId: taleId,
@@ -446,10 +499,12 @@ function (dojo, declare) {
         },
 
         action_alibi() {
+            this.actionDone();
             this.ajaxcall( "/mrjackpocket/mrjackpocket/alibi.html", {}, this, () => {});
         },
 
         action_jocker() {
+            this.actionDone();
             const { detectiveId, newPos } = this.optionActions.jocker;
             this.ajaxcall( "/mrjackpocket/mrjackpocket/jocker.html", {
                 detectiveId: detectiveId,
@@ -458,6 +513,7 @@ function (dojo, declare) {
         },
 
         action_detective() {
+            this.actionDone();
             const { detectiveId, newPos } = this.optionActions.detective;
             this.ajaxcall( "/mrjackpocket/mrjackpocket/detective.html", {
                 detectiveId: detectiveId,
@@ -514,21 +570,14 @@ function (dojo, declare) {
         {
             console.log( 'Entering state: '+stateName );
             
-            switch( stateName )
-            {
-            
-            /* Example:
-            
-            case 'myGameState':
-            
-                // Show some HTML block at this game state
-                dojo.style( 'my_html_block_id', 'display', 'block' );
-                
-                break;
-           */
-           
-           
-            case 'dummmy':
+            switch(stateName) {
+            case 'playerTurn':
+                setTimeout(() => {
+                    this.initOptions(
+                        this.currentData.currentOptions,
+                        this.currentData.nextOptions,
+                    );
+                }, 1000);
                 break;
             }
         },
@@ -540,21 +589,9 @@ function (dojo, declare) {
         {
             console.log( 'Leaving state: '+stateName );
             
-            switch( stateName )
-            {
-            
-            /* Example:
-            
-            case 'myGameState':
-            
-                // Hide the HTML block we are displaying only during this game state
-                dojo.style( 'my_html_block_id', 'display', 'none' );
-                
-                break;
-           */
-           
-           
-            case 'dummmy':
+            switch(stateName) {
+            case 'playerTurn':
+                this.clearActionEventListeners();
                 break;
             }               
         }, 
@@ -712,6 +749,7 @@ function (dojo, declare) {
 
         initOptions(currentOptions, nextOptions) {
             // TODO animate beauty
+            // it should work like upsert
             for (const index in currentOptions) {
                 const option = currentOptions[index];
                 const nextOption = nextOptions?.[index];
@@ -732,8 +770,9 @@ function (dojo, declare) {
                     dojo.removeClass(nextId, 'next-option-disable');
                     $(nextId).innerText = nextOption.ability;
                 }
+                const hasListener = this.eventListeners.options.find((e) => e.id === availableId);
 
-                if (!option.wasUsed) {
+                if (!option.wasUsed && this.isCurrentPlayerActive() && !hasListener) {
                     const type = 'click';
                     const listener = this.getListenerByOption(option.ability);
                     available.addEventListener(type, listener);
@@ -872,7 +911,7 @@ function (dojo, declare) {
             const { characterId, wallSide } = notif.args;
             console.log('characterId', characterId, 'wallSide', wallSide);
 
-            this.removeOptionEventListener('rotation');
+            this.optionWasUsed('rotation');
             const character = this.getCharacterById(characterId);
             if (wallSide !== character.wallSide) {
                 this.rotateTale({
@@ -890,7 +929,7 @@ function (dojo, declare) {
             const { characterId1, characterId2 } = notif.args;
             console.log('characterId1', characterId1, 'characterId2', characterId2);
 
-            this.removeOptionEventListener('exchange');
+            this.optionWasUsed('exchange');
             const character1 = this.getCharacterById(characterId1);
             const character2 = this.getCharacterById(characterId2);
             const pos1 = character1.pos;
@@ -905,7 +944,7 @@ function (dojo, declare) {
             const { detectiveId, newPos } = notif.args;
             console.log('detectiveId', detectiveId, 'newPos', newPos);
 
-            this.removeOptionEventListener('jocker');
+            this.optionWasUsed('jocker');
             if (!detectiveId || !newPos) {
                 // TODO notify player what jack skip step by jocker
                 alert('Jack skipped by jocker');
@@ -919,7 +958,7 @@ function (dojo, declare) {
             const { detectiveId, newPos } = notif.args;
             console.log('detectiveId', detectiveId, 'newPos', newPos);
 
-            this.removeOptionEventListener(detectiveId);
+            this.optionWasUsed(detectiveId);
             this.detective({ detectiveId, newPos });
         },
 
@@ -934,7 +973,7 @@ function (dojo, declare) {
             const { alibiId, points } = notif.args;
             console.log('alibiId', alibiId, 'points', points);
 
-            this.removeOptionEventListener('alibi');
+            this.optionWasUsed('alibi');
             this.alibiJack({ alibiId, points });
             // TODO say player about alibi + points
             this.currentData.jackAlibiCards.push(alibiId);
@@ -952,7 +991,7 @@ function (dojo, declare) {
             if (playerisJack) {
                 return;
             }
-            this.removeOptionEventListener('alibi');
+            this.optionWasUsed('alibi');
             this.alibiAllExceptJack();
             // TODO say that jack took alibi card
             this.currentData.currentRound.availableALibiCards -= 1;
@@ -964,7 +1003,7 @@ function (dojo, declare) {
             console.log('alibiId', alibiId, 'close', close);
             // TODO say player about alibi
 
-            this.removeOptionEventListener('alibi');
+            this.optionWasUsed('alibi');
             this.alibiAll(alibiId);
             if (close) {
                 this.closeCharacter(alibiId);
@@ -975,6 +1014,13 @@ function (dojo, declare) {
             // todo reduce it in the interface
             this.currentData.currentRound.availableALibiCards -= 1;
             this.updateAlibiCards();
+        },
+
+        optionWasUsed(option) {
+            const currentOption = this.currentData.currentOptions.find((e) => e.ability === option);
+            if (currentOption) {
+                currentOption.wasUsed = true;
+            }
         },
 
         notif_roundEnd(notif) {
