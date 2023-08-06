@@ -90,17 +90,14 @@ function (dojo, declare) {
                 } else if (round === currentRoundNum) {
                     dojo.addClass(roundId, 'current-round');
                 }
-                // TODO add round picture
-                $(roundId).innerText = round;
+                this.addImg(roundId, `img/${roundId}.png`);
             }
 
             this.updateGoal(gamedatas.currentRound.playUntilVisibility);
 
             for (const character of gamedatas.characters) {
                 const taleId = this.getTaleIdByCharacterId(character.id);
-                // TODO add picture for character
-                const tale = $(taleId);
-                tale.innerText = this.getCharacterImage(character);
+                this.addImg(taleId, this.getCharacterImage(character));
                 // TODO if we add it there we need to support it always. it is hard
                 // const isVisible = gamedatas.visibleCharacters.some((e) => e.id === character.id);
                 // if (isVisible) {
@@ -116,8 +113,7 @@ function (dojo, declare) {
             for (const detective of gamedatas.detectives) {
                 const taleId = this.getTaleIdByDetectiveId(detective.id);
                 const metaDetective = gamedatas.meta.detectives.find(({ id }) =>  id === detective.id);
-                // TODO add picture for detective
-                $(taleId).innerText = metaDetective.name;
+                this.addImg(taleId, metaDetective.img);
             }
 
             this.reduceAvailableAlibiCards();
@@ -662,14 +658,13 @@ function (dojo, declare) {
 
         getCharacterImage(character) {
             const metaCharacter = this.getMetaCharacterById(character.id);
-            return  metaCharacter.name + ', opened = ' + character.isOpened;
+            return character.isOpened ? metaCharacter.tale_img : metaCharacter.closed_tale_img;
         },
 
         rotateTale({ characterId, oldWallSide, newWallSide }) {
             const taleId = this.getTaleIdByCharacterId(characterId);
             const degree = this.getDegree({ oldWallSide, newWallSide });
             const character = this.getCharacterById(characterId);
-            // $(taleId).children[0] = this.getCharacterImage({ ...character, wallSide: newWallSide });
             this.rotateTo(taleId, degree);
         },
 
@@ -683,12 +678,12 @@ function (dojo, declare) {
             const taleId2 = this.getTaleIdByCharacterId(characterId2);
             const tale1 = $(taleId1);
             const tale2 = $(taleId2);
-            const text1 = tale1.innerText;
-            const text2 = tale2.innerText;
+            const text1 = tale1.style;
+            const text2 = tale2.style;
             // TODO change tales with animation
             // TODO maybe not change it for player who already changed
-            tale1.innerText = text2;
-            tale2.innerText = text1;
+            tale1.style = text2;
+            tale2.style = text1;
         },
 
         moveDetective({ detectiveId, newPos }) {
@@ -696,11 +691,12 @@ function (dojo, declare) {
             const newFEPos = this.getFEPosByBEpos(newBEPos);
             const newTaleId = `tale_${newFEPos.id}`;
             const oldTaleId = this.getTaleIdByDetectiveId(detectiveId);
+            const metaDetective = this.getMetaDetectiveById(detectiveId);
             const newTale = $(newTaleId);
             const oldTale = $(oldTaleId);
-            // TODO add animation and pictures
-            newTale.innerText = oldTale.innerText;
-            oldTale.innerText = '';
+            // TODO add animation
+            this.addImg(newTale, metaDetective.img);
+            oldTale.style = '';
         },
 
         closeCharacter(characterId) {
@@ -708,7 +704,15 @@ function (dojo, declare) {
             const taleId = this.getTaleIdByCharacterId(characterId);
             // TODO animate closing
             character.isOpened = false;
-            $(taleId).innerText = this.getCharacterImage(character);
+            this.addImg(taleId, this.getCharacterImage(character));
+        },
+
+        addImg(id, url) {
+            dojo.setStyle(id, {
+                'background-image': `url("${g_gamethemeurl}${url}")`,
+                'background-size': 'contain',
+                'background-repeat': 'no-repeat',
+            });
         },
 
         endRound({
@@ -761,21 +765,13 @@ function (dojo, declare) {
                     dojo.addClass(availableId, 'option-was-used');
                 }
                 const available = $(availableId);
-                dojo.setStyle(availableId, {
-                    'background-image': `url("${g_gamethemeurl}img/${option.ability}_option.png")`,
-                    'background-size': 'contain',
-                    'background-repeat': 'no-repeat',
-                });
+                this.addImg(availableId, `img/${option.ability}_option.png`);
 
                 if (!nextOption) {
                     dojo.addClass(nextId, 'next-option-disable');
                 } else {
                     dojo.removeClass(nextId, 'next-option-disable');
-                    dojo.setStyle(nextId, {
-                        'background-image': `url("${g_gamethemeurl}img/${nextOption.ability}_option.png")`,
-                        'background-size': 'contain',
-                        'background-repeat': 'no-repeat',
-                    });
+                    this.addImg(nextId, `img/${nextOption.ability}_option.png`);
                 }
                 const hasListener = this.eventListeners.options.find((e) => e.id === availableId);
 
