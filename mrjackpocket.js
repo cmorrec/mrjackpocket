@@ -750,6 +750,7 @@ function (dojo, declare) {
         initOptions(currentOptions, nextOptions) {
             // TODO animate beauty
             // it should work like upsert
+            $('available-options').children = '';
             for (const index in currentOptions) {
                 const option = currentOptions[index];
                 const nextOption = nextOptions?.[index];
@@ -760,15 +761,21 @@ function (dojo, declare) {
                     dojo.addClass(availableId, 'option-was-used');
                 }
                 const available = $(availableId);
-                // TODO add option picture
-                available.innerText = option.ability;
+                dojo.setStyle(availableId, {
+                    'background-image': `url("${g_gamethemeurl}img/${option.ability}_option.png")`,
+                    'background-size': 'contain',
+                    'background-repeat': 'no-repeat',
+                });
 
                 if (!nextOption) {
                     dojo.addClass(nextId, 'next-option-disable');
                 } else {
-                    // TODO add next option picture
                     dojo.removeClass(nextId, 'next-option-disable');
-                    $(nextId).innerText = nextOption.ability;
+                    dojo.setStyle(nextId, {
+                        'background-image': `url("${g_gamethemeurl}img/${nextOption.ability}_option.png")`,
+                        'background-size': 'contain',
+                        'background-repeat': 'no-repeat',
+                    });
                 }
                 const hasListener = this.eventListeners.options.find((e) => e.id === availableId);
 
