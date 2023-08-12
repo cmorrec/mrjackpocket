@@ -664,7 +664,7 @@ function (dojo, declare) {
         rotateTale({ characterId, oldWallSide, newWallSide }) {
             const taleId = this.getTaleIdByCharacterId(characterId);
             const degree = this.getDegree({ oldWallSide, newWallSide });
-            const character = this.getCharacterById(characterId);
+            // const character = this.getCharacterById(characterId);
             this.rotateTo(taleId, degree);
         },
 
@@ -676,14 +676,22 @@ function (dojo, declare) {
         exchangeTales({ characterId1, characterId2 }) {
             const taleId1 = this.getTaleIdByCharacterId(characterId1);
             const taleId2 = this.getTaleIdByCharacterId(characterId2);
-            const tale1 = $(taleId1);
-            const tale2 = $(taleId2);
-            const text1 = tale1.style;
-            const text2 = tale2.style;
+            const character1 = this.getCharacterById(characterId1);
+            const character2 = this.getCharacterById(characterId2);
+            this.addImg(taleId1, this.getCharacterImage(character1));
+            this.addImg(taleId2, this.getCharacterImage(character2));
+            this.rotateTale({
+                characterId: characterId1,
+                oldWallSide: character2.wallSide,
+                newWallSide: character1.wallSide,
+            });
+            this.rotateTale({
+                characterId: characterId2,
+                oldWallSide: character1.wallSide,
+                newWallSide: character2.wallSide,
+            });
             // TODO change tales with animation
             // TODO maybe not change it for player who already changed
-            tale1.style = text2;
-            tale2.style = text1;
         },
 
         moveDetective({ detectiveId, newPos }) {
@@ -937,9 +945,9 @@ function (dojo, declare) {
             const character2 = this.getCharacterById(characterId2);
             const pos1 = character1.pos;
             const pos2 = character2.pos;
-            this.exchangeTales({ characterId1, characterId2 });
             character1.pos = pos2;
             character2.pos = pos1;
+            this.exchangeTales({ characterId1, characterId2 });
         },
 
         notif_jocker(notif) {
@@ -1020,7 +1028,7 @@ function (dojo, declare) {
         },
 
         optionWasUsed(option) {
-            const currentOption = this.currentData.currentOptions.find((e) => e.ability === option);
+            const currentOption = this.currentData.currentOptions.find((e) => e.ability === option && !e.wasUsed);
             if (currentOption) {
                 currentOption.wasUsed = true;
             }
