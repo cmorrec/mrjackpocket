@@ -90,14 +90,22 @@ function (dojo, declare) {
                 } else if (round === currentRoundNum) {
                     dojo.addClass(roundId, 'current-round');
                 }
-                this.addImg(roundId, `img/${roundId}.png`);
+                this.addImg({
+                    id: roundId,
+                    isDetective: false,
+                    urls: `img/${roundId}.png`,
+                });
             }
 
             this.updateGoal(gamedatas.currentRound.playUntilVisibility);
 
             for (const character of gamedatas.characters) {
                 const taleId = this.getTaleIdByCharacterId(character.id);
-                this.addImg(taleId, this.getCharacterImage(character));
+                this.addImg({
+                    id: taleId,
+                    isDetective: false,
+                    urls: this.getCharacterImage(character),
+                });
                 // TODO if we add it there we need to support it always. it is hard
                 // const isVisible = gamedatas.visibleCharacters.some((e) => e.id === character.id);
                 // if (isVisible) {
@@ -110,10 +118,20 @@ function (dojo, declare) {
                 });
             }
 
+            for (const pos of this.availableDetectivePos) {
+                const taleId = `tale_${pos.id}`;
+                dojo.setStyle(taleId, { 'flex-direction': `${!pos.y || pos.y === 4 ? 'column' : 'row'}${!pos.y || !pos.x ? '-reverse' : ''}` });
+            }
+
             for (const detective of gamedatas.detectives) {
-                const taleId = this.getTaleIdByDetectiveId(detective.id);
-                const metaDetective = gamedatas.meta.detectives.find(({ id }) =>  id === detective.id);
-                this.addImg(taleId, metaDetective.img);
+                // const taleId = this.getTaleIdByDetectiveId(detective.id);
+                this.moveDetective({ detectiveId: detective.id, newPos: detective.pos });
+                // const metaDetective = gamedatas.meta.detectives.find(({ id }) =>  id === detective.id);
+                // this.addImg({
+                //     id: taleId,
+                //     isDetective: true,
+                //     urls: metaDetective.img,
+                // });
             }
 
             this.reduceAvailableAlibiCards();
@@ -650,10 +668,11 @@ function (dojo, declare) {
         },
 
         getTaleIdByDetectiveId(detectiveId) {
-            const detective = this.getDetectiveById(detectiveId);
-            const bePos = this.currentData.meta.detectivePos[detective.pos];
-            const fePos = this.getFEPosByBEpos(bePos);
-            return `tale_${fePos.id}`;
+            return detectiveId;
+            // const detective = this.getDetectiveById(detectiveId);
+            // const bePos = this.currentData.meta.detectivePos[detective.pos];
+            // const fePos = this.getFEPosByBEpos(bePos);
+            // return `tale_inner_${fePos.id}`;
         },
 
         getCharacterImage(character) {
@@ -678,8 +697,8 @@ function (dojo, declare) {
             const taleId2 = this.getTaleIdByCharacterId(characterId2);
             const character1 = this.getCharacterById(characterId1);
             const character2 = this.getCharacterById(characterId2);
-            this.addImg(taleId1, this.getCharacterImage(character1));
-            this.addImg(taleId2, this.getCharacterImage(character2));
+            this.addImg({ id: taleId1, isDetective: false, urls: this.getCharacterImage(character1) });
+            this.addImg({ id: taleId2, isDetective: false, urls: this.getCharacterImage(character2) });
             this.rotateTale({
                 characterId: characterId1,
                 oldWallSide: character2.wallSide,
@@ -695,16 +714,42 @@ function (dojo, declare) {
         },
 
         moveDetective({ detectiveId, newPos }) {
+            const oldTaleId = this.getTaleIdByDetectiveId(detectiveId);
+            if ($(oldTaleId)) {
+                dojo.destroy(oldTaleId);
+            }
             const newBEPos = this.currentData.meta.detectivePos[newPos];
             const newFEPos = this.getFEPosByBEpos(newBEPos);
-            const newTaleId = `tale_${newFEPos.id}`;
-            const oldTaleId = this.getTaleIdByDetectiveId(detectiveId);
+            const allDetectivesAtFEPos = this.getAllDetectivesAtFEPos(newFEPos.id);
+            // const newTaleId = `tale_inner_${allDetectivesAtFEPos.length + 1}_${newFEPos.id}`;
+            const newTaleId = detectiveId;
+            // let newTale = $(newTaleId);
+            // if (!newTale) {
+            dojo.create(
+                'div',
+                {
+                    id: newTaleId,
+                    class: 'tale-inner',
+                    // 'data-value': detectiveId,
+                },
+                $(`tale_${newFEPos.id}`),
+            );
+                // newTale = $(newTaleId);
+            // }
             const metaDetective = this.getMetaDetectiveById(detectiveId);
-            const newTale = $(newTaleId);
-            const oldTale = $(oldTaleId);
+            // const oldTale = $(oldTaleId);
             // TODO add animation
-            this.addImg(newTale, metaDetective.img);
-            oldTale.style = '';
+            this.addImg({
+                id: newTaleId,
+                isDetective: true,
+                urls: metaDetective.img,
+            });
+        },
+
+        getAllDetectivesAtFEPos(id) {
+            return dojo.query(".tale-inner", $(`tale_${id}`))
+                .map((e) => e.id)
+                .map((e) => this.getDetectiveById(e));
         },
 
         closeCharacter(characterId) {
@@ -712,14 +757,22 @@ function (dojo, declare) {
             const taleId = this.getTaleIdByCharacterId(characterId);
             // TODO animate closing
             character.isOpened = false;
-            this.addImg(taleId, this.getCharacterImage(character));
+            this.addImg({
+                id: taleId,
+                isDetective: false,
+                urls: this.getCharacterImage(character),
+            });
         },
 
-        addImg(id, url) {
+        addImg({ id, isDetective, urls }) {
+            const background = (typeof urls === 'string' ? [urls] : urls)
+                .map((url) => `url("${g_gamethemeurl}${url}")`)
+                .join(', ');
+
             dojo.setStyle(id, {
-                'background-image': `url("${g_gamethemeurl}${url}")`,
-                'background-size': 'contain',
-                'background-repeat': 'no-repeat',
+                'background-image': background,
+                'background-size': urls.length === 1 ? 'contain' : 'contain',
+                'background-repeat': urls.length === 1 ? 'no-repeat' : 'no-repeat',
             });
         },
 
@@ -736,7 +789,9 @@ function (dojo, declare) {
             const oldRoundId = `round_${oldRound}`;
             const newRoundId = `round_${oldRound + 1}`;
             dojo.destroy(oldRoundId);
-            dojo.addClass(newRoundId, 'current-round');
+            if ($(newRoundId)) {
+                dojo.addClass(newRoundId, 'current-round');
+            }
 
             // TODO present isVisible
             alert(`isVisible = ${isVisible}`);
@@ -773,13 +828,21 @@ function (dojo, declare) {
                     dojo.addClass(availableId, 'option-was-used');
                 }
                 const available = $(availableId);
-                this.addImg(availableId, `img/${option.ability}_option.png`);
+                this.addImg({
+                    id: availableId,
+                    isDetective: false,
+                    urls: `img/${option.ability}_option.png`,
+                });
 
                 if (!nextOption) {
                     dojo.addClass(nextId, 'next-option-disable');
                 } else {
                     dojo.removeClass(nextId, 'next-option-disable');
-                    this.addImg(nextId, `img/${nextOption.ability}_option.png`);
+                    this.addImg({
+                        id: nextId,
+                        isDetective: false,
+                        urls: `img/${nextOption.ability}_option.png`,
+                    });
                 }
                 const hasListener = this.eventListeners.options.find((e) => e.id === availableId);
 

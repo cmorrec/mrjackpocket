@@ -142,6 +142,7 @@
     position: relative;
     height: 100px;
     width: 100px;
+    flex-wrap: wrap;
 }
 
 .tale-outer {
@@ -150,6 +151,11 @@
     position: relative;
     height: 100px;
     width: 100px;
+}
+
+.tale-inner {
+    height: 50px;
+    width: 50px;
 }
 
 .option-was-used {
