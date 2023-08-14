@@ -152,7 +152,7 @@ function (dojo, declare) {
             };
             this.clearCharacterEventListeners();
             this.clearDetectiveEventListeners();
-            this.clearActionEventListeners();
+            this.clearActionEventListeners(action);
             dojo.query(`.tale-to-choose`).removeClass('tale-to-choose');
             const cancelButton = $('cancel-button');
             if (!cancelButton) {
@@ -209,16 +209,21 @@ function (dojo, declare) {
             this.eventListeners.detectiveTales = [];
         },
 
-        clearActionEventListeners() {
+        clearActionEventListeners(actionToStayColor) {
             const options = this.eventListeners.options.map((e) => e.option);
-            options.forEach((option) => this.removeOptionEventListener(option));
+            const optionToStayColor = actionToStayColor ? this.eventListeners.options.find((e) => e.option === actionToStayColor) : undefined;
+            options.forEach((option) => this.removeOptionEventListener(option, actionToStayColor));
+            if (optionToStayColor) {
+                dojo.removeClass(optionToStayColor.id, 'option-was-used');
+            }
         },
 
-        removeOptionEventListener(option) {
+        removeOptionEventListener(option, actionToStayColor) {
             // TODO add card inactive by styles
             const e = this.eventListeners.options.find((e) => e.option === option);
             $(e.id).removeEventListener(e.type, e.listener);
             dojo.addClass(e.id, 'option-was-used');
+            dojo.removeClass(e.id, 'option-is-ready');
             this.eventListeners.options = this.eventListeners.options.filter((item) => item.id !== e.id);
         },
 
@@ -824,6 +829,7 @@ function (dojo, declare) {
                 const availableId = `available_option_${index}`;
                 const nextId = `next_option_${index}`;
                 dojo.removeClass(availableId, 'option-was-used');
+                dojo.removeClass(availableId, 'option-is-ready');
                 if (option.wasUsed) {
                     dojo.addClass(availableId, 'option-was-used');
                 }
@@ -844,18 +850,21 @@ function (dojo, declare) {
                         urls: `img/${nextOption.ability}_option.png`,
                     });
                 }
-                const hasListener = this.eventListeners.options.find((e) => e.id === availableId);
+                const hasListener = this.eventListeners.options.some((e) => e.id === availableId);
 
-                if (!option.wasUsed && this.isCurrentPlayerActive() && !hasListener) {
-                    const type = 'click';
-                    const listener = this.getListenerByOption(option.ability);
-                    available.addEventListener(type, listener);
-                    this.eventListeners.options.push({
-                        id: availableId,
-                        type,
-                        listener,
-                        option: option.ability,
-                    });
+                if (!option.wasUsed && this.isCurrentPlayerActive()) {
+                    dojo.addClass(availableId, 'option-is-ready');
+                    if (!hasListener) {
+                        const type = 'click';
+                        const listener = this.getListenerByOption(option.ability);
+                        available.addEventListener(type, listener);
+                        this.eventListeners.options.push({
+                            id: availableId,
+                            type,
+                            listener,
+                            option: option.ability,
+                        });
+                    }
                 }
             }
         },
