@@ -248,6 +248,7 @@ class MrJackPocket extends Table
             fn(array $round): array => array(
                 'num' => $round['round_num'],
                 'winPlayerId' => $round['win_player_id'],
+                'isCriminalVisible' => $round['is_criminal_visible'] === '1',
             ),
             $previousRounds,
         );
@@ -280,6 +281,7 @@ class MrJackPocket extends Table
         );
         $result['detectiveAlibiCards'] = $this->getDetectiveAlibiCards();
 
+
         return $result;
     }
 
@@ -292,11 +294,15 @@ class MrJackPocket extends Table
          */
         $result = array();
         $result['winnedRounds'] = $this->getWinnedRoundsByPlayerId($playerId); // TODO remove it ???
+        $jackPlayer = $this->getJackPlayer();
+        $jackPlayerId =(int) $jackPlayer['player_id'];
+        $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
+        $result['jackALibiCardsNum'] = count($jackALibiCards);
         $player = $this->getPlayer($playerId);
         if ($player['player_is_jack'] === '1') {
             $jackCharacter = $this->getJackCharacter();
             $result['jackId'] = $jackCharacter['character_id'];
-            $result['jackAlibiCards'] = $this->getAlibiCardsByPlayerId($playerId);
+            $result['jackAlibiCards'] = $jackALibiCards;
         }
 
         return $result;

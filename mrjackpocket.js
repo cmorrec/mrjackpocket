@@ -140,7 +140,138 @@ function (dojo, declare) {
 
             this.setupNotifications();
 
+            this.setPlayerPanels();
+
             console.log( "Ending game setup" );
+        },
+
+        setPlayerPanels() {
+            // TODO upsert this.removeTooltip( nodeId: string );
+            try {
+                this.removeTooltip('jack-character');
+                this.removeTooltip('jack-winned-rounds');
+                this.removeTooltip('detective-winned-rounds');
+                this.removeTooltip('jack-alibi');
+            } catch {}
+
+            // jackId?, jackAlibiCards?
+            // winnedRounds, jackALibiCardsNum
+            // jack -> jack: character, winned, alibi
+            // jack -> dets: winned
+            // 
+            // dets -> jack: character(-), winned, alibi(only num)
+            // dets -> dets: winned
+            const playerIds = Object.keys(this.currentData.players);
+            const oppositePlayerId = playerIds.find((playerId) => String(playerId) !== String(this.player_id));
+            const playerBoardDiv = $(`player_board_${this.player_id}`);
+            const oppositePlayerBoardDiv = $(`player_board_${oppositePlayerId}`);
+
+            const [jackBoardDiv, detectiveBoardDiv] = this.currentData.jackId
+                ? [playerBoardDiv, oppositePlayerBoardDiv]
+                : [oppositePlayerBoardDiv, playerBoardDiv];
+
+            if (!$('jack-character')) {
+                dojo.place(
+                    this.format_block('jstpl_jack_panel', {}),
+                    jackBoardDiv,
+                );
+                dojo.place(
+                    this.format_block('jstpl_detective_panel', {}),
+                    detectiveBoardDiv,
+                );
+    
+                this.addImg({
+                    _class: 'time-label',
+                    urls: 'img/time.png',
+                });
+    
+                this.addImg({
+                    id: 'jack-character',
+                    urls: 'img/alibi_back.png',
+                });
+            }
+
+            const jackWinnedRounds = this.currentData.previousRounds.filter((e) => !e.isCriminalVisible);
+            const detectiveWinnedRounds = this.currentData.previousRounds.filter((e) => e.isCriminalVisible);
+            $('jack-winned-rounds-num').innerText = jackWinnedRounds.length;
+            this.addWinnedRoundsTooltip('jack-winned-rounds', jackWinnedRounds);
+            $('detective-winned-rounds-num').innerText = detectiveWinnedRounds.length;
+            this.addWinnedRoundsTooltip('detective-winned-rounds', detectiveWinnedRounds);
+
+            this.addTooltipHtml(
+                'jack-character',
+                this.format_block('jstpl_jack_character_tooltip',
+                {
+                    styles: this.addImg({
+                        urls: this.currentData.jackId
+                            ? this.getMetaCharacterById(this.currentData.jackId).alibi_img
+                            : 'img/alibi_back.png',
+                    }),
+                }),
+            );
+
+            if (this.currentData.jackId) {
+                $('jack-alibi-num').innerHTML = this.getAlibiJackPoints();
+            }
+
+            this.addJackAlibiTooltip(this.currentData.jackAlibiCards, this.currentData.jackALibiCardsNum);
+        },
+
+        getAlibiJackPoints() {
+            return this.currentData.jackAlibiCards
+                .map((characterId) => this.getMetaCharacterById(characterId))
+                .reduce((acc, cur) => acc + cur.points, 0)
+        },
+
+        addWinnedRoundsTooltip(id, winnedRounds) {
+            this.addTooltipHtml(
+                id,
+                this.format_block(
+                    'jstpl_winned_rounds_tooltip',
+                    {
+                        rounds: winnedRounds
+                            .map((e) => this.format_block(
+                                'jstpl_winned_round_tooltip',
+                                {
+                                    styles: this.addImg({
+                                        urls: `img/round_${e.num}.png`,
+                                    }),
+                                },
+                            ))
+                            .join(''),
+                    },
+                ),
+            );
+        },
+
+        addJackAlibiTooltip(jackAlibiCards, jackALibiCardsNum) {
+            this.addTooltipHtml(
+                'jack-alibi',
+                this.format_block(
+                    'jstpl_jack_alibi_cards_tooltip',
+                    {
+                        alibis: jackAlibiCards
+                            ?.map((e) => this.format_block(
+                                'jstpl_jack_alibi_card_tooltip',
+                                {
+                                    styles: this.addImg({
+                                        urls: this.getMetaCharacterById(e).alibi_img,
+                                    }),
+                                },
+                            ))
+                            .join('') ?? range(jackALibiCardsNum)
+                            .map(() => this.format_block(
+                                'jstpl_jack_alibi_card_tooltip',
+                                {
+                                    styles: this.addImg({
+                                        urls: 'img/alibi_back.png',
+                                    }),
+                                },
+                            ))
+                            .join(''),
+                    },
+                ),
+            );
         },
 
         clickOnAction(action) {
@@ -769,16 +900,25 @@ function (dojo, declare) {
             });
         },
 
-        addImg({ id, isDetective, urls }) {
+        addImg({ id, _class, isDetective, urls }) {
             const background = (typeof urls === 'string' ? [urls] : urls)
-                .map((url) => `url("${g_gamethemeurl}${url}")`)
+                .map((url) => `url('${g_gamethemeurl}${url}')`)
                 .join(', ');
 
-            dojo.setStyle(id, {
+            const styles = {
                 'background-image': background,
                 'background-size': urls.length === 1 ? 'contain' : 'contain',
                 'background-repeat': urls.length === 1 ? 'no-repeat' : 'no-repeat',
-            });
+            };
+            if (id) {
+                dojo.setStyle(id, styles);
+            } else if (_class) {
+                dojo.query(`.${_class}`).style(styles);
+            }
+
+            return Object.entries(styles)
+                .map(([key, value]) => `${key}:${value}`)
+                .join(';');
         },
 
         endRound({
@@ -1060,9 +1200,11 @@ function (dojo, declare) {
             this.alibiJack({ alibiId, points });
             // TODO say player about alibi + points
             this.currentData.jackAlibiCards.push(alibiId);
+            this.currentData.jackAlibiCardsNum += 1;
 
             this.currentData.currentRound.availableALibiCards -= 1;
             this.updateAlibiCards();
+            this.setPlayerPanels();
         },
 
         notif_alibiAllExceptJack(notif) {
@@ -1078,6 +1220,8 @@ function (dojo, declare) {
             this.alibiAllExceptJack();
             // TODO say that jack took alibi card
             this.currentData.currentRound.availableALibiCards -= 1;
+            this.currentData.jackAlibiCardsNum += 1;
+            this.setPlayerPanels();
         },
 
         notif_alibiAll(notif) {
@@ -1147,6 +1291,7 @@ function (dojo, declare) {
                     this.currentData.previousRounds.push({
                         num: newRoundNum - 1,
                         winPlayerId,
+                        isCriminalVisible: isVisible,
                     });
                     this.currentData.currentRound = {
                         ...this.currentData.currentRound,
@@ -1159,6 +1304,8 @@ function (dojo, declare) {
                         .forEach((e) => { e.isOpened = false; });
                     this.currentData.currentOptions = currentOptions;
                     this.currentData.nextOptions = nextOptions;
+
+                    this.setPlayerPanels();
                 },
                 1000,
             );

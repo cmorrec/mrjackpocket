@@ -46,12 +46,44 @@
 
 // Javascript HTML templates
 
-/*
-// Example:
-var jstpl_some_game_item='<div class="my_game_item" id="my_game_item_${MY_ITEM_ID}"></div>';
 
-*/
+var jstpl_jack_panel=`
+    <div id="jack-panel">
+        <div id="jack-character"></div>
+        <div class="time-container" id="jack-winned-rounds">
+            <div class="time-num" id="jack-winned-rounds-num">?</div>
+            ×
+            <div class="time-label"></div>
+        </div>
+        <div id="jack-points-plus">+</div>
+        <div class="time-container" id="jack-alibi">
+            <div class="time-num" id="jack-alibi-num">?</div>
+            ×
+            <div class="time-label"></div>
+        </div>
+    </div>
+`;
+var jstpl_detective_panel=`
+    <div id="detective-panel">
+        <div class="time-container" id="detective-winned-rounds">
+            <div class="time-num" id="detective-winned-rounds-num">?</div>
+            ×
+            <div class="time-label"></div>
+        </div>
+    </div>
+`;
+var jstpl_jack_character_tooltip='<div id="jack-character-tooltip" style="${styles}"></div>';
+var jstpl_winned_rounds_tooltip='<div class="winned-rounds-tooltip-container">${rounds}</div>';
+var jstpl_winned_round_tooltip='<div class="winned-round-tooltip" style="${styles}"></div>';
+var jstpl_jack_alibi_cards_tooltip='<div class="alibi-cards-tooltip-container">${alibis}</div>';
+var jstpl_jack_alibi_card_tooltip='<div class="alibi-card-tooltip" style="${styles}"></div>';
+// var jstpl_jack_riddle='<div class="" id="jack-riddle"></div>';
+// var jstpl_jack_character='<div class="player-alibi" id="jack-character"></div>';
+// var jstpl_jack_hided_alibi='<div class="" id="jack-hided-alibi"></div>';
+// var jstpl_jack_unhided_alibi='<div class="" id="jack-unhided-alibi-${alibi_id}"></div>';
+// var jstpl_jack_winned_rounds='<div class="winned-rounds" id="jack-winned-rounds"></div>';
+// var jstpl_detective_winned_rounds='<div class="winned-rounds" id="detective-winned-rounds"></div>';
 
-</script>  
+</script>
 
 {OVERALL_GAME_FOOTER}
