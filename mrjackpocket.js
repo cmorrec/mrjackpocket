@@ -134,7 +134,7 @@ function (dojo, declare) {
                 // });
             }
 
-            this.reduceAvailableAlibiCards();
+            this.updateAvailableAlibiCards();
 
             this.updateAlibiCards();
 
@@ -155,7 +155,7 @@ function (dojo, declare) {
             } catch {}
 
             // jackId?, jackAlibiCards?
-            // winnedRounds, jackALibiCardsNum
+            // winnedRounds, jackAlibiCardsNum
             // jack -> jack: character, winned, alibi
             // jack -> dets: winned
             // 
@@ -214,7 +214,7 @@ function (dojo, declare) {
                 $('jack-alibi-num').innerHTML = this.getAlibiJackPoints();
             }
 
-            this.addJackAlibiTooltip(this.currentData.jackAlibiCards, this.currentData.jackALibiCardsNum);
+            this.addJackAlibiTooltip(this.currentData.jackAlibiCards, this.currentData.jackAlibiCardsNum);
         },
 
         getAlibiJackPoints() {
@@ -244,27 +244,21 @@ function (dojo, declare) {
             );
         },
 
-        addJackAlibiTooltip(jackAlibiCards, jackALibiCardsNum) {
+        addJackAlibiTooltip(jackAlibiCards, jackAlibiCardsNum) {
+            console.log(jackAlibiCards, jackAlibiCardsNum)
             this.addTooltipHtml(
                 'jack-alibi',
                 this.format_block(
                     'jstpl_jack_alibi_cards_tooltip',
                     {
-                        alibis: jackAlibiCards
-                            ?.map((e) => this.format_block(
+                        alibis: (jackAlibiCards ?? range(jackAlibiCardsNum))
+                            .map((e) => this.format_block(
                                 'jstpl_jack_alibi_card_tooltip',
                                 {
                                     styles: this.addImg({
-                                        urls: this.getMetaCharacterById(e).alibi_img,
-                                    }),
-                                },
-                            ))
-                            .join('') ?? range(jackALibiCardsNum)
-                            .map(() => this.format_block(
-                                'jstpl_jack_alibi_card_tooltip',
-                                {
-                                    styles: this.addImg({
-                                        urls: 'img/alibi_back.png',
+                                        urls: jackAlibiCards
+                                            ? this.getMetaCharacterById(e).alibi_img
+                                            : 'img/alibi_back.png',
                                     }),
                                 },
                             ))
@@ -322,6 +316,14 @@ function (dojo, declare) {
                 );
             }
             this.removeActionButtons();
+            this.setDescriptionState('must choose an action');
+        },
+
+        setDescriptionState(state = '') {
+            // this.setClientState("client_playerPicksLocation", {
+            //     descriptionmyturn : _("${you} " + state),
+            // });
+            $('pagemaintitletext').innerHTML = _(state ? "You " + state : 'Loading');
         },
 
         clearCharacterEventListeners() {
@@ -379,31 +381,27 @@ function (dojo, declare) {
         },
 
         detectiveListener(detectiveId, isJocker = false) {
-            console.log('detectiveListener', detectiveId, isJocker)
             this.clickOnAction(detectiveId);
 
             const detective = this.getDetectiveById(detectiveId);
-            console.log(detective, detectiveId)
+            const metaDetective = this.getMetaDetectiveById(detectiveId);
             const currentPos = detective.pos;
             const availablePoses = this.getAvailablePoses(currentPos, isJocker ? 1 : 2);
             this.optionActions[isJocker ? 'jocker' : 'detective'].detectiveId = detectiveId;
 
-            console.log(availablePoses)
             availablePoses.forEach(({ fePos, bePos }) => {
                 const taleId = `tale_${fePos.id}`;
-                console.log(fePos, bePos, taleId, $(taleId))
                 dojo.addClass(taleId, 'tale-to-choose');
                 const type = 'click';
                 const listener = this.onNewPosClick(detectiveId, bePos.index, isJocker);
                 $(taleId).addEventListener(type, listener);
                 this.eventListeners.detectiveTales.push({ id: taleId, type, listener });
             });
+            this.setDescriptionState(`must choose a new position for ${metaDetective.name}`);
         },
 
         onNewPosClick(detectiveId, pos, isJocker) {
-            console.log(detectiveId, pos, isJocker);
             return (e) => {
-                console.log('onNewPosClick', detectiveId, pos, isJocker);
                 this.optionActions[isJocker ? 'jocker' : 'detective'].newPos = pos;
                 if (isJocker) {
                     this.action_jocker();
@@ -412,6 +410,7 @@ function (dojo, declare) {
                 }
 
                 this.clearDetectiveEventListeners();
+                this.setDescriptionState();
             };
         },
 
@@ -433,6 +432,7 @@ function (dojo, declare) {
                 $(taleId).addEventListener(type, listener);
                 this.eventListeners.detectiveTales.push({ id: taleId, type, listener });
             });
+            this.setDescriptionState(`must choose a detective to move`);
         },
 
         skipByJockerIfJack() {
@@ -441,6 +441,7 @@ function (dojo, declare) {
             this.optionActions.jocker.newPos = null;
             this.optionActions.jocker.detectiveId = null;
             this.action_jocker();
+            this.setDescriptionState();
         },
 
         getAvailablePoses(currentPos, steps) {
@@ -466,6 +467,7 @@ function (dojo, declare) {
                 .forEach(
                     (e) => this.setTaleListener(e.id, 'rotateTaleListenerTale')
                 );
+            this.setDescriptionState('must choose a character to rotate');
         },
 
         rotateTaleListenerTale(characterId) {
@@ -505,6 +507,9 @@ function (dojo, declare) {
                 }));
 
                 this.updateRotateApproveButtonStatus();
+
+                const metaCharacter = this.getMetaCharacterById(characterId);
+                this.setDescriptionState(`must choose a rotation for ${metaCharacter.name}`);
             };
         },
 
@@ -580,6 +585,7 @@ function (dojo, declare) {
                 character.wallSide = wallSide;
                 this.action_rotateTale();
                 this.destroyRotationButtons();
+                this.setDescriptionState()
             };
         },
 
@@ -589,6 +595,7 @@ function (dojo, declare) {
             this.currentData.characters.forEach(
                 (e) => this.setTaleListener(e.id, 'exchangeTalesListenerTale1'),
             );
+            this.setDescriptionState('must choose a first character to exchange');
         },
 
         exchangeTalesListenerTale1(characterId) {
@@ -601,6 +608,8 @@ function (dojo, declare) {
                     .forEach(
                         (e) => this.setTaleListener(e.id, 'exchangeTalesListenerTale2'),
                     );
+                const metaCharacter = this.getMetaCharacterById(characterId);
+                this.setDescriptionState(`must choose a second character to exchange it with ${metaCharacter.name}`);
             };
         },
 
@@ -609,6 +618,7 @@ function (dojo, declare) {
                 this.optionActions.exchange.taleId2 = characterId;
                 this.clearCharacterEventListeners();
                 this.action_exchangeTales();
+                this.setDescriptionState();
             };
         },
 
@@ -1027,27 +1037,27 @@ function (dojo, declare) {
             // TODO animate nicely
             alert(`You are Jack and you got alibi ${alibiId}, points ${points}`);
 
-            this.reduceAvailableAlibiCards();
+            this.updateAvailableAlibiCards();
         },
 
         alibiAllExceptJack() {
             // TODO animate nicely
             alert(`Jack got alibi`);
 
-            this.reduceAvailableAlibiCards();
+            this.updateAvailableAlibiCards();
         },
 
         alibiAll(alibiId) {
             // TODO animate nicely
             alert(`Detective got alibi = ${alibiId}`);
 
-            this.reduceAvailableAlibiCards();
+            this.updateAvailableAlibiCards();
         },
 
-        reduceAvailableAlibiCards() {
+        updateAvailableAlibiCards() {
             // TODO animate + picture
             const deck = $('alibi-deck');
-            deck.innerText = Number(deck.innerText || 9) - 1;
+            deck.innerText = 8 - ((this.currentData.jackAlibiCardsNum ?? 0) + this.currentData.detectiveAlibiCards.length);
         },
 
         ///////////////////////////////////////////////////
@@ -1200,7 +1210,7 @@ function (dojo, declare) {
             this.alibiJack({ alibiId, points });
             // TODO say player about alibi + points
             this.currentData.jackAlibiCards.push(alibiId);
-            this.currentData.jackAlibiCardsNum += 1;
+            this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
 
             this.currentData.currentRound.availableALibiCards -= 1;
             this.updateAlibiCards();
@@ -1220,7 +1230,10 @@ function (dojo, declare) {
             this.alibiAllExceptJack();
             // TODO say that jack took alibi card
             this.currentData.currentRound.availableALibiCards -= 1;
-            this.currentData.jackAlibiCardsNum += 1;
+            this.updateAlibiCards();
+            console.log(this.currentData.jackAlibiCardsNum);
+            this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
+            console.log(this.currentData.jackAlibiCardsNum);
             this.setPlayerPanels();
         },
 

@@ -297,7 +297,7 @@ class MrJackPocket extends Table
         $jackPlayer = $this->getJackPlayer();
         $jackPlayerId =(int) $jackPlayer['player_id'];
         $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
-        $result['jackALibiCardsNum'] = count($jackALibiCards);
+        $result['jackAlibiCardsNum'] = count($jackALibiCards);
         $player = $this->getPlayer($playerId);
         if ($player['player_is_jack'] === '1') {
             $jackCharacter = $this->getJackCharacter();
