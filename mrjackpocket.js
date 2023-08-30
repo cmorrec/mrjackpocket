@@ -101,9 +101,13 @@ function (dojo, declare) {
 
             for (const character of gamedatas.characters) {
                 const taleId = this.getTaleIdByCharacterId(character.id);
+                const characterDiv = document.createElement('div');
+                const taleInnerId = this.getTaleIdByCharacterId(character.id, 'inner');
+                characterDiv.id = taleInnerId;
+                characterDiv.classList = 'tale character-field';
+                $(taleId).appendChild(characterDiv);
                 this.addImg({
-                    id: taleId,
-                    isDetective: false,
+                    id: taleInnerId,
                     urls: this.getCharacterImage(character),
                 });
                 // TODO if we add it there we need to support it always. it is hard
@@ -479,7 +483,7 @@ function (dojo, declare) {
                 // TODO clear the new after click on another tale
                 this.clearCharacterEventListeners();
                 const character = this.getCharacterById(characterId);
-                const taleId = this.getTaleIdByCharacterId(characterId, true);
+                const taleId = this.getTaleIdByCharacterId(characterId, 'outer');
                 const tale = $(taleId);
 
                 this.optionActions.rotation.wallSide = character.wallSide;
@@ -806,11 +810,15 @@ function (dojo, declare) {
             return this.currentData.meta.detectives.find(e => e.id === characterId)
         },
 
-        getTaleIdByCharacterId(characterId, isOuter = false) {
+        getTaleIdByCharacterId(characterId, status = 'casual') {
+            if (status === 'inner') {
+                return `character_${characterId}`;
+            }
+
             const character = this.getCharacterById(characterId);
             const bePos = this.currentData.meta.characterPos[character.pos];
             const fePos = this.getFEPosByBEpos(bePos);
-            return isOuter ? `tale_outer_${fePos.id}` : `tale_${fePos.id}`;
+            return status === 'outer' ? `tale_outer_${fePos.id}` : `tale_${fePos.id}`;
         },
 
         getTaleIdByDetectiveId(detectiveId) {
@@ -827,7 +835,7 @@ function (dojo, declare) {
         },
 
         rotateTale({ characterId, oldWallSide, newWallSide }) {
-            const taleId = this.getTaleIdByCharacterId(characterId);
+            const taleId = this.getTaleIdByCharacterId(characterId, 'inner');
             const degree = this.getDegree({ oldWallSide, newWallSide });
             // const character = this.getCharacterById(characterId);
             this.rotateTo(taleId, degree);
@@ -841,10 +849,15 @@ function (dojo, declare) {
         exchangeTales({ characterId1, characterId2 }) {
             const taleId1 = this.getTaleIdByCharacterId(characterId1);
             const taleId2 = this.getTaleIdByCharacterId(characterId2);
+            const children1 = $(taleId1).innerHTML;
+            const children2 = $(taleId2).innerHTML;
+            console.log(children1, children2)
+            $(taleId1).innerHTML = children2;
+            $(taleId2).innerHTML = children1;
             const character1 = this.getCharacterById(characterId1);
             const character2 = this.getCharacterById(characterId2);
-            this.addImg({ id: taleId1, isDetective: false, urls: this.getCharacterImage(character1) });
-            this.addImg({ id: taleId2, isDetective: false, urls: this.getCharacterImage(character2) });
+            // this.addImg({ id: taleId1, isDetective: false, urls: this.getCharacterImage(character1) });
+            // this.addImg({ id: taleId2, isDetective: false, urls: this.getCharacterImage(character2) });
             this.rotateTale({
                 characterId: characterId1,
                 oldWallSide: character2.wallSide,
@@ -900,7 +913,7 @@ function (dojo, declare) {
 
         closeCharacter(characterId) {
             const character = this.getCharacterById(characterId);
-            const taleId = this.getTaleIdByCharacterId(characterId);
+            const taleId = this.getTaleIdByCharacterId(characterId, 'inner');
             // TODO animate closing
             character.isOpened = false;
             this.addImg({

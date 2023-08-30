@@ -77,12 +77,6 @@ var jstpl_winned_rounds_tooltip='<div class="winned-rounds-tooltip-container">${
 var jstpl_winned_round_tooltip='<div class="winned-round-tooltip" style="${styles}"></div>';
 var jstpl_jack_alibi_cards_tooltip='<div class="alibi-cards-tooltip-container">${alibis}</div>';
 var jstpl_jack_alibi_card_tooltip='<div class="alibi-card-tooltip" style="${styles}"></div>';
-// var jstpl_jack_riddle='<div class="" id="jack-riddle"></div>';
-// var jstpl_jack_character='<div class="player-alibi" id="jack-character"></div>';
-// var jstpl_jack_hided_alibi='<div class="" id="jack-hided-alibi"></div>';
-// var jstpl_jack_unhided_alibi='<div class="" id="jack-unhided-alibi-${alibi_id}"></div>';
-// var jstpl_jack_winned_rounds='<div class="winned-rounds" id="jack-winned-rounds"></div>';
-// var jstpl_detective_winned_rounds='<div class="winned-rounds" id="detective-winned-rounds"></div>';
 
 </script>
 
