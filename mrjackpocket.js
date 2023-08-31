@@ -23,10 +23,11 @@ function range(length) {
 
 define([
     "dojo","dojo/_base/declare",
+    "dojo/_base/fx",
     "ebg/core/gamegui",
-    "ebg/counter"
+    "ebg/counter",
 ],
-function (dojo, declare) {
+function (dojo, declare, baseFx) {
     return declare("bgagame.mrjackpocket", ebg.core.gamegui, {
         constructor: function(){
             console.log('mrjackpocket constructor');
@@ -210,7 +211,7 @@ function (dojo, declare) {
                         urls: this.currentData.jackId
                             ? this.getMetaCharacterById(this.currentData.jackId).alibi_img
                             : 'img/alibi_back.png',
-                    }),
+                    }).text,
                 }),
             );
 
@@ -239,7 +240,7 @@ function (dojo, declare) {
                                 {
                                     styles: this.addImg({
                                         urls: `img/round_${e.num}.png`,
-                                    }),
+                                    }).text,
                                 },
                             ))
                             .join(''),
@@ -249,7 +250,6 @@ function (dojo, declare) {
         },
 
         addJackAlibiTooltip(jackAlibiCards, jackAlibiCardsNum) {
-            console.log(jackAlibiCards, jackAlibiCardsNum)
             this.addTooltipHtml(
                 'jack-alibi',
                 this.format_block(
@@ -263,7 +263,7 @@ function (dojo, declare) {
                                         urls: jackAlibiCards
                                             ? this.getMetaCharacterById(e).alibi_img
                                             : 'img/alibi_back.png',
-                                    }),
+                                    }).text,
                                 },
                             ))
                             .join(''),
@@ -849,27 +849,10 @@ function (dojo, declare) {
         exchangeTales({ characterId1, characterId2 }) {
             const taleId1 = this.getTaleIdByCharacterId(characterId1);
             const taleId2 = this.getTaleIdByCharacterId(characterId2);
-            const children1 = $(taleId1).innerHTML;
-            const children2 = $(taleId2).innerHTML;
-            console.log(children1, children2)
-            $(taleId1).innerHTML = children2;
-            $(taleId2).innerHTML = children1;
-            const character1 = this.getCharacterById(characterId1);
-            const character2 = this.getCharacterById(characterId2);
-            // this.addImg({ id: taleId1, isDetective: false, urls: this.getCharacterImage(character1) });
-            // this.addImg({ id: taleId2, isDetective: false, urls: this.getCharacterImage(character2) });
-            this.rotateTale({
-                characterId: characterId1,
-                oldWallSide: character2.wallSide,
-                newWallSide: character1.wallSide,
-            });
-            this.rotateTale({
-                characterId: characterId2,
-                oldWallSide: character1.wallSide,
-                newWallSide: character2.wallSide,
-            });
-            // TODO change tales with animation
-            // TODO maybe not change it for player who already changed
+            const taleIdInner1 = this.getTaleIdByCharacterId(characterId1, 'inner');
+            const taleIdInner2 = this.getTaleIdByCharacterId(characterId2, 'inner');
+            this.slideToObject(taleIdInner1, taleId1, 1000).play();
+            this.slideToObject(taleIdInner2, taleId2, 1000).play();
         },
 
         moveDetective({ detectiveId, newPos }) {
@@ -914,12 +897,25 @@ function (dojo, declare) {
         closeCharacter(characterId) {
             const character = this.getCharacterById(characterId);
             const taleId = this.getTaleIdByCharacterId(characterId, 'inner');
-            // TODO animate closing
             character.isOpened = false;
-            this.addImg({
-                id: taleId,
-                isDetective: false,
-                urls: this.getCharacterImage(character),
+            const newImage = this.addImg({ urls: this.getCharacterImage(character) }).obj['background-image'];
+            const keyFrame = `
+                @keyframes close-${characterId}-character {
+                    from  {
+                        transform: rotateY(0deg);
+                        transform-style: preserve-3d;
+                    }
+                    to  {
+                        transform: rotateY(180deg);
+                        background-image: ${newImage};
+                        transform-style: preserve-3d;
+                    }
+                }
+            `;
+            document.styleSheets[document.styleSheets.length-1].insertRule(keyFrame, 0);
+            dojo.setStyle(taleId, {
+                animation: `close-${characterId}-character 2s 1`,
+                'animation-fill-mode': 'forwards',
             });
         },
 
@@ -933,15 +929,20 @@ function (dojo, declare) {
                 'background-size': urls.length === 1 ? 'contain' : 'contain',
                 'background-repeat': urls.length === 1 ? 'no-repeat' : 'no-repeat',
             };
+            const textStyles = Object.entries(styles)
+                .map(([key, value]) => `${key}:${value}`)
+                .join(';');
             if (id) {
-                dojo.setStyle(id, styles);
+                // dojo.setStyle(id, styles);
+                document.styleSheets[document.styleSheets.length-1].insertRule(`#${id} { ${textStyles} }`, 0);
             } else if (_class) {
                 dojo.query(`.${_class}`).style(styles);
             }
 
-            return Object.entries(styles)
-                .map(([key, value]) => `${key}:${value}`)
-                .join(';');
+            return {
+                obj: styles,
+                text: textStyles,
+            };
         },
 
         endRound({
