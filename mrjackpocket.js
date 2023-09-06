@@ -93,7 +93,6 @@ function (dojo, declare, baseFx) {
                 }
                 this.addImg({
                     id: roundId,
-                    isDetective: false,
                     urls: `img/${roundId}.png`,
                 });
             }
@@ -109,6 +108,7 @@ function (dojo, declare, baseFx) {
                 $(taleId).appendChild(characterDiv);
                 this.addImg({
                     id: taleInnerId,
+                    isCharacter: true,
                     urls: this.getCharacterImage(character),
                 });
                 // TODO if we add it there we need to support it always. it is hard
@@ -134,7 +134,6 @@ function (dojo, declare, baseFx) {
                 // const metaDetective = gamedatas.meta.detectives.find(({ id }) =>  id === detective.id);
                 // this.addImg({
                 //     id: taleId,
-                //     isDetective: true,
                 //     urls: metaDetective.img,
                 // });
             }
@@ -469,7 +468,7 @@ function (dojo, declare, baseFx) {
             this.currentData.characters
                 .filter((e) => e.lastRoundRotated !== this.currentData.currentRound.num)
                 .forEach(
-                    (e) => this.setTaleListener(e.id, 'rotateTaleListenerTale')
+                    (e) => this.setTaleListener(e.id, 'rotateTaleListenerTale', 'inner')
                 );
             this.setDescriptionState('must choose a character to rotate');
         },
@@ -626,8 +625,8 @@ function (dojo, declare, baseFx) {
             };
         },
 
-        setTaleListener(characterId, funcName) {
-            const taleId = this.getTaleIdByCharacterId(characterId);
+        setTaleListener(characterId, funcName, layout) {
+            const taleId = this.getTaleIdByCharacterId(characterId, layout);
             const tale = $(taleId);
             const type = 'click';
             const listener = this[funcName](characterId).bind(this);
@@ -845,14 +844,24 @@ function (dojo, declare, baseFx) {
             return this.sideDict[newWallSide] * 90;
             // return (this.sideDict[newWallSide] - this.sideDict[oldWallSide]) * 90;
         },
-        
+
         exchangeTales({ characterId1, characterId2 }) {
             const taleId1 = this.getTaleIdByCharacterId(characterId1);
             const taleId2 = this.getTaleIdByCharacterId(characterId2);
             const taleIdInner1 = this.getTaleIdByCharacterId(characterId1, 'inner');
             const taleIdInner2 = this.getTaleIdByCharacterId(characterId2, 'inner');
+            const tale1 = $(taleId1);
+            const tale2 = $(taleId2);
             this.slideToObject(taleIdInner1, taleId1, 1000).play();
             this.slideToObject(taleIdInner2, taleId2, 1000).play();
+            setTimeout(() => {
+                const children1 = tale1.innerHTML;
+                const children2 = tale2.innerHTML;
+                tale1.innerHTML = children2;
+                tale2.innerHTML = children1;
+                dojo.setStyle(taleIdInner1, { left: '0px', top: '0px' });
+                dojo.setStyle(taleIdInner2, { left: '0px', top: '0px' });
+            }, 1501);
         },
 
         moveDetective({ detectiveId, newPos }) {
@@ -883,7 +892,7 @@ function (dojo, declare, baseFx) {
             // TODO add animation
             this.addImg({
                 id: newTaleId,
-                isDetective: true,
+                isCharacter: true,
                 urls: metaDetective.img,
             });
         },
@@ -897,16 +906,38 @@ function (dojo, declare, baseFx) {
         closeCharacter(characterId) {
             const character = this.getCharacterById(characterId);
             const taleId = this.getTaleIdByCharacterId(characterId, 'inner');
+            const oldImage = this.addImg({ urls: this.getCharacterImage(character) }).obj['background-image'];
             character.isOpened = false;
             const newImage = this.addImg({ urls: this.getCharacterImage(character) }).obj['background-image'];
+            const keyFrameId = `close-${characterId}-character`;
+            const { wallSide } = character;
+            const axis = ['up', 'down'].includes(wallSide) ? 'Y' : 'X';
+            const currentRotationDeg = wallSide === 'up'
+                ? 180
+                : wallSide === 'down'
+                ? 0
+                : wallSide === 'right'
+                ? -90
+                : 90;
+            const currentRotation = `rotate(${currentRotationDeg}deg)`;
             const keyFrame = `
-                @keyframes close-${characterId}-character {
+                @keyframes ${keyFrameId} {
                     from  {
-                        transform: rotateY(0deg);
+                        transform: rotate${axis}(0deg) ${currentRotation};
+                        transform-style: preserve-3d;
+                    }
+                    50% {
+                        transform: rotate${axis}(90deg) ${currentRotation};
+                        background-image: ${oldImage};
+                        transform-style: preserve-3d;
+                    }
+                    51% {
+                        transform: rotate${axis}(90deg) ${currentRotation};
+                        background-image: ${newImage};
                         transform-style: preserve-3d;
                     }
                     to  {
-                        transform: rotateY(180deg);
+                        transform: rotate${axis}(0deg) ${currentRotation};
                         background-image: ${newImage};
                         transform-style: preserve-3d;
                     }
@@ -914,12 +945,20 @@ function (dojo, declare, baseFx) {
             `;
             document.styleSheets[document.styleSheets.length-1].insertRule(keyFrame, 0);
             dojo.setStyle(taleId, {
-                animation: `close-${characterId}-character 2s 1`,
+                animation: `${keyFrameId} 1s 1`,
                 'animation-fill-mode': 'forwards',
             });
+            setTimeout(() => {
+                dojo.setStyle(taleId, {
+                    animation: '',
+                    'animation-fill-mode': '',
+                    'background-image': newImage,
+                    // transform: `${currentRotation}`,
+                });
+            }, 1000);
         },
 
-        addImg({ id, _class, isDetective, urls }) {
+        addImg({ id, _class, urls, isCharacter = false }) {
             const background = (typeof urls === 'string' ? [urls] : urls)
                 .map((url) => `url('${g_gamethemeurl}${url}')`)
                 .join(', ');
@@ -933,8 +972,11 @@ function (dojo, declare, baseFx) {
                 .map(([key, value]) => `${key}:${value}`)
                 .join(';');
             if (id) {
-                // dojo.setStyle(id, styles);
-                document.styleSheets[document.styleSheets.length-1].insertRule(`#${id} { ${textStyles} }`, 0);
+                if (isCharacter) {
+                    document.styleSheets[document.styleSheets.length-1].insertRule(`#${id} { ${textStyles} }`, 0);
+                } else {
+                    dojo.setStyle(id, styles);
+                }
             } else if (_class) {
                 dojo.query(`.${_class}`).style(styles);
             }
@@ -1000,7 +1042,6 @@ function (dojo, declare, baseFx) {
                 const available = $(availableId);
                 this.addImg({
                     id: availableId,
-                    isDetective: false,
                     urls: `img/${option.ability}_option.png`,
                 });
 
@@ -1010,7 +1051,6 @@ function (dojo, declare, baseFx) {
                     dojo.removeClass(nextId, 'next-option-disable');
                     this.addImg({
                         id: nextId,
-                        isDetective: false,
                         urls: `img/${nextOption.ability}_option.png`,
                     });
                 }
