@@ -53,7 +53,7 @@ var jstpl_jack_panel=`
         <div class="time-container" id="jack-winned-rounds">
             <div class="time-num" id="jack-winned-rounds-num">?</div>
             ×
-            <div class="time-label"></div>
+            <div class="time-label" id="jack-winned-rounds-pic"></div>
         </div>
         <div id="jack-points-plus">+</div>
         <div class="time-container" id="jack-alibi">
@@ -68,7 +68,7 @@ var jstpl_detective_panel=`
         <div class="time-container" id="detective-winned-rounds">
             <div class="time-num" id="detective-winned-rounds-num">?</div>
             ×
-            <div class="time-label"></div>
+            <div class="time-label" id="detective-winned-rounds-pic"></div>
         </div>
     </div>
 `;

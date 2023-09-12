@@ -861,7 +861,7 @@ function (dojo, declare, baseFx) {
                 tale2.innerHTML = children1;
                 dojo.setStyle(taleIdInner1, { left: '0px', top: '0px' });
                 dojo.setStyle(taleIdInner2, { left: '0px', top: '0px' });
-            }, 1501);
+            }, 1500);
         },
 
         moveDetective({ detectiveId, newPos }) {
@@ -995,22 +995,9 @@ function (dojo, declare, baseFx) {
             characterIdsToClose,
             winPlayerId,
         }) {
-            // TODO animate move + increase counter current round to the winned person
-            const oldRound = this.currentData.currentRound.num;
-            const oldRoundId = `round_${oldRound}`;
-            const newRoundId = `round_${oldRound + 1}`;
-            dojo.destroy(oldRoundId);
-            if ($(newRoundId)) {
-                dojo.addClass(newRoundId, 'current-round');
-            }
+            this.animateWinnerDetermination({ isVisible });
+            this.animateNewRound({ winPlayerId, isVisible });
 
-            // TODO present isVisible
-            alert(`isVisible = ${isVisible}`);
-
-            // TODO increase winners rounds
-            alert(`winPlayerId = ${winPlayerId}`);
-
-            // TODO animate characters to close simultaneously
             this.currentData.characters
                 .filter(e => characterIdsToClose.includes(e.id))
                 .forEach(e => this.closeCharacter(e.id));
@@ -1023,6 +1010,36 @@ function (dojo, declare, baseFx) {
                 newOptions,
                 newNextOptions,
             );
+        },
+
+        animateWinnerDetermination({ isVisible }) {
+            // as in JACK original
+            // 1) card from the right side appears in front of players deck
+            // 2) then it rotateY and we see visible or invisible
+            // 3) card return where it was
+            alert(`isVisible = ${isVisible}`);
+        },
+
+        animateNewRound({ winPlayerId, isVisible }) {
+            // TODO increase counter current round to the winned person
+            // 1) old round move to the winPlayer panel and destroy and increase counter
+            const oldRound = this.currentData.currentRound.num;
+            const oldRoundId = `round_${oldRound}`;
+            const newRoundId = `round_${oldRound + 1}`;
+            const placeToMoveRound = isVisible ? 'detective-winned-rounds-pic' : 'jack-winned-rounds-pic';
+
+            this.slideToObject(oldRoundId, 'container', 1400).play();
+            dojo.setStyle(oldRoundId, { 'box-shadow': '0 0 0 max(100vh, 100vw) rgba(0, 0, 0, .3)', transform: 'scale(3)' });
+            setTimeout(() => {
+                this.slideToObject(oldRoundId, placeToMoveRound, 1000).play();
+                dojo.setStyle(oldRoundId, { 'box-shadow': '', transform: 'scale(1)' });
+                setTimeout(() => {
+                    dojo.destroy(oldRoundId);
+                    if ($(newRoundId)) {
+                        dojo.addClass(newRoundId, 'current-round');
+                    }
+                }, 1100);
+            }, 1600);
         },
 
         initOptions(currentOptions, nextOptions) {

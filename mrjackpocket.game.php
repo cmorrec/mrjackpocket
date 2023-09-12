@@ -280,7 +280,10 @@ class MrJackPocket extends Table
             $this->getVisibleCharacters($characters, $detectives),
         );
         $result['detectiveAlibiCards'] = $this->getDetectiveAlibiCards();
-
+        $jackPlayer = $this->getJackPlayer();
+        $result['jackPlayerId'] = (int) $jackPlayer['player_id'];
+        $detectivePlayer = $this->getDetectivePlayer();
+        $result['detectivePlayerId'] = (int) $detectivePlayer['player_id'];
 
         return $result;
     }

@@ -112,6 +112,9 @@
 .round {
     width: 40px;
     height: 40px;
+    z-index: 1;
+    transition-duration: 900ms, 900ms;
+    transition-property: box-shadow, transform;
 }
 
 #goal-info {
