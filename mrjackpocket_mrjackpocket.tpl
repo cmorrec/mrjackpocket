@@ -27,7 +27,15 @@
     </div>
 
 
-    <div id="goal-info"></div>
+    <div id="goal-info">
+        <div id="visible-status-card-container">
+            <div id="visible-status-card-inner">
+                <div id="visible-status-card-front"></div>
+                <div id="visible-status-card-back"></div>
+            </div>
+        </div>
+        <div id="goal-info-inner"></div>
+    </div>
 
     <div id="board">
         <!-- BEGIN tale -->
@@ -37,7 +45,9 @@
         <!-- END tale -->
     </div>
 
-    <div id="alibi-deck"></div>
+    <div id="alibi-deck">
+
+    </div>
 
     <div id="detective-alibi"></div>
 </div>

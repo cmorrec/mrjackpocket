@@ -19,7 +19,9 @@ function range(length) {
     return [...Array(length).keys()];
 };
 
-
+async function delay(ms) {
+    return new Promise((res, rej) => setTimeout(() => res(), ms));
+};
 
 define([
     "dojo","dojo/_base/declare",
@@ -145,6 +147,9 @@ function (dojo, declare, baseFx) {
             this.setupNotifications();
 
             this.setPlayerPanels();
+
+            this.addImg({ id: 'visible-status-card-front', urls: 'img/invisible_card.jpg' });
+            this.addImg({ id: 'visible-status-card-back', urls: 'img/visible_card.png' });
 
             console.log( "Ending game setup" );
         },
@@ -906,9 +911,8 @@ function (dojo, declare, baseFx) {
         closeCharacter(characterId) {
             const character = this.getCharacterById(characterId);
             const taleId = this.getTaleIdByCharacterId(characterId, 'inner');
-            const oldImage = this.addImg({ urls: this.getCharacterImage(character) }).obj['background-image'];
-            character.isOpened = false;
-            const newImage = this.addImg({ urls: this.getCharacterImage(character) }).obj['background-image'];
+            const oldImage = this.addImg({ urls: this.getCharacterImage({ ...character, isOpened: true }) }).obj['background-image'];
+            const newImage = this.addImg({ urls: this.getCharacterImage({ ...character, isOpened: false }) }).obj['background-image'];
             const keyFrameId = `close-${characterId}-character`;
             const { wallSide } = character;
             const axis = ['up', 'down'].includes(wallSide) ? 'Y' : 'X';
@@ -996,19 +1000,26 @@ function (dojo, declare, baseFx) {
             winPlayerId,
         }) {
             this.animateWinnerDetermination({ isVisible });
-            this.animateNewRound({ winPlayerId, isVisible });
+            setTimeout(
+                () => {
+                    this.currentData.characters
+                        .filter(e => characterIdsToClose.includes(e.id))
+                        .forEach(e => this.closeCharacter(e.id));
 
-            this.currentData.characters
-                .filter(e => characterIdsToClose.includes(e.id))
-                .forEach(e => this.closeCharacter(e.id));
-
-            if (playUntilVisibility !== this.currentData.currentRound.playUntilVisibility) {
-                this.updateGoal(playUntilVisibility);
-            }
-
-            this.initOptions(
-                newOptions,
-                newNextOptions,
+                    setTimeout(() => {
+                        const init = () => this.initOptions(
+                            newOptions,
+                            newNextOptions,
+                        );
+                        if (playUntilVisibility !== this.currentData.currentRound.playUntilVisibility) {
+                            this.updateGoal(playUntilVisibility);
+                            setTimeout(init, 1200);
+                        } else {
+                            init();
+                        }
+                    }, 1200);
+                },
+                5700,
             );
         },
 
@@ -1017,13 +1028,33 @@ function (dojo, declare, baseFx) {
             // 1) card from the right side appears in front of players deck
             // 2) then it rotateY and we see visible or invisible
             // 3) card return where it was
-            alert(`isVisible = ${isVisible}`);
+            // alert(`isVisible = ${isVisible}`);
+            const id = 'visible-status-card-inner';
+            const wasVisible = this.currentData.previousRounds[this.currentData.previousRounds.length - 1]?.isCriminalVisible ?? false;
+
+            const backMove = () => {
+                this.slideToObject(id, 'visible-status-card-container', 1000).play();
+                dojo.setStyle(id, { 'box-shadow': '' });
+                setTimeout(() => {
+                    this.animateNewRound({ isVisible });
+                }, 1100);
+            };
+            this.slideToObject(id, 'container', 1400).play();
+            dojo.setStyle(id, { 'box-shadow': '0 0 0 max(100vh, 100vw) rgba(0, 0, 0, .3)' });
+            setTimeout(() => {
+                if (isVisible !== wasVisible) {
+                    dojo.toggleClass(id, 'is-visible');
+                    setTimeout(backMove, 900);
+                } else {
+                    backMove();
+                }
+            }, 1600);
         },
 
-        animateNewRound({ winPlayerId, isVisible }) {
+        animateNewRound({ isVisible }) {
             // TODO increase counter current round to the winned person
             // 1) old round move to the winPlayer panel and destroy and increase counter
-            const oldRound = this.currentData.currentRound.num;
+            const oldRound = this.currentData.currentRound.num - 1;
             const oldRoundId = `round_${oldRound}`;
             const newRoundId = `round_${oldRound + 1}`;
             const placeToMoveRound = isVisible ? 'detective-winned-rounds-pic' : 'jack-winned-rounds-pic';
@@ -1091,9 +1122,9 @@ function (dojo, declare, baseFx) {
         },
 
         updateGoal(playUntilVisibility) {
-            // TODO animate
+            // TODO animate for 1s
             const isJackPlayer = Boolean(this.currentData.jackId);
-            const goalElement = $('goal-info');
+            const goalElement = $('goal-info-inner');
             // TODO change it to text and beautiful picture (maybe tooltip)
             goalElement.innerText = isJackPlayer && playUntilVisibility
                 ? 'isJackPlayer && playUntilVisibility'
