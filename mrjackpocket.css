@@ -314,7 +314,7 @@
 }
 
 /* The flip card container - set the width and height to whatever you want. We have added the border property to demonstrate that the flip itself goes out of the box on hover (remove perspective if you don't want the 3D effect */
-#visible-status-card {
+#visible-status-card-container {
     width: 220px;
     height: 320px;
     transition-duration: 900ms, 900ms;
@@ -355,5 +355,76 @@
 
 /* Style the back side */
 #visible-status-card-back {
+    transform: rotateY(180deg);
+}
+
+/* #jack-alibi-animation-pic {
+    width: 40px;
+    height: 40px;
+    z-index: 1;
+    transition-duration: 900ms, 900ms;
+    transition-property: box-shadow, transform;
+} */
+
+#alibi-deck {
+    position: relative;
+}
+
+#alibi-deck-img {
+}
+
+.alibi-deck-img {
+    width: 220px;
+    height: 320px;
+}
+
+#alibi-deck-counter {
+    z-index: 2;
+    bottom: 50px;
+}
+
+
+/* The flip card container - set the width and height to whatever you want. We have added the border property to demonstrate that the flip itself goes out of the box on hover (remove perspective if you don't want the 3D effect */
+#jack-alibi-opening-container {
+    width: 220px;
+    height: 320px;
+    transition-duration: 900ms, 900ms;
+    transition-property: box-shadow, transform;
+    background-color: transparent;
+    perspective: 1000px; /* Remove this if you don't want the 3D effect */
+}
+
+/* This container is needed to position the front and back side */
+#jack-alibi-opening-inner {
+    position: relative;
+    width: 220px;
+    height: 320px;
+    z-index: 2;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+}
+  
+  /* Do an horizontal flip when you move the mouse over the flip box container */
+#jack-alibi-opening-inner.is-visible {
+    transform: rotateY(180deg);
+}
+
+/* Position the front and back side */
+#jack-alibi-opening-front, #jack-alibi-opening-back {
+    position: absolute;
+    width: 220px;
+    height: 320px;
+    -webkit-backface-visibility: hidden; /* Safari */
+    backface-visibility: hidden;
+}
+
+/* Style the front side (fallback if image is missing) */
+#jack-alibi-opening-front {
+
+}
+
+/* Style the back side */
+#jack-alibi-opening-back {
     transform: rotateY(180deg);
 }

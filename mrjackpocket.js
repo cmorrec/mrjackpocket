@@ -23,6 +23,8 @@ async function delay(ms) {
     return new Promise((res, rej) => setTimeout(() => res(), ms));
 };
 
+const SHADOW_ALL_SCREEN = '0 0 0 max(100vh, 100vw) rgba(0, 0, 0, .3)';
+
 define([
     "dojo","dojo/_base/declare",
     "dojo/_base/fx",
@@ -150,6 +152,7 @@ function (dojo, declare, baseFx) {
 
             this.addImg({ id: 'visible-status-card-front', urls: 'img/invisible_card.jpg' });
             this.addImg({ id: 'visible-status-card-back', urls: 'img/visible_card.png' });
+            this.addImg({ id: 'alibi-deck-img', urls: 'img/alibi_back.png' });
 
             console.log( "Ending game setup" );
         },
@@ -1040,7 +1043,7 @@ function (dojo, declare, baseFx) {
                 }, 1100);
             };
             this.slideToObject(id, 'container', 1400).play();
-            dojo.setStyle(id, { 'box-shadow': '0 0 0 max(100vh, 100vw) rgba(0, 0, 0, .3)' });
+            dojo.setStyle(id, { 'box-shadow': SHADOW_ALL_SCREEN });
             setTimeout(() => {
                 if (isVisible !== wasVisible) {
                     dojo.toggleClass(id, 'is-visible');
@@ -1060,7 +1063,7 @@ function (dojo, declare, baseFx) {
             const placeToMoveRound = isVisible ? 'detective-winned-rounds-pic' : 'jack-winned-rounds-pic';
 
             this.slideToObject(oldRoundId, 'container', 1400).play();
-            dojo.setStyle(oldRoundId, { 'box-shadow': '0 0 0 max(100vh, 100vw) rgba(0, 0, 0, .3)', transform: 'scale(3)' });
+            dojo.setStyle(oldRoundId, { 'box-shadow': SHADOW_ALL_SCREEN, transform: 'scale(3)' });
             setTimeout(() => {
                 this.slideToObject(oldRoundId, placeToMoveRound, 1000).play();
                 dojo.setStyle(oldRoundId, { 'box-shadow': '', transform: 'scale(1)' });
@@ -1136,21 +1139,59 @@ function (dojo, declare, baseFx) {
         },
 
         alibiJack({ alibiId, points }) {
-            // TODO animate nicely
-            alert(`You are Jack and you got alibi ${alibiId}, points ${points}`);
-
+            this.alibiUnified({ alibiId, points });
             this.updateAvailableAlibiCards();
         },
 
         alibiAllExceptJack() {
-            // TODO animate nicely
-            alert(`Jack got alibi`);
-
+            this.alibiUnified();
             this.updateAvailableAlibiCards();
         },
 
+        alibiUnified({ alibiId, points } = {}) {
+            const id = 'jack-alibi-opening-inner';
+            const finalPlaceToMove = 'jack-winned-rounds-pic';
+            dojo.place(
+                this.format_block('jstpl_jack_alibi_opening', {}),
+                'alibi-deck-opening',
+            );
+            this.addImg({ id: 'jack-alibi-opening-front' , urls: 'img/alibi_back.png' });
+            if (alibiId) {
+                this.addImg({ id: 'jack-alibi-opening-back' , urls: `img/alibi_${alibiId}.png` });
+            }
+
+            this.slideToObject(id, 'container', 1400).play();
+            dojo.setStyle(
+                id,
+                {
+                    'box-shadow': SHADOW_ALL_SCREEN,
+                    // transform: 'scale(3)',
+                },
+            );
+            const finalMove = () => {
+                this.slideToObject(id, finalPlaceToMove, 1000).play();
+                dojo.setStyle(id, { 'box-shadow': '' });
+                setTimeout(() => {
+                    dojo.destroy('jack-alibi-opening-container');
+                }, 1100);
+            };
+
+            setTimeout(() => {
+                if (alibiId) {
+                    dojo.toggleClass(id, 'is-visible');
+                    setTimeout(finalMove, 1100);
+                } else {
+                    finalMove();
+                }
+            }, 1600);
+        },
+
         alibiAll(alibiId) {
-            // TODO animate nicely
+            // 1 создать там где колода
+            // 2 назначить картинку небольшую
+            // 3 поместить в центр
+            // 4 красиво исчезнуть
+            // 5 закрыть карту если можно
             alert(`Detective got alibi = ${alibiId}`);
 
             this.updateAvailableAlibiCards();
@@ -1158,7 +1199,7 @@ function (dojo, declare, baseFx) {
 
         updateAvailableAlibiCards() {
             // TODO animate + picture
-            const deck = $('alibi-deck');
+            const deck = $('alibi-deck-counter');
             deck.innerText = 8 - ((this.currentData.jackAlibiCardsNum ?? 0) + this.currentData.detectiveAlibiCards.length);
         },
 

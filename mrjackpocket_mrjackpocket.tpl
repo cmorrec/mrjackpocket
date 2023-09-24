@@ -46,7 +46,9 @@
     </div>
 
     <div id="alibi-deck">
-
+        <div id="alibi-deck-img" class="alibi-deck-img"></div>
+        <div id="alibi-deck-opening"></div>
+        <div id="alibi-deck-counter"></div>
     </div>
 
     <div id="detective-alibi"></div>
@@ -87,6 +89,14 @@ var jstpl_winned_rounds_tooltip='<div class="winned-rounds-tooltip-container">${
 var jstpl_winned_round_tooltip='<div class="winned-round-tooltip" style="${styles}"></div>';
 var jstpl_jack_alibi_cards_tooltip='<div class="alibi-cards-tooltip-container">${alibis}</div>';
 var jstpl_jack_alibi_card_tooltip='<div class="alibi-card-tooltip" style="${styles}"></div>';
+var jstpl_jack_alibi_opening=`
+    <div id="jack-alibi-opening-container">
+        <div id="jack-alibi-opening-inner">
+            <div id="jack-alibi-opening-front"></div>
+            <div id="jack-alibi-opening-back"></div>
+        </div>
+    </div>
+`;
 
 </script>
 
