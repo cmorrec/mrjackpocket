@@ -101,6 +101,7 @@ function (dojo, declare, baseFx) {
                 });
             }
 
+            // async
             this.updateGoal(gamedatas.currentRound.playUntilVisibility);
 
             for (const character of gamedatas.characters) {
@@ -853,7 +854,7 @@ function (dojo, declare, baseFx) {
             // return (this.sideDict[newWallSide] - this.sideDict[oldWallSide]) * 90;
         },
 
-        exchangeTales({ characterId1, characterId2 }) {
+        async exchangeTales({ characterId1, characterId2 }) {
             const taleId1 = this.getTaleIdByCharacterId(characterId1);
             const taleId2 = this.getTaleIdByCharacterId(characterId2);
             const taleIdInner1 = this.getTaleIdByCharacterId(characterId1, 'inner');
@@ -862,14 +863,13 @@ function (dojo, declare, baseFx) {
             const tale2 = $(taleId2);
             this.slideToObject(taleIdInner1, taleId1, 1000).play();
             this.slideToObject(taleIdInner2, taleId2, 1000).play();
-            setTimeout(() => {
-                const children1 = tale1.innerHTML;
-                const children2 = tale2.innerHTML;
-                tale1.innerHTML = children2;
-                tale2.innerHTML = children1;
-                dojo.setStyle(taleIdInner1, { left: '0px', top: '0px' });
-                dojo.setStyle(taleIdInner2, { left: '0px', top: '0px' });
-            }, 1500);
+            await delay(1500);
+            const children1 = tale1.innerHTML;
+            const children2 = tale2.innerHTML;
+            tale1.innerHTML = children2;
+            tale2.innerHTML = children1;
+            dojo.setStyle(taleIdInner1, { left: '0px', top: '0px' });
+            dojo.setStyle(taleIdInner2, { left: '0px', top: '0px' });
         },
 
         moveDetective({ detectiveId, newPos }) {
@@ -911,7 +911,7 @@ function (dojo, declare, baseFx) {
                 .map((e) => this.getDetectiveById(e));
         },
 
-        closeCharacter(characterId) {
+        async closeCharacter(characterId) {
             const character = this.getCharacterById(characterId);
             const taleId = this.getTaleIdByCharacterId(characterId, 'inner');
             const oldImage = this.addImg({ urls: this.getCharacterImage({ ...character, isOpened: true }) }).obj['background-image'];
@@ -955,14 +955,14 @@ function (dojo, declare, baseFx) {
                 animation: `${keyFrameId} 1s 1`,
                 'animation-fill-mode': 'forwards',
             });
-            setTimeout(() => {
-                dojo.setStyle(taleId, {
-                    animation: '',
-                    'animation-fill-mode': '',
-                    'background-image': newImage,
-                    // transform: `${currentRotation}`,
-                });
-            }, 1000);
+
+            await delay(1000);
+            dojo.setStyle(taleId, {
+                animation: '',
+                'animation-fill-mode': '',
+                'background-image': newImage,
+                // transform: `${currentRotation}`,
+            });
         },
 
         addImg({ id, _class, urls, isCharacter = false }) {
@@ -994,39 +994,33 @@ function (dojo, declare, baseFx) {
             };
         },
 
-        endRound({
+        async endRound({
             isVisible,
             playUntilVisibility, 
             newOptions,
             newNextOptions,
             characterIdsToClose,
             winPlayerId,
+            newRoundNum,
         }) {
-            this.animateWinnerDetermination({ isVisible });
-            setTimeout(
-                () => {
-                    this.currentData.characters
-                        .filter(e => characterIdsToClose.includes(e.id))
-                        .forEach(e => this.closeCharacter(e.id));
+            await this.animateWinnerDetermination({ isVisible, newRoundNum });
+            await Promise.all(
+                this.currentData.characters
+                    .filter(e => characterIdsToClose.includes(e.id))
+                    .map(e => this.closeCharacter(e.id))
+            );
 
-                    setTimeout(() => {
-                        const init = () => this.initOptions(
-                            newOptions,
-                            newNextOptions,
-                        );
-                        if (playUntilVisibility !== this.currentData.currentRound.playUntilVisibility) {
-                            this.updateGoal(playUntilVisibility);
-                            setTimeout(init, 1200);
-                        } else {
-                            init();
-                        }
-                    }, 1200);
-                },
-                5700,
+            if (playUntilVisibility !== this.currentData.currentRound.playUntilVisibility) {
+                await this.updateGoal(playUntilVisibility);
+            }
+
+            this.initOptions(
+                newOptions,
+                newNextOptions,
             );
         },
 
-        animateWinnerDetermination({ isVisible }) {
+        async animateWinnerDetermination({ isVisible, newRoundNum }) {
             // as in JACK original
             // 1) card from the right side appears in front of players deck
             // 2) then it rotateY and we see visible or invisible
@@ -1035,46 +1029,41 @@ function (dojo, declare, baseFx) {
             const id = 'visible-status-card-inner';
             const wasVisible = this.currentData.previousRounds[this.currentData.previousRounds.length - 1]?.isCriminalVisible ?? false;
 
-            const backMove = () => {
-                this.slideToObject(id, 'visible-status-card-container', 1000).play();
-                dojo.setStyle(id, { 'box-shadow': '' });
-                setTimeout(() => {
-                    this.animateNewRound({ isVisible });
-                }, 1100);
-            };
             this.slideToObject(id, 'container', 1400).play();
             dojo.setStyle(id, { 'box-shadow': SHADOW_ALL_SCREEN });
+            await delay(1600);
 
-            setTimeout(() => {
-                if (isVisible !== wasVisible) {
-                    dojo.toggleClass(id, 'is-visible');
-                    setTimeout(backMove, 900);
-                } else {
-                    backMove();
-                }
-            }, 1600);
+            if (isVisible !== wasVisible) {
+                dojo.toggleClass(id, 'is-visible');
+                await delay(900);
+            }
+
+            this.slideToObject(id, 'visible-status-card-container', 1000).play();
+            dojo.setStyle(id, { 'box-shadow': '' });
+            await delay(1100);
+
+            await this.animateNewRound({ isVisible, newRoundNum });
         },
 
-        animateNewRound({ isVisible }) {
+        async animateNewRound({ isVisible, newRoundNum }) {
             // TODO increase counter current round to the winned person
             // 1) old round move to the winPlayer panel and destroy and increase counter
-            const oldRound = this.currentData.currentRound.num - 1;
-            const oldRoundId = `round_${oldRound}`;
-            const newRoundId = `round_${oldRound + 1}`;
+            const oldRoundId = `round_${newRoundNum - 1}`;
+            const newRoundId = `round_${newRoundNum}`;
             const placeToMoveRound = isVisible ? 'detective-winned-rounds-pic' : 'jack-winned-rounds-pic';
 
             this.slideToObject(oldRoundId, 'container', 1400).play();
             dojo.setStyle(oldRoundId, { 'box-shadow': SHADOW_ALL_SCREEN, transform: 'scale(3)' });
-            setTimeout(() => {
-                this.slideToObject(oldRoundId, placeToMoveRound, 1000).play();
-                dojo.setStyle(oldRoundId, { 'box-shadow': '', transform: 'scale(1)' });
-                setTimeout(() => {
-                    dojo.destroy(oldRoundId);
-                    if ($(newRoundId)) {
-                        dojo.addClass(newRoundId, 'current-round');
-                    }
-                }, 1100);
-            }, 1600);
+            await delay(1600);
+
+            this.slideToObject(oldRoundId, placeToMoveRound, 1000).play();
+            dojo.setStyle(oldRoundId, { 'box-shadow': '', transform: 'scale(1)' });
+            await delay(1100);
+
+            dojo.destroy(oldRoundId);
+            if ($(newRoundId)) {
+                dojo.addClass(newRoundId, 'current-round');
+            }
         },
 
         initOptions(currentOptions, nextOptions) {
@@ -1125,7 +1114,7 @@ function (dojo, declare, baseFx) {
             }
         },
 
-        updateGoal(playUntilVisibility) {
+        async updateGoal(playUntilVisibility) {
             // TODO animate for 1s
             const isJackPlayer = Boolean(this.currentData.jackId);
             const goalElement = $('goal-info-inner');
@@ -1149,7 +1138,7 @@ function (dojo, declare, baseFx) {
             this.updateAvailableAlibiCards();
         },
 
-        alibiUnified({ alibiId, points } = {}) {
+        async alibiUnified({ alibiId, points } = {}) {
             const id = 'jack-alibi-opening-inner';
             const finalPlaceToMove = 'jack-winned-alibi-pic';
             dojo.place(
@@ -1162,24 +1151,19 @@ function (dojo, declare, baseFx) {
                 this.addImg({ id: 'jack-alibi-opening-back' , urls: alibiSource });
             }
 
-            const finalMove = () => {
-                this.slideToObject(id, finalPlaceToMove, 1000).play();
-                dojo.setStyle(id, { 'box-shadow': '', transform: 'scale(0.25)' });
-                setTimeout(() => {
-                    dojo.destroy('jack-alibi-opening-container');
-                }, 1100);
-            };
             this.slideToObject(id, 'container', 1400).play();
             dojo.setStyle(id, { 'box-shadow': SHADOW_ALL_SCREEN });
+            await delay(1600);
 
-            setTimeout(() => {
-                if (alibiId) {
-                    dojo.toggleClass(id, 'is-visible');
-                    setTimeout(finalMove, 1100);
-                } else {
-                    finalMove();
-                }
-            }, 1600);
+            if (alibiId) {
+                dojo.toggleClass(id, 'is-visible');
+                await delay(1100);
+            }
+
+            this.slideToObject(id, finalPlaceToMove, 1000).play();
+            dojo.setStyle(id, { 'box-shadow': '', transform: 'scale(0.25)' });
+            await delay(1100);
+            dojo.destroy('jack-alibi-opening-container');
         },
 
         alibiAll(alibiId) {
@@ -1308,7 +1292,7 @@ function (dojo, declare, baseFx) {
             const pos2 = character2.pos;
             character1.pos = pos2;
             character2.pos = pos1;
-            this.exchangeTales({ characterId1, characterId2 });
+            this.exchangeTales({ characterId1, characterId2 }); // async
         },
 
         notif_jocker(notif) {
@@ -1385,7 +1369,7 @@ function (dojo, declare, baseFx) {
             this.optionWasUsed('alibi');
             this.alibiAll(alibiId);
             if (close) {
-                this.closeCharacter(alibiId);
+                this.closeCharacter(alibiId); // async
                 const character = this.getCharacterById(alibiId);
                 character.isOpened = false;
             }
@@ -1402,65 +1386,62 @@ function (dojo, declare, baseFx) {
             }
         },
 
-        notif_roundEnd(notif) {
-            setTimeout(
-                () => {
-                    console.log('notif_roundEnd');
-                    const {
-                        nextActivePlayerId,
-                        newRoundNum,
-                        newOptions,
-                        newNextOptions,
-                        characterIdsToClose: closeCharactersObj,
-                        isVisible,
-                        playUntilVisibility,
-                        winPlayerId,
-                    } = notif.args;
-                    const characterIdsToClose = Object.values(closeCharactersObj);
-                    console.log(
-                        'nextActivePlayerId =', nextActivePlayerId, '\n',
-                        'newRoundNum =', newRoundNum, '\n',
-                        'newOptions =', newOptions, '\n',
-                        'newNextOptions =', newNextOptions, '\n',
-                        'characterIdsToClose =', characterIdsToClose, '\n',
-                        'isVisible =', isVisible, '\n',
-                        'playUntilVisibility =', playUntilVisibility, '\n',
-                        'winPlayerId =', winPlayerId, '\n',
-                    );
-        
-                    const currentOptions = newOptions.map(e => ({ ability: e, wasUsed: false }));
-                    const nextOptions = newNextOptions?.map(e => ({ ability: e, wasUsed: false }));
-        
-                    this.endRound({
-                        isVisible,
-                        playUntilVisibility,
-                        newOptions: currentOptions,
-                        newNextOptions: nextOptions,
-                        characterIdsToClose,
-                        winPlayerId,
-                    });
-        
-                    this.currentData.previousRounds.push({
-                        num: newRoundNum - 1,
-                        winPlayerId,
-                        isCriminalVisible: isVisible,
-                    });
-                    this.currentData.currentRound = {
-                        ...this.currentData.currentRound,
-                        num: newRoundNum,
-                        playUntilVisibility,
-                        activePlayerId: nextActivePlayerId,
-                    };
-                    this.currentData.characters
-                        .filter(e => characterIdsToClose.includes(e.id))
-                        .forEach((e) => { e.isOpened = false; });
-                    this.currentData.currentOptions = currentOptions;
-                    this.currentData.nextOptions = nextOptions;
-
-                    this.setPlayerPanels();
-                },
-                1000,
+        async notif_roundEnd(notif) {
+            await delay(1000);
+            console.log('notif_roundEnd');
+            const {
+                nextActivePlayerId,
+                newRoundNum,
+                newOptions,
+                newNextOptions,
+                characterIdsToClose: closeCharactersObj,
+                isVisible,
+                playUntilVisibility,
+                winPlayerId,
+            } = notif.args;
+            const characterIdsToClose = Object.values(closeCharactersObj);
+            console.log(
+                'nextActivePlayerId =', nextActivePlayerId, '\n',
+                'newRoundNum =', newRoundNum, '\n',
+                'newOptions =', newOptions, '\n',
+                'newNextOptions =', newNextOptions, '\n',
+                'characterIdsToClose =', characterIdsToClose, '\n',
+                'isVisible =', isVisible, '\n',
+                'playUntilVisibility =', playUntilVisibility, '\n',
+                'winPlayerId =', winPlayerId, '\n',
             );
+
+            const currentOptions = newOptions.map(e => ({ ability: e, wasUsed: false }));
+            const nextOptions = newNextOptions?.map(e => ({ ability: e, wasUsed: false }));
+
+            await this.endRound({
+                isVisible,
+                playUntilVisibility,
+                newOptions: currentOptions,
+                newNextOptions: nextOptions,
+                characterIdsToClose,
+                winPlayerId,
+                newRoundNum,
+            });
+
+            this.currentData.previousRounds.push({
+                num: newRoundNum - 1,
+                winPlayerId,
+                isCriminalVisible: isVisible,
+            });
+            this.currentData.currentRound = {
+                ...this.currentData.currentRound,
+                num: newRoundNum,
+                playUntilVisibility,
+                activePlayerId: nextActivePlayerId,
+            };
+            this.currentData.characters
+                .filter(e => characterIdsToClose.includes(e.id))
+                .forEach((e) => { e.isOpened = false; });
+            this.currentData.currentOptions = currentOptions;
+            this.currentData.nextOptions = nextOptions;
+
+            this.setPlayerPanels();
         },
    });   
 });
