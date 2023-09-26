@@ -1044,6 +1044,7 @@ function (dojo, declare, baseFx) {
             };
             this.slideToObject(id, 'container', 1400).play();
             dojo.setStyle(id, { 'box-shadow': SHADOW_ALL_SCREEN });
+
             setTimeout(() => {
                 if (isVisible !== wasVisible) {
                     dojo.toggleClass(id, 'is-visible');
@@ -1150,31 +1151,26 @@ function (dojo, declare, baseFx) {
 
         alibiUnified({ alibiId, points } = {}) {
             const id = 'jack-alibi-opening-inner';
-            const finalPlaceToMove = 'jack-winned-rounds-pic';
+            const finalPlaceToMove = 'jack-winned-alibi-pic';
             dojo.place(
                 this.format_block('jstpl_jack_alibi_opening', {}),
                 'alibi-deck-opening',
             );
             this.addImg({ id: 'jack-alibi-opening-front' , urls: 'img/alibi_back.png' });
-            if (alibiId) {
-                this.addImg({ id: 'jack-alibi-opening-back' , urls: `img/alibi_${alibiId}.png` });
+            const alibiSource = alibiId ? `img/alibi_${alibiId}.png` : undefined;
+            if (alibiSource) {
+                this.addImg({ id: 'jack-alibi-opening-back' , urls: alibiSource });
             }
 
-            this.slideToObject(id, 'container', 1400).play();
-            dojo.setStyle(
-                id,
-                {
-                    'box-shadow': SHADOW_ALL_SCREEN,
-                    // transform: 'scale(3)',
-                },
-            );
             const finalMove = () => {
                 this.slideToObject(id, finalPlaceToMove, 1000).play();
-                dojo.setStyle(id, { 'box-shadow': '' });
+                dojo.setStyle(id, { 'box-shadow': '', transform: 'scale(0.25)' });
                 setTimeout(() => {
                     dojo.destroy('jack-alibi-opening-container');
                 }, 1100);
             };
+            this.slideToObject(id, 'container', 1400).play();
+            dojo.setStyle(id, { 'box-shadow': SHADOW_ALL_SCREEN });
 
             setTimeout(() => {
                 if (alibiId) {

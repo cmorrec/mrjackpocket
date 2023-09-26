@@ -71,7 +71,7 @@ var jstpl_jack_panel=`
         <div class="time-container" id="jack-alibi">
             <div class="time-num" id="jack-alibi-num">?</div>
             ×
-            <div class="time-label"></div>
+            <div class="time-label" id="jack-winned-alibi-pic"></div>
         </div>
     </div>
 `;

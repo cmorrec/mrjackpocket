@@ -119,6 +119,7 @@
 
 #goal-info {
     grid-area: goal;
+    z-index: 2;
 }
 
 #board {
@@ -321,6 +322,7 @@
     transition-property: box-shadow, transform;
     background-color: transparent;
     perspective: 1000px; /* Remove this if you don't want the 3D effect */
+    z-index: 2;
 }
 
 /* This container is needed to position the front and back side */
@@ -357,14 +359,6 @@
 #visible-status-card-back {
     transform: rotateY(180deg);
 }
-
-/* #jack-alibi-animation-pic {
-    width: 40px;
-    height: 40px;
-    z-index: 1;
-    transition-duration: 900ms, 900ms;
-    transition-property: box-shadow, transform;
-} */
 
 #alibi-deck {
     position: relative;
