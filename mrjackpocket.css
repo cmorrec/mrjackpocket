@@ -382,6 +382,7 @@
 #jack-alibi-opening-container {
     width: 220px;
     height: 320px;
+    z-index: 3;
     transition-duration: 900ms, 900ms;
     transition-property: box-shadow, transform;
     background-color: transparent;
@@ -393,7 +394,7 @@
     position: relative;
     width: 220px;
     height: 320px;
-    z-index: 2;
+    z-index: 3;
     text-align: center;
     transition: transform 0.8s;
     transform-style: preserve-3d;

@@ -1128,13 +1128,13 @@ function (dojo, declare, baseFx) {
                 : '!isJackPlayer && !playUntilVisibility';
         },
 
-        alibiJack({ alibiId, points }) {
-            this.alibiUnified({ alibiId, points });
+        async alibiJack({ alibiId, points }) {
+            await this.alibiUnified({ alibiId, points });
             this.updateAvailableAlibiCards();
         },
 
-        alibiAllExceptJack() {
-            this.alibiUnified();
+        async alibiAllExceptJack() {
+            await this.alibiUnified();
             this.updateAvailableAlibiCards();
         },
 
@@ -1166,19 +1166,36 @@ function (dojo, declare, baseFx) {
             dojo.destroy('jack-alibi-opening-container');
         },
 
-        alibiAll(alibiId) {
+        async alibiAll(alibiId) {
             // 1 создать там где колода
             // 2 назначить картинку небольшую
             // 3 поместить в центр
             // 4 красиво исчезнуть
-            // 5 закрыть карту если можно
-            alert(`Detective got alibi = ${alibiId}`);
+            const id = 'jack-alibi-opening-inner';
+            dojo.place(
+                this.format_block('jstpl_jack_alibi_opening', {}),
+                'alibi-deck-opening',
+            );
+            this.addImg({ id: 'jack-alibi-opening-front' , urls: 'img/alibi_back.png' });
+            const alibiSource = `img/alibi_${alibiId}.png`;
+            this.addImg({ id: 'jack-alibi-opening-back' , urls: alibiSource });
+
+            this.slideToObject(id, 'container', 1400).play();
+            dojo.setStyle(id, { 'box-shadow': SHADOW_ALL_SCREEN });
+            await delay(1600);
+
+            dojo.toggleClass(id, 'is-visible');
+            await delay(1100);
+
+            this.fadeOutAndDestroy('jack-alibi-opening-container', 1000);
+            this.addImg({ id: 'jack-alibi-opening-front' , urls: alibiSource });
+            await delay(1100);
 
             this.updateAvailableAlibiCards();
         },
 
         updateAvailableAlibiCards() {
-            // TODO animate + picture
+            // TODO animate
             const deck = $('alibi-deck-counter');
             deck.innerText = 8 - ((this.currentData.jackAlibiCardsNum ?? 0) + this.currentData.detectiveAlibiCards.length);
         },
@@ -1324,13 +1341,13 @@ function (dojo, declare, baseFx) {
             detective.pos = newPos;
         },
 
-        notif_alibiJack(notif) {
+        async notif_alibiJack(notif) {
             console.log('notif_alibiJack');
             const { alibiId, points } = notif.args;
             console.log('alibiId', alibiId, 'points', points);
 
             this.optionWasUsed('alibi');
-            this.alibiJack({ alibiId, points });
+            await this.alibiJack({ alibiId, points });
             // TODO say player about alibi + points
             this.currentData.jackAlibiCards.push(alibiId);
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
@@ -1340,7 +1357,7 @@ function (dojo, declare, baseFx) {
             this.setPlayerPanels();
         },
 
-        notif_alibiAllExceptJack(notif) {
+        async notif_alibiAllExceptJack(notif) {
             console.log('notif_alibiAllExceptJack');
             const {} = notif.args;
 
@@ -1350,7 +1367,7 @@ function (dojo, declare, baseFx) {
                 return;
             }
             this.optionWasUsed('alibi');
-            this.alibiAllExceptJack();
+            await this.alibiAllExceptJack();
             // TODO say that jack took alibi card
             this.currentData.currentRound.availableALibiCards -= 1;
             this.updateAlibiCards();
@@ -1360,16 +1377,16 @@ function (dojo, declare, baseFx) {
             this.setPlayerPanels();
         },
 
-        notif_alibiAll(notif) {
+        async notif_alibiAll(notif) {
             console.log('notif_alibiAll');
             const { alibiId, close } = notif.args;
             console.log('alibiId', alibiId, 'close', close);
             // TODO say player about alibi
 
             this.optionWasUsed('alibi');
-            this.alibiAll(alibiId);
+            await this.alibiAll(alibiId);
             if (close) {
-                this.closeCharacter(alibiId); // async
+                await this.closeCharacter(alibiId); // async
                 const character = this.getCharacterById(alibiId);
                 character.isOpened = false;
             }
