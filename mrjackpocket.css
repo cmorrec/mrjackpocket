@@ -423,3 +423,8 @@
 #jack-alibi-opening-back {
     transform: rotateY(180deg);
 }
+
+#holmes, #watson, #dog {
+    z-index: 2;
+    position: absolute;
+}

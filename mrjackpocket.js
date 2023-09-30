@@ -134,13 +134,8 @@ function (dojo, declare, baseFx) {
             }
 
             for (const detective of gamedatas.detectives) {
-                // const taleId = this.getTaleIdByDetectiveId(detective.id);
-                this.moveDetective({ detectiveId: detective.id, newPos: detective.pos });
-                // const metaDetective = gamedatas.meta.detectives.find(({ id }) =>  id === detective.id);
-                // this.addImg({
-                //     id: taleId,
-                //     urls: metaDetective.img,
-                // });
+                // async
+                this.moveDetective({ detectiveId: detective.id, newPos: detective.pos, oldPos: null });
             }
 
             this.updateAvailableAlibiCards();
@@ -872,37 +867,81 @@ function (dojo, declare, baseFx) {
             dojo.setStyle(taleIdInner2, { left: '0px', top: '0px' });
         },
 
-        moveDetective({ detectiveId, newPos }) {
+        async moveDetective({ detectiveId, newPos, oldPos }) {
             const oldTaleId = this.getTaleIdByDetectiveId(detectiveId);
-            if ($(oldTaleId)) {
-                dojo.destroy(oldTaleId);
-            }
             const newBEPos = this.currentData.meta.detectivePos[newPos];
             const newFEPos = this.getFEPosByBEpos(newBEPos);
-            const allDetectivesAtFEPos = this.getAllDetectivesAtFEPos(newFEPos.id);
-            // const newTaleId = `tale_inner_${allDetectivesAtFEPos.length + 1}_${newFEPos.id}`;
-            const newTaleId = detectiveId;
-            // let newTale = $(newTaleId);
-            // if (!newTale) {
+            const newTaleId = `${detectiveId}_new`;
+            const metaDetective = this.getMetaDetectiveById(detectiveId);
+            if (oldPos) {
+                const taleRoute = this.getTaleRoute({ newPos, oldPos });
+                for (const fePos of taleRoute) {
+                    this.slideToObject(oldTaleId, `tale_${fePos.id}`, 500).play();
+                    await delay(450);
+                }
+            }
             dojo.create(
                 'div',
                 {
                     id: newTaleId,
                     class: 'tale-inner',
-                    // 'data-value': detectiveId,
                 },
                 $(`tale_${newFEPos.id}`),
             );
-                // newTale = $(newTaleId);
-            // }
-            const metaDetective = this.getMetaDetectiveById(detectiveId);
-            // const oldTale = $(oldTaleId);
-            // TODO add animation
+            if ($(oldTaleId)) {
+                dojo.destroy(oldTaleId);
+            }
+            $(newTaleId).id = detectiveId;
             this.addImg({
-                id: newTaleId,
+                id: detectiveId,
                 isCharacter: true,
                 urls: metaDetective.img,
             });
+        },
+
+        getTaleRoute({ oldPos, newPos }) {
+            // console.log('input', oldPos, newPos);
+            let currentPos = oldPos;
+            let isEnd = false;
+            const result = [];
+            while (!isEnd) {
+                if (currentPos % 3 === 0) {
+                    const { x, y } = this.currentData.meta.detectivePos[currentPos];
+                    const isDown = y === 4;
+                    const isUp = y === 0;
+                    const isLeft = x === 0;
+                    const isRight = x === 4;
+                    const newX = isLeft || isRight
+                        ? x
+                        : isUp
+                        ? x + 1
+                        : x - 1;
+                    const newY = isUp || isDown
+                        ? y
+                        : isRight
+                        ? y + 1
+                        : y - 1;
+                    const newFEpos = this.boardPos.find((pos) => pos.x === newX && pos.y === newY);
+                    if (!newFEpos) {
+                        alert('System error! Please write support');
+                        console.log('getTaleRoute', x, y, newX, newY, currentPos, this.currentData.meta.detectivePos[currentPos]);
+                    }
+                    result.push(newFEpos);
+                    // console.log('corner cycle', newFEpos);
+                }
+
+                const nextPos = currentPos + 1;
+                currentPos = nextPos > 12 ? nextPos - 12 : nextPos;
+                result.push(this.getFEPosByBEpos(this.currentData.meta.detectivePos[currentPos]));
+
+                if (currentPos === newPos) {
+                    isEnd = true;
+                }
+                // console.log('cycle', nextPos, currentPos, isEnd);
+            }
+            // console.log('result', result);
+
+            return result;
         },
 
         getAllDetectivesAtFEPos(id) {
@@ -1312,7 +1351,7 @@ function (dojo, declare, baseFx) {
             this.exchangeTales({ characterId1, characterId2 }); // async
         },
 
-        notif_jocker(notif) {
+        async notif_jocker(notif) {
             console.log('notif_jocker');
             const { detectiveId, newPos } = notif.args;
             console.log('detectiveId', detectiveId, 'newPos', newPos);
@@ -1322,22 +1361,22 @@ function (dojo, declare, baseFx) {
                 // TODO notify player what jack skip step by jocker
                 alert('Jack skipped by jocker');
             } else {
-                this.detective({ detectiveId, newPos });
+                await this.detective({ detectiveId, newPos });
             }
         },
 
-        notif_detective(notif) {
+        async notif_detective(notif) {
             console.log('notif_detective');
             const { detectiveId, newPos } = notif.args;
             console.log('detectiveId', detectiveId, 'newPos', newPos);
 
             this.optionWasUsed(detectiveId);
-            this.detective({ detectiveId, newPos });
+            await this.detective({ detectiveId, newPos });
         },
 
-        detective({ detectiveId, newPos }) {
+        async detective({ detectiveId, newPos }) {
             const detective = this.getDetectiveById(detectiveId);
-            this.moveDetective({ detectiveId, newPos });
+            await this.moveDetective({ detectiveId, newPos, oldPos: detective.pos });
             detective.pos = newPos;
         },
 
