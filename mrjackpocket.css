@@ -209,10 +209,6 @@
     align-items: center;
 }
 
-#alibi-deck {
-    grid-area: alibi;
-}
-
 .tale {
     border: 1px solid black;
     text-align: center;
@@ -393,7 +389,7 @@
 
 /* The flip card container - set the width and height to whatever you want. We have added the border property to demonstrate that the flip itself goes out of the box on hover (remove perspective if you don't want the 3D effect */
 #visible-status-card-container {
-    width: 220px;
+    width: 210px;
     height: 320px;
     transition-duration: 900ms, 900ms;
     transition-property: box-shadow, transform;
@@ -405,7 +401,7 @@
 /* This container is needed to position the front and back side */
 #visible-status-card-inner {
     position: relative;
-    width: 220px;
+    width: 210px;
     height: 320px;
     z-index: 2;
     text-align: center;
@@ -421,7 +417,7 @@
 /* Position the front and back side */
 #visible-status-card-front, #visible-status-card-back {
     position: absolute;
-    width: 220px;
+    width: 210px;
     height: 320px;
     -webkit-backface-visibility: hidden; /* Safari */
     backface-visibility: hidden;
@@ -438,26 +434,37 @@
 }
 
 #alibi-deck {
+    grid-area: alibi;
     position: relative;
+    width: 185px;
+    height: 320px;
+}
+
+#alibi-deck-opening {
+    position: absolute;
 }
 
 #alibi-deck-img {
+    position: absolute;
 }
 
 .alibi-deck-img {
-    width: 220px;
+    width: 185px;
     height: 320px;
 }
 
 #alibi-deck-counter {
+    position: absolute;
     z-index: 2;
+    color: aliceblue;
     bottom: 50px;
+    left: 50%;
 }
 
 
 /* The flip card container - set the width and height to whatever you want. We have added the border property to demonstrate that the flip itself goes out of the box on hover (remove perspective if you don't want the 3D effect */
 #jack-alibi-opening-container {
-    width: 220px;
+    width: 185px;
     height: 320px;
     z-index: 3;
     transition-duration: 900ms, 900ms;
@@ -469,7 +476,7 @@
 /* This container is needed to position the front and back side */
 #jack-alibi-opening-inner {
     position: relative;
-    width: 220px;
+    width: 185px;
     height: 320px;
     z-index: 3;
     text-align: center;
@@ -485,7 +492,7 @@
 /* Position the front and back side */
 #jack-alibi-opening-front, #jack-alibi-opening-back {
     position: absolute;
-    width: 220px;
+    width: 185px;
     height: 320px;
     -webkit-backface-visibility: hidden; /* Safari */
     backface-visibility: hidden;

@@ -141,8 +141,6 @@ function (dojo, declare, baseFx) {
 
             this.updateAvailableAlibiCards();
 
-            this.updateAlibiCards();
-
             this.setupNotifications();
 
             this.setPlayerPanels();
@@ -716,33 +714,6 @@ function (dojo, declare, baseFx) {
             // TODO add styles to active and inactive options
         },
 
-        updateAlibiCards() {
-            const el = $('detective-alibi');
-            el.innerHTML = '';
-            this.currentData.detectiveAlibiCards.forEach(
-                (e, i) => el.appendChild(
-                    Object.assign(
-                        document.createElement('div'),
-                        {
-                            id: `detective-alibi_${i}`,
-                            innerText: `detective alibi: ${e}`,
-                        },
-                    ),
-                ),
-            );
-            (this.currentData.jackAlibiCards ?? []).forEach(
-                (e, i) => el.appendChild(
-                    Object.assign(
-                        document.createElement('div'),
-                        {
-                            id: `jack-alibi_${i}`,
-                            innerText: `jack alibi ${e}`,
-                        },
-                    ),
-                ),
-            );
-        },
-
         ///////////////////////////////////////////////////
         //// Game & client states
         
@@ -1244,10 +1215,10 @@ function (dojo, declare, baseFx) {
         },
 
         async alibiAll(alibiId) {
-            // 1 создать там где колода
-            // 2 назначить картинку небольшую
-            // 3 поместить в центр
-            // 4 красиво исчезнуть
+            // 1 create in the cards place
+            // 2 assign picture
+            // 3 move to the center
+            // 4 fase out and destroy
             const id = 'jack-alibi-opening-inner';
             dojo.place(
                 this.format_block('jstpl_jack_alibi_opening', {}),
@@ -1430,7 +1401,6 @@ function (dojo, declare, baseFx) {
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
 
             this.currentData.currentRound.availableALibiCards -= 1;
-            this.updateAlibiCards();
             this.setPlayerPanels();
         },
 
@@ -1447,8 +1417,6 @@ function (dojo, declare, baseFx) {
             await this.alibiAllExceptJack();
             // TODO say that jack took alibi card
             this.currentData.currentRound.availableALibiCards -= 1;
-            this.updateAlibiCards();
-            console.log(this.currentData.jackAlibiCardsNum);
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
             console.log(this.currentData.jackAlibiCardsNum);
             this.setPlayerPanels();
@@ -1470,7 +1438,6 @@ function (dojo, declare, baseFx) {
             this.currentData.detectiveAlibiCards.push(alibiId);
             // todo reduce it in the interface
             this.currentData.currentRound.availableALibiCards -= 1;
-            this.updateAlibiCards();
         },
 
         optionWasUsed(option) {
