@@ -88,9 +88,80 @@
     gap: 10px;
 }
 
-.available-option {
+.available-option-container {
     width: 80px;
     height: 80px;
+    border-radius: 40px;
+    perspective: 300px;
+    background-color: transparent;
+}
+
+.available-option-inner {
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    perspective: 300px;
+    background-color: transparent;
+    position: relative;
+    transform-style: preserve-3d;
+    animation-fill-mode: forwards;
+    animation-duration: 1s;
+}
+
+.available-option-inner.is-front {
+    animation-name: option-loading-front;
+}
+
+.available-option-inner.is-back {
+    animation-name: option-loading-back;
+}
+
+.available-option-inner.front-to-back {
+    animation-name: option-front-to-back;
+}
+
+.available-option-inner.back-to-front {
+    animation-name: option-back-to-front;
+}
+
+@keyframes option-loading-front {
+    0%, 100% { transform: rotateY(0deg); }
+    25%, 75% { transform: rotateY(180deg); }
+    50% { transform: rotateY(360deg); }
+}
+
+@keyframes option-loading-back {
+    0% { transform: rotateY(0deg); }
+    33%, 100% { transform: rotateY(180deg); }
+    66% { transform: rotateY(360deg); }
+}
+
+@keyframes option-back-to-front {
+    0% { transform: rotateY(180deg); }
+    100% { transform: rotateY(360deg); }
+}
+
+@keyframes option-front-to-back {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(180deg); }
+}
+
+.available-option-front, .available-option-back {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    -webkit-backface-visibility: hidden; /* Safari */
+    backface-visibility: hidden;
+}
+
+/* Style the front side (fallback if image is missing) */
+.available-option-front {
+
+}
+
+/* Style the back side */
+.available-option-back {
+    transform: rotateY(180deg);
 }
 
 .next-option {
@@ -98,6 +169,12 @@
     height: 20px;
     margin-right: -40px;
     margin-top: -20px;
+    z-index: 2;
+}
+
+.next-option.is-active {
+    width: 80px;
+    height: 80px;
 }
 
 #round-info {

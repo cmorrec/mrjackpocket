@@ -13,7 +13,12 @@
 
     <div id="available-options">
         <!-- BEGIN available_option -->
-            <div id="available_option_{index}" class="available-option"></div>
+            <div id="available_option_container_{index}" class="available-option-container">
+                <div id="available_option_inner_{index}" class="available-option-inner">
+                    <div id="available_option_front_{index}" class="available-option-front"></div>
+                    <div id="available_option_back_{index}" class="available-option-back"></div>
+                </div>
+            </div>
             <div id="next_option_{index}" class="next-option"></div>
         <!-- END available_option -->
     </div>

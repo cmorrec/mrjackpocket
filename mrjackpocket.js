@@ -80,6 +80,7 @@ function (dojo, declare, baseFx) {
             this.currentData = gamedatas;
             console.log( "Starting game setup" );
 
+            // async
             this.initOptions(
                 gamedatas.currentOptions,
                 gamedatas.nextOptions,
@@ -292,7 +293,7 @@ function (dojo, declare, baseFx) {
             }
         },
 
-        clickOnCancelButton() {
+        async clickOnCancelButton() {
             if (this.optionActions.rotation.taleId) {
                 const character = this.getCharacterById(this.optionActions.rotation.taleId);
                 if (this.optionActions.rotation.wallSide && this.optionActions.rotation.wallSide !== character.wallSide) {
@@ -317,13 +318,28 @@ function (dojo, declare, baseFx) {
                 jocker: {},
             };
             if (this.isCurrentPlayerActive()) {
-                this.initOptions(
-                    this.currentData.currentOptions,
-                    this.currentData.nextOptions,
-                );
+                this.updateOptionsStatuses();
             }
             this.removeActionButtons();
             this.setDescriptionState('must choose an action');
+        },
+
+        updateOptionsStatuses() {
+            this.currentData.currentOptions.forEach((option, index) => {
+                const availableId = `available_option_inner_${index}`;
+                const availableFrontId = `available_option_front_${index}`;
+                const availableBackId = `available_option_back_${index}`;
+
+                dojo.removeClass(availableId, 'option-is-ready');
+                if (option.wasUsed) {
+                    dojo.addClass(availableFrontId, 'option-was-used');
+                    dojo.addClass(availableBackId, 'option-was-used');
+                } else {
+                    dojo.removeClass(availableFrontId, 'option-was-used');
+                    dojo.removeClass(availableBackId, 'option-was-used');
+                }
+                this.initOptionListener(option, availableId);
+            });
         },
 
         setDescriptionState(state = '') {
@@ -362,7 +378,7 @@ function (dojo, declare, baseFx) {
             // TODO add card inactive by styles
             const e = this.eventListeners.options.find((e) => e.option === option);
             $(e.id).removeEventListener(e.type, e.listener);
-            dojo.addClass(e.id, 'option-was-used');
+            // dojo.addClass(e.id, 'option-was-used');
             dojo.removeClass(e.id, 'option-is-ready');
             this.eventListeners.options = this.eventListeners.options.filter((item) => item.id !== e.id);
         },
@@ -739,12 +755,10 @@ function (dojo, declare, baseFx) {
             
             switch(stateName) {
             case 'playerTurn':
-                setTimeout(() => {
-                    this.initOptions(
-                        this.currentData.currentOptions,
-                        this.currentData.nextOptions,
-                    );
-                }, 1000);
+                setTimeout(
+                    () => this.updateOptionsStatuses(),
+                    1000,
+                );
                 break;
             }
         },
@@ -1011,7 +1025,7 @@ function (dojo, declare, baseFx) {
 
             const styles = {
                 'background-image': background,
-                'background-size': urls.length === 1 ? 'contain' : 'contain',
+                'background-size': urls.length === 1 ? 'cover' : 'contain',
                 'background-repeat': urls.length === 1 ? 'no-repeat' : 'no-repeat',
             };
             const textStyles = Object.entries(styles)
@@ -1053,7 +1067,7 @@ function (dojo, declare, baseFx) {
                 await this.updateGoal(playUntilVisibility);
             }
 
-            this.initOptions(
+            await this.initOptions(
                 newOptions,
                 newNextOptions,
             );
@@ -1105,52 +1119,76 @@ function (dojo, declare, baseFx) {
             }
         },
 
-        initOptions(currentOptions, nextOptions) {
-            // TODO animate beauty
-            // it should work like upsert
-            $('available-options').children = '';
-            for (const index in currentOptions) {
-                const option = currentOptions[index];
-                const nextOption = nextOptions?.[index];
-                const availableId = `available_option_${index}`;
-                const nextId = `next_option_${index}`;
-                dojo.removeClass(availableId, 'option-was-used');
-                dojo.removeClass(availableId, 'option-is-ready');
-                if (option.wasUsed) {
-                    dojo.addClass(availableId, 'option-was-used');
-                }
-                const available = $(availableId);
-                this.addImg({
-                    id: availableId,
-                    urls: `img/${option.ability}_option.png`,
+        async initOptions(currentOptions, nextOptions) {
+            const optionMeta = [
+                ['rotation', 'exchange'],
+                ['rotation', 'jocker'],
+                ['alibi', 'holmes'],
+                ['watson', 'dog'],
+            ];
+            if (!this.wasOptionsPicturesAssigned) {
+                optionMeta.forEach((abilities, index) => {
+                    const frontId = `available_option_front_${index}`;
+                    const backId = `available_option_back_${index}`;
+                    this.addImg({ id: frontId, urls: `img/${abilities[0]}_option.png` });
+                    this.addImg({ id: backId, urls: `img/${abilities[1]}_option.png` });
                 });
+                this.wasOptionsPicturesAssigned = true;
+            }
+            const isOdd = Boolean(nextOptions);
+            await Promise.all(
+                currentOptions.map(async (option, index) => {
+                    const nextOption = nextOptions?.[index];
+                    const availableId = `available_option_inner_${index}`;
+                    const nextId = `next_option_${index}`;
+                    const isFront = optionMeta[index][0] === option.ability;
+                    const frontId = `available_option_front_${index}`;
+                    const backId = `available_option_back_${index}`;
 
-                if (!nextOption) {
-                    dojo.addClass(nextId, 'next-option-disable');
-                } else {
-                    dojo.removeClass(nextId, 'next-option-disable');
-                    this.addImg({
-                        id: nextId,
-                        urls: `img/${nextOption.ability}_option.png`,
+                    if (isOdd) {
+                        ['option-is-ready', 'is-back', 'is-front', 'front-to-back', 'back-to-front']
+                            .forEach((e) => dojo.removeClass(availableId, e));
+                        dojo.addClass(availableId, isFront ? 'is-front' : 'is-back');
+                        dojo.removeClass(nextId, 'next-option-disable');
+                        this.addImg({ id: nextId, urls: `img/${nextOption.ability}_option.png`, });
+                    } else {
+                        dojo.removeClass(availableId, 'is-front');
+                        dojo.removeClass(availableId, 'is-back');
+                        dojo.addClass(availableId, isFront ? 'back-to-front' : 'front-to-back');
+                        dojo.addClass(nextId, 'next-option-disable');
+                    }
+
+                    if (option.wasUsed) {
+                        dojo.addClass(frontId, 'option-was-used');
+                        dojo.addClass(backId, 'option-was-used');
+                    } else {
+                        dojo.removeClass(frontId, 'option-was-used');
+                        dojo.removeClass(backId, 'option-was-used');
+                    }
+                    this.initOptionListener(option, availableId);
+                }),
+            );
+        },
+
+        initOptionListener(option, availableId) {
+            const hasListener = this.eventListeners.options.some((e) => e.id === availableId);
+            const available = $(availableId);
+
+            if (!option.wasUsed && this.isCurrentPlayerActive()) {
+                dojo.addClass(availableId, 'option-is-ready');
+                if (!hasListener) {
+                    const type = 'click';
+                    const listener = this.getListenerByOption(option.ability);
+                    available.addEventListener(type, listener);
+                    this.eventListeners.options.push({
+                        id: availableId,
+                        type,
+                        listener,
+                        option: option.ability,
                     });
                 }
-                const hasListener = this.eventListeners.options.some((e) => e.id === availableId);
-
-                if (!option.wasUsed && this.isCurrentPlayerActive()) {
-                    dojo.addClass(availableId, 'option-is-ready');
-                    if (!hasListener) {
-                        const type = 'click';
-                        const listener = this.getListenerByOption(option.ability);
-                        available.addEventListener(type, listener);
-                        this.eventListeners.options.push({
-                            id: availableId,
-                            type,
-                            listener,
-                            option: option.ability,
-                        });
-                    }
-                }
             }
+
         },
 
         async updateGoal(playUntilVisibility) {
