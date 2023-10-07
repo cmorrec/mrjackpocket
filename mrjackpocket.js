@@ -1176,10 +1176,6 @@ function (dojo, declare, baseFx) {
                 this.wasGoalInitiated = true;
             }
 
-            if (playUntilVisibility) {
-                dojo.addClass('goal-info-inner', 'until-visibility');
-            }
-
             const playerStatus = isJackPlayer ? 'You are Jack' : 'You are a detective';
             const visibilityStatus = playUntilVisibility
                 ? 'Both players achieved their goals simultaneously. The game will end when a detective see jack in the end of round. Otherwise Jack will win in the end of 8th round'
@@ -1187,7 +1183,10 @@ function (dojo, declare, baseFx) {
             const text = `${playerStatus}. ${visibilityStatus}`;
             this.addGoalTooltip(text);
 
-            await delay(900);
+            if (playUntilVisibility) {
+                dojo.addClass('goal-info-inner', 'until-visibility');
+                await delay(900);
+            }
         },
 
         addGoalTooltip(text) {
