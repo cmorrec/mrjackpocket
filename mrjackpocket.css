@@ -512,3 +512,59 @@
     z-index: 2;
     position: absolute;
 }
+
+
+/* The flip card container - set the width and height to whatever you want. We have added the border property to demonstrate that the flip itself goes out of the box on hover (remove perspective if you don't want the 3D effect */
+#goal-info-container {
+    width: 40px;
+    height: 40px;
+    transition-duration: 900ms;
+    transition-property: transform;
+    background-color: transparent;
+    perspective: 1000px;
+}
+
+/* This container is needed to position the front and back side */
+#goal-info-inner {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+}
+  
+  /* Do an horizontal flip when you move the mouse over the flip box container */
+#goal-info-inner.until-visibility {
+    transform: rotateY(180deg);
+}
+
+/* Position the front and back side */
+#goal-info-front, #goal-info-back {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    -webkit-backface-visibility: hidden; /* Safari */
+    backface-visibility: hidden;
+}
+
+/* Style the front side (fallback if image is missing) */
+#goal-info-front {
+
+}
+
+/* Style the back side */
+#goal-info-back {
+    transform: rotateY(180deg);
+}
+
+.tooltip-text {
+    --fa-style-family-brands: "Font Awesome 6 Brands";
+    --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+    --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
+    --fa-style-family-classic: "Font Awesome 6 Free";
+    --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
+    font-size: 1.2em;
+    font-weight: 700;
+    font-family: Special Elite,cursive;
+}

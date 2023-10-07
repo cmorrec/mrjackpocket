@@ -1163,17 +1163,38 @@ function (dojo, declare, baseFx) {
         },
 
         async updateGoal(playUntilVisibility) {
-            // TODO animate for 1s
             const isJackPlayer = Boolean(this.currentData.jackId);
-            const goalElement = $('goal-info-inner');
-            // TODO change it to text and beautiful picture (maybe tooltip)
-            goalElement.innerText = isJackPlayer && playUntilVisibility
-                ? 'isJackPlayer && playUntilVisibility'
-                : isJackPlayer && !playUntilVisibility
-                ? 'isJackPlayer && !playUntilVisibility'
-                : !isJackPlayer && playUntilVisibility
-                ? '!isJackPlayer && playUntilVisibility'
-                : '!isJackPlayer && !playUntilVisibility';
+            if (!this.wasGoalInitiated) {
+                dojo.place(
+                    this.format_block('jstpl_question_svg', { color: '#0047AB' }),
+                    'goal-info-front',
+                );
+                dojo.place(
+                    this.format_block('jstpl_question_svg', { color: '#C70039' }),
+                    'goal-info-back',
+                );
+                this.wasGoalInitiated = true;
+            }
+
+            if (playUntilVisibility) {
+                dojo.addClass('goal-info-inner', 'until-visibility');
+            }
+
+            const playerStatus = isJackPlayer ? 'You are Jack' : 'You are a detective';
+            const visibilityStatus = playUntilVisibility
+                ? 'Both players achieved their goals simultaneously. The game will end when a detective see jack in the end of round. Otherwise Jack will win in the end of 8th round'
+                : 'The detective wins if at the end of the round only one character remains under suspicion. Jack wins if he manages to score 6 points by summing up the alibi cards and the rounds won';
+            const text = `${playerStatus}. ${visibilityStatus}`;
+            this.addGoalTooltip(text);
+
+            await delay(900);
+        },
+
+        addGoalTooltip(text) {
+            this.addTooltipHtml(
+                'goal-info-container',
+                `<span class="tooltip-text">${text}</span>`,
+            );
         },
 
         async alibiJack({ alibiId, points }) {
