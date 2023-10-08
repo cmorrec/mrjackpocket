@@ -23,6 +23,17 @@ async function delay(ms) {
     return new Promise((res, rej) => setTimeout(() => res(), ms));
 };
 
+function getOffset( el ) {
+    let _x = 0;
+    let _y = 0;
+    while(el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
+        _x += el.offsetLeft - el.scrollLeft + el.offsetWidth / 2;
+        _y += el.offsetTop - el.scrollTop - el.offsetHeight / 2;
+        el = el.offsetParent;
+    }
+    return { top: _y, left: _x };
+}
+
 const SHADOW_ALL_SCREEN = '0 0 0 max(100vh, 100vw) rgba(0, 0, 0, .3)';
 
 define([
@@ -148,6 +159,7 @@ function (dojo, declare, baseFx) {
             this.addImg({ id: 'visible-status-card-front', urls: 'img/invisible_card.jpg' });
             this.addImg({ id: 'visible-status-card-back', urls: 'img/visible_card.png' });
             this.addImg({ id: 'alibi-deck-img', urls: 'img/alibi_back.png' });
+            this.updateVisibleTales();
 
             console.log( "Ending game setup" );
         },
@@ -320,6 +332,7 @@ function (dojo, declare, baseFx) {
             }
             this.removeActionButtons();
             this.setDescriptionState('must choose an action');
+            this.updateVisibleTales();
         },
 
         updateOptionsStatuses() {
@@ -590,6 +603,7 @@ function (dojo, declare, baseFx) {
             this.updateRotateApproveButtonStatus();
             this.rotateTale({ characterId, oldWallSide, newWallSide });
             this.optionActions.rotation.wallSide = newWallSide;
+            this.updateVisibleTales();
         },
 
         rotateTaleListenerApprove(characterId) {
@@ -790,12 +804,12 @@ function (dojo, declare, baseFx) {
             return this.currentData.meta.characters.find(e => e.id === characterId)
         },
 
-        getDetectiveById(characterId) {
-            return this.currentData.detectives.find((e) => e.id === characterId);
+        getDetectiveById(detectiveId) {
+            return this.currentData.detectives.find((e) => e.id === detectiveId);
         },
 
-        getMetaDetectiveById(characterId) {
-            return this.currentData.meta.detectives.find(e => e.id === characterId)
+        getMetaDetectiveById(detectiveId) {
+            return this.currentData.meta.detectives.find(e => e.id === detectiveId)
         },
 
         getTaleIdByCharacterId(characterId, status = 'casual') {
@@ -1189,6 +1203,96 @@ function (dojo, declare, baseFx) {
             }
         },
 
+        updateVisibleTales() {
+            const realCharacters = this.currentData.characters.map((e) => {
+                const metaCharacter = this.getMetaCharacterById(e.id);
+                const bePos = this.currentData.meta.characterPos[e.pos];
+                const fePos = this.getFEPosByBEpos(bePos);
+
+                return {
+                    ...e,
+                    wallSide: this.optionActions?.rotation?.taleId === e.id
+                        ? this.optionActions?.rotation?.wallSide ?? e.wallSide
+                        : e.wallSide,
+                    x: fePos.x,
+                    y: fePos.y,
+                    fePosId: fePos.id,
+                    isManyRoads: metaCharacter.closed_roads > 3 && !e.isOpened,
+                };
+            });
+
+            for (const { id: detectiveId, pos: detectivePos } of this.currentData.detectives) {
+                const lineId = `line_${detectiveId}`;
+                dojo.destroy(lineId);
+
+                const bePos = this.currentData.meta.detectivePos[detectivePos];
+                const { x, y, id: fePosId } = this.getFEPosByBEpos(bePos);
+                const axis = x === 0 || x === 4 ? 'x' : 'y';
+                const inverse = x === 4 || y === 4;
+                const closestWall = x === 0 ? 'left'
+                    : x === 4 ? 'right'
+                    : y === 0 ? 'up'
+                    : 'down';
+                const farthestWall = x === 0 ? 'right'
+                    : x === 4 ? 'left'
+                    : y === 0 ? 'down'
+                    : 'up';
+                const potentialCharacters = realCharacters.filter(
+                    (e) => axis === 'x'
+                        ? e.y === y
+                        : e.x === x,
+                );
+                potentialCharacters.sort(
+                    (a, b) => (axis === 'x' ? a.x - b.x : a.y - b.y) * (inverse ? -1 : 1),
+                );
+
+                let visibleCharacters = [];
+                for (const potentialCharacter of potentialCharacters) {
+                    const { isManyRoads, wallSide } = potentialCharacter;
+                    if (wallSide === closestWall && !isManyRoads) {
+                        break;
+                    }
+                    visibleCharacters.push(potentialCharacter);
+                    if (wallSide === farthestWall && !isManyRoads) {
+                        break;
+                    }
+                }
+                // ???
+                visibleCharacters = visibleCharacters.filter((e) => e.isOpened);
+
+                if (!visibleCharacters.length) {
+                    continue;
+                }
+                
+                const goalCharacter = visibleCharacters[visibleCharacters.length - 1];
+                const goalTaleId = `tale_outer_${goalCharacter.fePosId}`;
+                const detectiveTaleId = `tale_outer_${fePosId}`;
+                const offsetGoal = getOffset($(goalTaleId));
+                const offsetDetective = getOffset($(detectiveTaleId));
+                const { start, end } = inverse
+                    ? { start: offsetGoal, end: offsetDetective }
+                    : { start: offsetDetective, end: offsetGoal };
+
+                dojo.place(
+                    `<div
+                        id="${lineId}"
+                        class="visible-line"
+                        style="${axis === 'x'
+                            ? `width: ${end.left - start.left}px`
+                            : `height: ${end.top - start.top}px`
+                        }">
+                    </div>`,
+                    inverse ? goalTaleId : detectiveTaleId,
+                );
+
+                // const c = document.getElementById("canvas");
+                // const ctx = c.getContext("2d");
+                // ctx.beginPath();
+                // ctx.rect(start.left, start.top, end.left - start.left, end.top - start.top);
+                // ctx.stroke();
+            }
+        },
+
         addGoalTooltip(text) {
             this.addTooltipHtml(
                 'goal-info-container',
@@ -1363,6 +1467,7 @@ function (dojo, declare, baseFx) {
             }
             character.wallSide = wallSide;
             character.lastRoundRotated = this.currentData.currentRound.num;
+            this.updateVisibleTales();
         },
 
         notif_exchangeTales(notif) {
@@ -1378,6 +1483,7 @@ function (dojo, declare, baseFx) {
             character1.pos = pos2;
             character2.pos = pos1;
             this.exchangeTales({ characterId1, characterId2 }); // async
+            this.updateVisibleTales();
         },
 
         async notif_jocker(notif) {
@@ -1407,6 +1513,7 @@ function (dojo, declare, baseFx) {
             const detective = this.getDetectiveById(detectiveId);
             await this.moveDetective({ detectiveId, newPos, oldPos: detective.pos });
             detective.pos = newPos;
+            this.updateVisibleTales();
         },
 
         async notif_alibiJack(notif) {
@@ -1422,6 +1529,7 @@ function (dojo, declare, baseFx) {
 
             this.currentData.currentRound.availableALibiCards -= 1;
             this.setPlayerPanels();
+            this.updateVisibleTales();
         },
 
         async notif_alibiAllExceptJack(notif) {
@@ -1440,6 +1548,7 @@ function (dojo, declare, baseFx) {
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
             console.log(this.currentData.jackAlibiCardsNum);
             this.setPlayerPanels();
+            this.updateVisibleTales();
         },
 
         async notif_alibiAll(notif) {
@@ -1458,6 +1567,7 @@ function (dojo, declare, baseFx) {
             this.currentData.detectiveAlibiCards.push(alibiId);
             // todo reduce it in the interface
             this.currentData.currentRound.availableALibiCards -= 1;
+            this.updateVisibleTales();
         },
 
         optionWasUsed(option) {
@@ -1523,6 +1633,7 @@ function (dojo, declare, baseFx) {
             this.currentData.nextOptions = nextOptions;
 
             this.setPlayerPanels();
+            this.updateVisibleTales();
         },
    });   
 });
