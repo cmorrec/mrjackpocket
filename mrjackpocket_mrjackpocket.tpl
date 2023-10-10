@@ -58,7 +58,7 @@
     <div id="alibi-deck">
         <div id="alibi-deck-img" class="alibi-deck-img"></div>
         <div id="alibi-deck-opening"></div>
-        <div id="alibi-deck-counter"></div>
+        <span id="alibi-deck-counter" class="tooltip-text"></span>
     </div>
 
     <div id="detective-alibi"></div>

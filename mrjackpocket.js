@@ -1369,7 +1369,7 @@ function (dojo, declare, baseFx) {
         updateAvailableAlibiCards() {
             // TODO animate
             const deck = $('alibi-deck-counter');
-            deck.innerText = 8 - ((this.currentData.jackAlibiCardsNum ?? 0) + this.currentData.detectiveAlibiCards.length);
+            deck.innerText = 8 - (this.currentData.jackAlibiCardsNum + this.currentData.detectiveAlibiCards.length);
         },
 
         ///////////////////////////////////////////////////
@@ -1522,12 +1522,10 @@ function (dojo, declare, baseFx) {
             console.log('alibiId', alibiId, 'points', points);
 
             this.optionWasUsed('alibi');
-            await this.alibiJack({ alibiId, points });
-            // TODO say player about alibi + points
             this.currentData.jackAlibiCards.push(alibiId);
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
-
             this.currentData.currentRound.availableALibiCards -= 1;
+            await this.alibiJack({ alibiId, points });
             this.setPlayerPanels();
             this.updateVisibleTales();
         },
@@ -1536,17 +1534,14 @@ function (dojo, declare, baseFx) {
             console.log('notif_alibiAllExceptJack');
             const {} = notif.args;
 
-            // TODO if jack ignore it
             const playerisJack = Boolean(this.currentData.jackId);
             if (playerisJack) {
                 return;
             }
             this.optionWasUsed('alibi');
-            await this.alibiAllExceptJack();
-            // TODO say that jack took alibi card
             this.currentData.currentRound.availableALibiCards -= 1;
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
-            console.log(this.currentData.jackAlibiCardsNum);
+            await this.alibiAllExceptJack();
             this.setPlayerPanels();
             this.updateVisibleTales();
         },
@@ -1555,18 +1550,16 @@ function (dojo, declare, baseFx) {
             console.log('notif_alibiAll');
             const { alibiId, close } = notif.args;
             console.log('alibiId', alibiId, 'close', close);
-            // TODO say player about alibi
 
             this.optionWasUsed('alibi');
+            this.currentData.detectiveAlibiCards.push(alibiId);
+            this.currentData.currentRound.availableALibiCards -= 1;
             await this.alibiAll(alibiId);
             if (close) {
                 await this.closeCharacter(alibiId); // async
                 const character = this.getCharacterById(alibiId);
                 character.isOpened = false;
             }
-            this.currentData.detectiveAlibiCards.push(alibiId);
-            // todo reduce it in the interface
-            this.currentData.currentRound.availableALibiCards -= 1;
             this.updateVisibleTales();
         },
 
