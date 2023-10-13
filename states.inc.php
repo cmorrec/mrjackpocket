@@ -52,6 +52,15 @@ $machinestates = array(
         "action" => "stEndOfRound",
         "transitions" => array(
             "playerTurn" => 24,
+            "gameEndAnimation" => 26,
+        ),
+    ),
+
+    26 => array(
+        "name" => "gameEndAnimation",
+        "type" => "game",
+        "action" => "stEndOfGame",
+        "transitions" => array(
             "gameEnd" => 99,
         ),
     ),
