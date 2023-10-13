@@ -50,6 +50,7 @@ $machinestates = array(
         "name" => "roundEnd",
         "type" => "game",
         "action" => "stEndOfRound",
+        "updateGameProgression" => true,
         "transitions" => array(
             "playerTurn" => 24,
             "gameEnd" => 99,

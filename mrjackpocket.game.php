@@ -298,7 +298,7 @@ class MrJackPocket extends Table
         $result = array();
         $result['winnedRounds'] = $this->getWinnedRoundsByPlayerId($playerId); // TODO remove it ???
         $jackPlayer = $this->getJackPlayer();
-        $jackPlayerId =(int) $jackPlayer['player_id'];
+        $jackPlayerId = (int) $jackPlayer['player_id'];
         $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
         $result['jackAlibiCardsNum'] = count($jackALibiCards);
         $player = $this->getPlayer($playerId);
@@ -317,6 +317,10 @@ class MrJackPocket extends Table
         Compute and return the current game progression.
         The number returned must be an integer beween 0 (=the game just started) and
         100 (= the game is finished or almost finished).
+        100 / (8 * 4) = 100 / 32 =~ 3
+        0 = ((1 - 1) * 4 + 0) * 3 = 0
+        3 = ((1 - 1) * 4 + 1) * 3 = 0
+        100 = ((8 - 1) * 4 + 4) * 3 = 0
     
         This method is called each time we are in a game state with the "updateGameProgression" property set to true 
         (see states.inc.php)
@@ -325,9 +329,11 @@ class MrJackPocket extends Table
     {
         $currentRound = $this->getLastRound();
         $availableOptions = $this->getCurrentAvailableOptions();
-        return (int) ((
-            (((int) $currentRound['round_num']) * 4 + count($availableOptions)) / $this->round_num)
-            * 100);
+        $MAX_AVAILABLE_OPTIONS = 4;
+        $closedOptions = $MAX_AVAILABLE_OPTIONS - count($availableOptions);
+        $part = 100 / ($this->round_num * $MAX_AVAILABLE_OPTIONS);
+
+        return (int) ($part * (($currentRound['round_num'] - 1) * $MAX_AVAILABLE_OPTIONS + $closedOptions));
     }
 
     //////////////////////////////////////////////////////////////////////////////

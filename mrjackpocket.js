@@ -341,15 +341,17 @@ function (dojo, declare, baseFx) {
                 const availableFrontId = `available_option_front_${index}`;
                 const availableBackId = `available_option_back_${index}`;
 
-                dojo.removeClass(availableId, 'option-is-ready');
-                if (option.wasUsed) {
-                    dojo.addClass(availableFrontId, 'option-was-used');
-                    dojo.addClass(availableBackId, 'option-was-used');
-                } else {
-                    dojo.removeClass(availableFrontId, 'option-was-used');
-                    dojo.removeClass(availableBackId, 'option-was-used');
+                if ($(availableId)) {
+                    dojo.removeClass(availableId, 'option-is-ready');
+                    if (option.wasUsed) {
+                        dojo.addClass(availableFrontId, 'option-was-used');
+                        dojo.addClass(availableBackId, 'option-was-used');
+                    } else {
+                        dojo.removeClass(availableFrontId, 'option-was-used');
+                        dojo.removeClass(availableBackId, 'option-was-used');
+                    }
+                    this.initOptionListener(option, availableId);
                 }
-                this.initOptionListener(option, availableId);
             });
         },
 
