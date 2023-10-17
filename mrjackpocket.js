@@ -611,10 +611,10 @@ function (dojo, declare, baseFx) {
             //     '\nnewWallSide', newWallSide,
             //     '\nthis.sideDict', this.sideDict,
             // );
-            this.updateRotateApproveButtonStatus();
             this.rotateTale({ characterId, oldWallSide, newWallSide });
             this.optionActions.rotation.wallSide = newWallSide;
             this.updateVisibleTales();
+            this.updateRotateApproveButtonStatus();
         },
 
         rotateTaleListenerApprove(characterId) {
