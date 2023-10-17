@@ -582,9 +582,18 @@ function (dojo, declare, baseFx) {
         updateRotateApproveButtonStatus() {
             const { wallSide, taleId } = this.optionActions.rotation;
             const character = this.getCharacterById(taleId);
-            $('rotate-approve').className = character.wallSide === wallSide
-                ? 'rotate-approve-disable'
-                : '';
+            const disableButton = character.wallSide === wallSide;
+            const buttonId = 'rotate-approve';
+            if (disableButton) {
+                dojo.addClass(buttonId, 'rotate-approve-disable');
+                this.addTooltipHtml(
+                    buttonId,
+                    `<span class="tooltip-text">You should change the tale\'s orientation. You can\'t stay it as it is.</span>`,
+                );
+            } else {
+                dojo.removeClass(buttonId, 'rotate-approve-disable');
+                this.removeTooltip(buttonId);
+            }
         },
 
         rotateTaleListenerClockwise(characterId) {
