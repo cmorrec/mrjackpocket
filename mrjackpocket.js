@@ -333,6 +333,12 @@ function (dojo, declare, baseFx) {
             this.removeActionButtons();
             this.setDescriptionState('must choose an action');
             this.updateVisibleTales();
+
+            this.currentData.characters
+                .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
+                .map((e) => this.removeTooltip(
+                    this.getTaleIdByCharacterId(e.id),
+                ));
         },
 
         updateOptionsStatuses() {
@@ -503,6 +509,12 @@ function (dojo, declare, baseFx) {
                 .forEach(
                     (e) => this.setTaleListener(e.id, 'rotateTaleListenerTale', 'inner')
                 );
+            this.currentData.characters
+                .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
+                .map((e) => this.addTooltipHtml(
+                    this.getTaleIdByCharacterId(e.id),
+                    `<span class="tooltip-text">You can\'t rotate this tale, because it already was rotated in the current round. Please, choose another tale.</span>`,
+                ));
             this.setDescriptionState('must choose a character to rotate');
         },
 
@@ -550,6 +562,12 @@ function (dojo, declare, baseFx) {
 
                 const metaCharacter = this.getMetaCharacterById(characterId);
                 this.setDescriptionState(`must choose a rotation for ${metaCharacter.name}`);
+
+                this.currentData.characters
+                    .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
+                    .map((e) => this.removeTooltip(
+                        this.getTaleIdByCharacterId(e.id),
+                    ));
             };
         },
 
