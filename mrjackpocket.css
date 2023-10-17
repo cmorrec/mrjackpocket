@@ -189,6 +189,7 @@
 .round {
     width: 40px;
     height: 40px;
+    border-radius: 20px;
     z-index: 2;
     transition-duration: 900ms, 900ms;
     transition-property: box-shadow, transform;
@@ -197,12 +198,17 @@
 #goal-info {
     grid-area: goal;
     z-index: 2;
+    margin: 20px 0;
 }
 
 #board {
     grid-area: board;
+    grid-column: 5;
+    max-width: 580px;
+    max-height: 580px;
     display: grid;
-    gap: 10px;
+    row-gap: 20px;
+    column-gap: 20px;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
     justify-items: center;
@@ -210,7 +216,7 @@
 }
 
 .tale {
-    border: 1px solid black;
+    /* border: 1px solid black; */
     text-align: center;
     display: flex;
     align-items: center;
@@ -244,7 +250,6 @@
 
 .option-is-ready {
     cursor: pointer;
-    box-shadow: 3px 3px red, -1em 0 .4em olive;
 }
 
 .next-option-disable {
@@ -252,12 +257,21 @@
 }
 
 .tale-to-choose {
-    box-shadow: 3px 3px red, -1em 0 .4em olive;
     cursor: pointer;
 }
 
 .current-round {
-    box-shadow: 3px 3px red, -1em 0 .4em olive;
+    /* -webkit-box-shadow: 0px 0px 2px 6px rgba(0,79,255,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(0,79,255,1);
+    box-shadow: 0px 0px 2px 6px rgba(0,79,255,1); */
+
+    /* -webkit-box-shadow: 0px 0px 2px 6px rgba(119,118,188,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(119,118,188,1);
+    box-shadow: 0px 0px 2px 6px rgba(119,118,188,1); */
+
+    -webkit-box-shadow: 0px 0px 2px 2px rgba(255,175,240,1);
+    -moz-box-shadow: 0px 0px 2px 2px rgba(255,175,240,1);
+    box-shadow: 0px 0px 2px 2px rgba(255,175,240,1);
 }
 
 .character-field {
@@ -266,36 +280,61 @@
 
 .detective-field {
     border: 0px;
-    background: wheat;
 }
 
 .is-visible-tale {
-    box-shadow: 3px 3px red, -1em 0 .4em olive;
+
+}
+
+.is-visible-tale, .tale-to-choose, .option-is-ready {
+    -webkit-box-shadow: 0px 0px 2px 6px rgba(119,118,188,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(119,118,188,1);
+    box-shadow: 0px 0px 2px 6px rgba(119,118,188,1);
+
+    /* -webkit-box-shadow: 0px 0px 2px 6px rgba(0,79,255,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(0,79,255,1);
+    box-shadow: 0px 0px 2px 6px rgba(0,79,255,1); */
+
+    /* -webkit-box-shadow: 0px 0px 2px 6px rgba(83,255,69,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(83,255,69,1);
+    box-shadow: 0px 0px 2px 6px rgba(83,255,69,1); */
+
+    /* -webkit-box-shadow: 0px 0px 2px 6px rgba(240,146,221,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(240,146,221,1);
+    box-shadow: 0px 0px 2px 6px rgba(240,146,221,1); */
+
+    /* -webkit-box-shadow: 0px 0px 2px 6px rgba(255,175,240,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(255,175,240,1);
+    box-shadow: 0px 0px 2px 6px rgba(255,175,240,1); */
+
+    /* -webkit-box-shadow: 0px 0px 2px 6px rgba(101,222,241,1);
+    -moz-box-shadow: 0px 0px 2px 6px rgba(101,222,241,1);
+    box-shadow: 0px 0px 2px 6px rgba(101,222,241,1); */
 }
 
 #clockwise {
-    position: absolute;
-    right: -50px;
-    top: 10px;
-    cursor: pointer;
-    z-index: 2;
+    right: -30px;
 }
 
 #counter-clockwise {
-    position: absolute;
-    left: -60px;
-    top: 10px;
-    cursor: pointer;
-    z-index: 2;
+    left: -30px;
 }
 
 #rotate-approve {
-    position: absolute;
     bottom: -20px;
     left: auto;
     right: auto;
+}
+
+#counter-clockwise, #clockwise {
+    width: 50px;
+    height: 50px;
+}
+
+#rotate-approve, #counter-clockwise, #clockwise {
+    position: absolute;
     cursor: pointer;
-    z-index: 2;
+    z-index: 4;
 }
 
 .rotate-approve-disable {
@@ -303,14 +342,14 @@
     cursor: default;
 }
 
-#detective-alibi {
+/* #detective-alibi {
     grid-area: dAlibi;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 10px;
-}
+} */
 
 #jack-panel {
     display: flex;
@@ -343,7 +382,6 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    
 }
 
 .time-num {
@@ -373,8 +411,8 @@
 .alibi-cards-tooltip-container {
     min-width: 100px;
     min-height: 100px;
-    max-width: 220px;
-    max-height: 320px;
+    max-width: 100px;
+    max-height: 150px;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -391,8 +429,8 @@
 
 /* The flip card container - set the width and height to whatever you want. We have added the border property to demonstrate that the flip itself goes out of the box on hover (remove perspective if you don't want the 3D effect */
 #visible-status-card-container {
-    width: 210px;
-    height: 320px;
+    width: 100px;
+    height: 150px;
     transition-duration: 900ms, 900ms;
     transition-property: box-shadow, transform;
     background-color: transparent;
@@ -403,8 +441,8 @@
 /* This container is needed to position the front and back side */
 #visible-status-card-inner {
     position: relative;
-    width: 210px;
-    height: 320px;
+    width: 100px;
+    height: 150px;
     z-index: 2;
     text-align: center;
     transition: transform 0.8s;
@@ -419,10 +457,11 @@
 /* Position the front and back side */
 #visible-status-card-front, #visible-status-card-back {
     position: absolute;
-    width: 210px;
-    height: 320px;
+    width: 100px;
+    height: 150px;
     -webkit-backface-visibility: hidden; /* Safari */
     backface-visibility: hidden;
+    border-radius: 10px;
 }
 
 /* Style the front side (fallback if image is missing) */
@@ -438,8 +477,8 @@
 #alibi-deck {
     grid-area: alibi;
     position: relative;
-    width: 185px;
-    height: 320px;
+    width: 80px;
+    height: 150px;
     z-index: 3;
 }
 
@@ -452,23 +491,23 @@
 }
 
 .alibi-deck-img {
-    width: 185px;
-    height: 320px;
+    width: 100px;
+    height: 150px;
 }
 
 #alibi-deck-counter {
     position: absolute;
     z-index: 2;
     color: aliceblue;
-    bottom: 50px;
+    bottom: 10px;
     left: 50%;
 }
 
 
 /* The flip card container - set the width and height to whatever you want. We have added the border property to demonstrate that the flip itself goes out of the box on hover (remove perspective if you don't want the 3D effect */
 #jack-alibi-opening-container {
-    width: 185px;
-    height: 320px;
+    width: 100px;
+    height: 150px;
     z-index: 3;
     transition-duration: 900ms, 900ms;
     transition-property: box-shadow, transform;
@@ -479,8 +518,8 @@
 /* This container is needed to position the front and back side */
 #jack-alibi-opening-inner {
     position: relative;
-    width: 185px;
-    height: 320px;
+    width: 100px;
+    height: 150px;
     z-index: 3;
     text-align: center;
     transition: transform 0.8s;
@@ -495,8 +534,8 @@
 /* Position the front and back side */
 #jack-alibi-opening-front, #jack-alibi-opening-back {
     position: absolute;
-    width: 185px;
-    height: 320px;
+    width: 100px;
+    height: 150px;
     -webkit-backface-visibility: hidden; /* Safari */
     backface-visibility: hidden;
 }
@@ -514,6 +553,7 @@
 #holmes, #watson, #dog {
     z-index: 2;
     position: absolute;
+    border-radius: 25px;
 }
 
 
@@ -525,6 +565,7 @@
     transition-property: transform;
     background-color: transparent;
     perspective: 1000px;
+    margin-top: 20px;
 }
 
 /* This container is needed to position the front and back side */
@@ -575,9 +616,10 @@
 
 .visible-line {
     background-color: yellow;
-    min-width: 15px;
-    min-height: 15px;
+    box-shadow: 0px 0px 6px 6px yellow;
+    min-width: 0px;
+    min-height: 0px;
     position: absolute;
-    left: 43%;
-    top: 43%;
+    left: 50%;
+    top: 50%;
 }

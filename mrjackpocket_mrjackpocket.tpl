@@ -60,8 +60,6 @@
         <div id="alibi-deck-opening"></div>
         <span id="alibi-deck-counter" class="tooltip-text"></span>
     </div>
-
-    <div id="detective-alibi"></div>
 </div>
 
 <script type="text/javascript">

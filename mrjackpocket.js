@@ -523,21 +523,25 @@ function (dojo, declare, baseFx) {
                     {
                         id: 'clockwise',
                         name: 'clockwise',
+                        img: 'img/clockwise-arrow.png',
                         listener: this.rotateTaleListenerClockwise(characterId),
                     },
                     {
                         id: 'counter-clockwise',
                         name: 'counter-clockwise',
+                        img: 'img/counter-clockwise-arrow.png',
                         listener: this.rotateTaleListenerCounterClockwise(characterId),
                     },
                     {
                         id: 'rotate-approve',
-                        name: 'rotate-approve',
+                        name: 'Approve',
+                        img: null,
                         listener: this.rotateTaleListenerApprove(characterId),
                     },
                 ].forEach((e) => this.createButton({
                     id: e.id,
                     listener: e.listener,
+                    img: e.img,
                     name: e.name,
                     parent: tale,
                 }));
@@ -553,10 +557,15 @@ function (dojo, declare, baseFx) {
             id,
             listener,
             name,
+            img,
             parent,
         }) {
-            const btn = document.createElement("button");
-            btn.innerHTML = name; // TODO change it to the picture arrows
+            const btn = document.createElement(img ? 'div' : "button");
+            if (img) {
+                btn.style = this.addImg({ urls: img }).text;
+            } else {
+                btn.innerHTML = name;
+            }
             btn.id = id;
             btn.addEventListener("click", listener);
             parent.appendChild(btn);
