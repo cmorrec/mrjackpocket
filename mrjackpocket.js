@@ -36,6 +36,13 @@ function getOffset( el ) {
 
 const SHADOW_ALL_SCREEN = '0 0 0 max(100vh, 100vw) rgba(0, 0, 0, .3)';
 
+const GameEndStatus = {
+    NOT_GAME_END: 'NOT_GAME_END',
+    JACK_WIN: 'JACK_WIN',
+    DETECTIVE_WIN: 'DETECTIVE_WIN',
+    PLAY_UNTIL_VISIBILITY: 'PLAY_UNTIL_VISIBILITY',
+};
+
 define([
     "dojo","dojo/_base/declare",
     "dojo/_base/fx",
@@ -114,7 +121,7 @@ function (dojo, declare, baseFx) {
             }
 
             // async
-            this.updateGoal(gamedatas.currentRound.playUntilVisibility);
+            this.updateGoal({ playUntilVisibility: gamedatas.currentRound.playUntilVisibility });
 
             for (const character of gamedatas.characters) {
                 const taleId = this.getTaleIdByCharacterId(character.id);
@@ -754,6 +761,20 @@ function (dojo, declare, baseFx) {
             }, this, () => {});
         },
 
+        action_gameEnd() {
+            try {
+                console.log('action_gameEnd');
+                this.ajaxcall(
+                    "/mrjackpocket/mrjackpocket/confirmGameEnd.html",
+                    {},
+                    this,
+                    () => {},
+                );
+            } catch(e) {
+                console.error(e);
+            }
+        },
+
         clickOnOption(option) {
             this.clearCharacterEventListeners();
             this.clearDetectiveEventListeners();
@@ -783,7 +804,58 @@ function (dojo, declare, baseFx) {
                     1000,
                 );
                 break;
+            case 'gameEndAnimation':
+                setTimeout(() => this.winnerDetermination(), 8500);
+                break;
             }
+        },
+
+        winnerDetermination() {
+            let isSend = false;
+            const { jackCharacterId, gameEndStatus, jackAlibiCards } = this.currentData;
+            this.addJackAlibiTooltip(jackAlibiCards, this.currentData.jackAlibiCardsNum);
+            $('jack-alibi-num').innerHTML = this.getAlibiJackPoints();
+
+            const send = () => {
+                if (!isSend) {
+                    isSend = true;
+                    this.action_gameEnd();
+                }
+            };
+            const isJackWin = gameEndStatus === GameEndStatus.JACK_WIN;
+            const endText = _(`End game: ${isJackWin ? 'Jack' : 'Detective'} win`);
+            $('pagemaintitletext').innerHTML = endText;
+
+            this.myDlg = new ebg.popindialog();
+            this.myDlg.create('myDialogUniqueId');
+            this.myDlg.setTitle(endText);
+            this.myDlg.setMaxWidth( 500 );
+
+            const html = this.format_block( 'jstpl_endgame_dialog', {
+                jackPicture: this.addImg({ urls: `img/alibi_${jackCharacterId}.png` }).text,
+            });
+
+            this.myDlg.setContent(html);
+            this.myDlg.show();
+
+            dojo.connect(
+                $('my_ok_button'),
+                'onclick',
+                this,
+                (event) => {
+                    event.preventDefault();
+                    send();
+                    this.myDlg.destroy();
+                },
+            );
+
+            setTimeout(
+                () => send(),
+                Boolean(this.currentData.jackId) ? 1000 : 1500,
+            );
+
+            this.currentData.jackId = this.currentData.jackCharacterId;
+            this.setPlayerPanels();
         },
 
         // onLeavingState: this method is called each time we are leaving a game state.
@@ -1078,6 +1150,7 @@ function (dojo, declare, baseFx) {
             characterIdsToClose,
             winPlayerId,
             newRoundNum,
+            gameEndStatus,
         }) {
             await this.animateWinnerDetermination({ isVisible, newRoundNum });
             await Promise.all(
@@ -1087,13 +1160,15 @@ function (dojo, declare, baseFx) {
             );
 
             if (playUntilVisibility !== this.currentData.currentRound.playUntilVisibility) {
-                await this.updateGoal(playUntilVisibility);
+                await this.updateGoal({ playUntilVisibility, gameEndStatus });
             }
 
-            await this.initOptions(
-                newOptions,
-                newNextOptions,
-            );
+            if (![GameEndStatus.DETECTIVE_WIN, GameEndStatus.JACK_WIN].includes(gameEndStatus)) {
+                await this.initOptions(
+                    newOptions,
+                    newNextOptions,
+                );
+            }
         },
 
         async animateWinnerDetermination({ isVisible, newRoundNum }) {
@@ -1214,7 +1289,7 @@ function (dojo, declare, baseFx) {
 
         },
 
-        async updateGoal(playUntilVisibility) {
+        async updateGoal({ playUntilVisibility, gameEndStatus }) {
             const isJackPlayer = Boolean(this.currentData.jackId);
             if (!this.wasGoalInitiated) {
                 dojo.place(
@@ -1232,7 +1307,12 @@ function (dojo, declare, baseFx) {
             const visibilityStatus = playUntilVisibility
                 ? 'Both players achieved their goals simultaneously. The game will end when a detective see jack in the end of round. Otherwise Jack will win in the end of 8th round'
                 : 'The detective wins if at the end of the round only one character remains under suspicion. Jack wins if he manages to score 6 points by summing up the alibi cards and the rounds won';
-            const text = `${playerStatus}. ${visibilityStatus}`;
+            const winnerStatus = gameEndStatus === GameEndStatus.DETECTIVE_WIN
+                ? 'Detetive wins'
+                : gameEndStatus === GameEndStatus.JACK_WIN
+                ? 'Jack wins'
+                : null;
+            const text = `${playerStatus}. ${winnerStatus ?? visibilityStatus}`;
             this.addGoalTooltip(text);
 
             if (playUntilVisibility) {
@@ -1484,7 +1564,8 @@ function (dojo, declare, baseFx) {
             dojo.subscribe('alibiJack', this, 'notif_alibiJack');
             // todo     this.notifqueue.setIgnoreNotificationCheck( 'dealCard', (notif) => (notif.args.player_id == this.player_id) );
             dojo.subscribe('alibiAllExceptJack', this, 'notif_alibiAllExceptJack');
-            dojo.subscribe('alibiAll', this, 'notif_alibiAll');            
+            dojo.subscribe('alibiAll', this, 'notif_alibiAll');
+            dojo.subscribe('gameEnd', this, 'notif_gameEnd');
         },
 
         // TODO: from this point and below, you can write your game notifications handling methods
@@ -1531,8 +1612,7 @@ function (dojo, declare, baseFx) {
 
             this.optionWasUsed('jocker');
             if (!detectiveId || !newPos) {
-                // TODO notify player what jack skip step by jocker
-                alert('Jack skipped by jocker');
+                this.showBubble('container', _('Jack skipped by jocker'), 0, 1500, 'pink_bubble');
             } else {
                 await this.detective({ detectiveId, newPos });
             }
@@ -1560,6 +1640,7 @@ function (dojo, declare, baseFx) {
             console.log('alibiId', alibiId, 'points', points);
 
             this.optionWasUsed('alibi');
+            this.updateAlibiTimerStatus();
             this.currentData.jackAlibiCards.push(alibiId);
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
             this.currentData.currentRound.availableALibiCards -= 1;
@@ -1577,6 +1658,7 @@ function (dojo, declare, baseFx) {
                 return;
             }
             this.optionWasUsed('alibi');
+            this.updateAlibiTimerStatus();
             this.currentData.currentRound.availableALibiCards -= 1;
             this.currentData.jackAlibiCardsNum = (this.currentData.jackAlibiCardsNum ?? 0) + 1;
             await this.alibiAllExceptJack();
@@ -1590,6 +1672,7 @@ function (dojo, declare, baseFx) {
             console.log('alibiId', alibiId, 'close', close);
 
             this.optionWasUsed('alibi');
+            this.updateAlibiTimerStatus();
             this.currentData.detectiveAlibiCards.push(alibiId);
             this.currentData.currentRound.availableALibiCards -= 1;
             await this.alibiAll(alibiId);
@@ -1601,6 +1684,16 @@ function (dojo, declare, baseFx) {
             this.updateVisibleTales();
         },
 
+        updateAlibiTimerStatus() {
+            const availableOptionsNum = this.currentData
+                .currentOptions
+                .filter((e) => !e.wasUsed)
+                .length;
+            if (!availableOptionsNum) {
+                this.lastOption = 'alibi';
+            }
+        },
+
         optionWasUsed(option) {
             const currentOption = this.currentData.currentOptions.find((e) => e.ability === option && !e.wasUsed);
             if (currentOption) {
@@ -1610,6 +1703,11 @@ function (dojo, declare, baseFx) {
 
         async notif_roundEnd(notif) {
             await delay(1000);
+            if (this.lastOption === 'alibi') {
+                await delay(2900);
+                this.lastOption = null;
+            }
+
             console.log('notif_roundEnd');
             const {
                 nextActivePlayerId,
@@ -1620,6 +1718,7 @@ function (dojo, declare, baseFx) {
                 isVisible,
                 playUntilVisibility,
                 winPlayerId,
+                gameEndStatus,
             } = notif.args;
             const characterIdsToClose = Object.values(closeCharactersObj);
             console.log(
@@ -1631,6 +1730,7 @@ function (dojo, declare, baseFx) {
                 'isVisible =', isVisible, '\n',
                 'playUntilVisibility =', playUntilVisibility, '\n',
                 'winPlayerId =', winPlayerId, '\n',
+                'gameEndStatus = ', gameEndStatus, '\n',
             );
 
             const currentOptions = newOptions.map(e => ({ ability: e, wasUsed: false }));
@@ -1644,6 +1744,7 @@ function (dojo, declare, baseFx) {
                 characterIdsToClose,
                 winPlayerId,
                 newRoundNum,
+                gameEndStatus,
             });
 
             this.currentData.previousRounds.push({
@@ -1666,5 +1767,14 @@ function (dojo, declare, baseFx) {
             this.setPlayerPanels();
             this.updateVisibleTales();
         },
-   });   
+
+        notif_gameEnd(notif) {
+            const { jackCharacterId, gameEndStatus, jackAlibiCards } = notif.args;
+
+            console.log('notif_gameEnd', jackCharacterId, gameEndStatus, jackAlibiCards );
+            this.currentData.jackAlibiCards = jackAlibiCards;
+            this.currentData.jackCharacterId = jackCharacterId;
+            this.currentData.gameEndStatus = gameEndStatus;
+        },
+   });
 });

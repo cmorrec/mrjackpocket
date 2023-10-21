@@ -92,4 +92,13 @@ class action_mrjackpocket extends APP_GameAction
 
     self::ajaxResponse();
   }
+
+  public function confirmGameEnd()
+  {
+    self::setAjaxMode();
+
+    $this->game->confirmGameEnd();
+
+    self::ajaxResponse();
+  }
 }

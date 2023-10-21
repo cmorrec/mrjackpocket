@@ -623,3 +623,20 @@
     left: 50%;
     top: 50%;
 }
+
+#end-game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#end-game-jack {
+    width: 90px;
+    height: 160px;
+}
+
+#my_ok_button {
+    border: 1px solid black;
+    padding: 10px;
+}

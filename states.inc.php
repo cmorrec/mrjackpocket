@@ -53,6 +53,23 @@ $machinestates = array(
         "updateGameProgression" => true,
         "transitions" => array(
             "playerTurn" => 24,
+            "gameEndAnimation" => 26,
+        ),
+    ),
+
+    26 => array(
+        "name" => "gameEndAnimation",
+        "type" => "game",
+        "action" => "stEndOfGame",
+        "transitions" => array(
+            "gameEndApprove" => 27,
+        ),
+    ),
+
+    27 => array(
+        "name" => "gameEndApprove",
+        "type" => "multipleactiveplayer",
+        "transitions" => array(
             "gameEnd" => 99,
         ),
     ),

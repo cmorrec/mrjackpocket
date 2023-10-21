@@ -431,6 +431,9 @@ class MrJackPocket extends Table
     function addRound(): void
     {
         $lastRound = $this->getLastRound();
+        if (!is_null($lastRound) && ((int) $lastRound['round_num']) == 8) {
+            return;
+        }
         if (is_null($lastRound)) {
             $roundNum = 1;
             $playUntilVisibility = 0;
@@ -1122,6 +1125,13 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
+    function confirmGameEnd() {
+        $currentState = $this->gamestate->state();
+        if ($currentState['name'] === 'gameEndApprove') {
+            $this->gamestate->nextState('gameEnd');
+        }
+    }
+
     /*
     
     Example:
@@ -1271,8 +1281,9 @@ class MrJackPocket extends Table
             self::DbQuery($sql);
         }
 
-        if ($gameEndStatus === 'DETECTIVE_WIN' || $gameEndStatus === 'JACK_WIN') {
-            // TODO set end game
+        $isGameEnd = $gameEndStatus === 'DETECTIVE_WIN' || $gameEndStatus === 'JACK_WIN';
+
+        if ($isGameEnd) {
             if ($gameEndStatus === 'DETECTIVE_WIN') {
                 $winnerId = $detectivePlayerId;
             } else {
@@ -1282,7 +1293,6 @@ class MrJackPocket extends Table
                               SET player_score = 1,
                                   player_score_aux = 1
                             WHERE player_id='$winnerId' ");
-            $this->gamestate->nextState('gameEnd');
         }
 
         if ($currentRoundNum % 2 === 1) {
@@ -1290,8 +1300,10 @@ class MrJackPocket extends Table
         } else {
             $newOptions = $this->getRandomOptions();
         }
-        $this->addRound();
-        $this->saveOptionsInDB($currentRoundNum + 1, $newOptions);
+        if (!$isGameEnd) {
+            $this->addRound();
+            $this->saveOptionsInDB($currentRoundNum + 1, $newOptions);
+        }
 
         if ($currentRoundNum % 2 === 1) {
             $nextOptions = null;
@@ -1300,10 +1312,10 @@ class MrJackPocket extends Table
             $nextOptions = $this->getRevertOptions();
             $nextActivePlayerId = (int) $detectivePlayerId;
         }
-        $this->activeNextPlayer();
-        //$this->gamestate->changeActivePlayer($nextActivePlayerId);
-
-        $this->gamestate->nextState('playerTurn');
+        if (!$isGameEnd) {
+            $this->activeNextPlayer();
+            $this->gamestate->nextState('playerTurn');
+        }
 
         self::notifyAllPlayers(
             "roundEnd",
@@ -1320,8 +1332,13 @@ class MrJackPocket extends Table
                 'isVisible' => $isJackVisible,
                 'playUntilVisibility' => $playUntilVisibility,
                 'winPlayerId' => $winPlayerId,
+                'gameEndStatus' => $gameEndStatus,
             ),
         );
+
+        if ($isGameEnd) {
+            $this->gamestate->nextState('gameEndAnimation');
+        }
     }
 
     function getGameEndStatus(
@@ -1377,6 +1394,36 @@ class MrJackPocket extends Table
         }
 
         return 'NOT_GAME_END';
+    }
+
+    function stEndOfGame() {
+        $characters = $this->getCharacters();
+        $detectives = $this->getDetectives();
+        $visibleCharacters = $this->getVisibleCharacters($characters, $detectives);
+        $isJackVisible = $this->array_any(
+            $visibleCharacters,
+            fn(array $character) => $character['is_jack'] === '1',
+        );
+        $jackPlayer = $this->getJackPlayer();
+        $jackPlayerId = (int) $jackPlayer['player_id'];
+        $gameEndStatus = $this->getGameEndStatus($isJackVisible, $jackPlayerId);
+        $jackCharacter = $this->getJackCharacter();
+        if ('JACK_WIN' === $gameEndStatus) {
+            $text = 'End game. Jack win';
+        } else {
+            $text = 'End game. Detective win';
+        }
+        $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
+        self::notifyAllPlayers(
+            "gameEnd",
+            clienttranslate($text),
+            array(
+                'jackCharacterId' => $jackCharacter['character_id'],
+                'gameEndStatus' => $gameEndStatus,
+                'jackAlibiCards' => $jackALibiCards,
+            ),
+        );
+        $this->gamestate->nextState('gameEndApprove');
     }
 
     /*
