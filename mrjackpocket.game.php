@@ -301,7 +301,11 @@ class MrJackPocket extends Table
         $jackPlayerId = (int) $jackPlayer['player_id'];
         $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
         $result['jackAlibiCardsNum'] = count($jackALibiCards);
+        $result['playersInfo'] = $this->getPlayers();
         $player = $this->getPlayer($playerId);
+        if (is_null($player)) {
+            return $result;
+        }
         if ($player['player_is_jack'] === '1') {
             $jackCharacter = $this->getJackCharacter();
             $result['jackId'] = $jackCharacter['character_id'];
@@ -484,7 +488,7 @@ class MrJackPocket extends Table
         return self::getObjectListFromDB("SELECT round_num FROM `round` WHERE win_player_id = $playerId", true);
     }
 
-    function getPlayer(int $playerId): array
+    function getPlayer(int $playerId): ?array
     {
         return self::getObjectFromDB("SELECT * FROM player WHERE player_id = $playerId");
     }

@@ -187,14 +187,23 @@ function (dojo, declare, baseFx) {
             // 
             // dets -> jack: character(-), winned, alibi(only num)
             // dets -> dets: winned
-            const playerIds = Object.keys(this.currentData.players);
-            const oppositePlayerId = playerIds.find((playerId) => String(playerId) !== String(this.player_id));
-            const playerBoardDiv = $(`player_board_${this.player_id}`);
-            const oppositePlayerBoardDiv = $(`player_board_${oppositePlayerId}`);
+            const jackPlayerId = this.currentData.playersInfo.find((e) => e.player_is_jack === '1')?.player_id;
+            const detectivePlayerId = this.currentData.playersInfo.find((e) => e.player_is_jack === '0')?.player_id;
+            if (!jackPlayerId || !detectivePlayerId) {
+                console.error(`Error: jackPlayerId = ${jackPlayerId}, detectivePlayerId = ${detectivePlayerId}`);
+                return;
+            }
+            const jackBoardDiv = $(`player_board_${jackPlayerId}`);
+            const detectiveBoardDiv = $(`player_board_${detectivePlayerId}`);
+            // const playerIds = Object.keys(this.currentData.players);
+            // const oppositePlayerId = playerIds.find((playerId) => String(playerId) !== String(this.player_id));
+            // const playerBoardDiv = $(`player_board_${this.player_id}`);
+            // const oppositePlayerBoardDiv = $(`player_board_${oppositePlayerId}`);
 
-            const [jackBoardDiv, detectiveBoardDiv] = this.currentData.jackId
-                ? [playerBoardDiv, oppositePlayerBoardDiv]
-                : [oppositePlayerBoardDiv, playerBoardDiv];
+            // const [jackBoardDiv, detectiveBoardDiv] =
+            // this.currentData.jackId
+            //     ? [playerBoardDiv, oppositePlayerBoardDiv]
+            //     : [oppositePlayerBoardDiv, playerBoardDiv];
 
             if (!$('jack-character')) {
                 dojo.place(
