@@ -168,6 +168,10 @@ function (dojo, declare, baseFx) {
             this.addImg({ id: 'visible-status-card-back', urls: 'img/visible_card.png' });
             this.addImg({ id: 'alibi-deck-img', urls: 'img/alibi_back.png' });
             this.updateVisibleTales();
+            const wasVisible = this.currentData.previousRounds[this.currentData.previousRounds.length - 1]?.isCriminalVisible ?? false;
+            if (wasVisible) {
+                dojo.toggleClass('visible-status-card-inner', 'is-visible');
+            }
 
             console.log( "Ending game setup" );
         },
