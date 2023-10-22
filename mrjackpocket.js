@@ -78,6 +78,7 @@ function (dojo, declare, baseFx) {
                 const isColumnCorner = Number(e.x === 0 || e.x === 4);
                 return isRowCorner + isColumnCorner === 1;
             });
+            this.tooltipRegister = [];
         },
         
         /*
@@ -195,15 +196,6 @@ function (dojo, declare, baseFx) {
             }
             const jackBoardDiv = $(`player_board_${jackPlayerId}`);
             const detectiveBoardDiv = $(`player_board_${detectivePlayerId}`);
-            // const playerIds = Object.keys(this.currentData.players);
-            // const oppositePlayerId = playerIds.find((playerId) => String(playerId) !== String(this.player_id));
-            // const playerBoardDiv = $(`player_board_${this.player_id}`);
-            // const oppositePlayerBoardDiv = $(`player_board_${oppositePlayerId}`);
-
-            // const [jackBoardDiv, detectiveBoardDiv] =
-            // this.currentData.jackId
-            //     ? [playerBoardDiv, oppositePlayerBoardDiv]
-            //     : [oppositePlayerBoardDiv, playerBoardDiv];
 
             if (!$('jack-character')) {
                 dojo.place(
@@ -233,7 +225,7 @@ function (dojo, declare, baseFx) {
             $('detective-winned-rounds-num').innerText = detectiveWinnedRounds.length;
             this.addWinnedRoundsTooltip('detective-winned-rounds', detectiveWinnedRounds);
 
-            this.addTooltipHtml(
+            this.addTooltipHtmlCustom(
                 'jack-character',
                 this.format_block('jstpl_jack_character_tooltip',
                 {
@@ -259,7 +251,7 @@ function (dojo, declare, baseFx) {
         },
 
         addWinnedRoundsTooltip(id, winnedRounds) {
-            this.addTooltipHtml(
+            this.addTooltipHtmlCustom(
                 id,
                 this.format_block(
                     'jstpl_winned_rounds_tooltip',
@@ -280,7 +272,7 @@ function (dojo, declare, baseFx) {
         },
 
         addJackAlibiTooltip(jackAlibiCards, jackAlibiCardsNum) {
-            this.addTooltipHtml(
+            this.addTooltipHtmlCustom(
                 'jack-alibi',
                 this.format_block(
                     'jstpl_jack_alibi_cards_tooltip',
@@ -352,9 +344,13 @@ function (dojo, declare, baseFx) {
 
             this.currentData.characters
                 .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
-                .map((e) => this.removeTooltip(
-                    this.getTaleIdByCharacterId(e.id),
-                ));
+                .forEach((e) => {
+                    this.removeTooltip(this.getTaleIdByCharacterId(e.id));
+                    const tooltip = this.tooltipRegister.find((t) => this.getTaleIdByCharacterId(e.id) === t.id);
+                    if (tooltip) {
+                        $(tooltip.id).addEventListener('click', tooltip.listener);
+                    }
+                });
         },
 
         updateOptionsStatuses() {
@@ -527,11 +523,29 @@ function (dojo, declare, baseFx) {
                 );
             this.currentData.characters
                 .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
-                .map((e) => this.addTooltipHtml(
+                .forEach((e) => this.addTooltipHtmlCustom(
                     this.getTaleIdByCharacterId(e.id),
                     `<span class="tooltip-text">You can\'t rotate this tale, because it already was rotated in the current round. Please, choose another tale.</span>`,
                 ));
             this.setDescriptionState('must choose a character to rotate');
+        },
+
+        addTooltipHtmlCustom(id, html) {
+            this.addTooltipHtml(id, html);
+            let obj = this.tooltipRegister.find((e) => e.id === id);
+            if (!obj) {
+                obj = {
+                    id,
+                    listener: () => {
+                        try {
+                            this.tooltips[id].open(id);
+                        } catch (e) {}
+                    },
+                };
+                this.tooltipRegister.push(obj);
+                $(id).addEventListener('click', obj.listener);
+            }
+            return obj;
         },
 
         rotateTaleListenerTale(characterId) {
@@ -581,9 +595,13 @@ function (dojo, declare, baseFx) {
 
                 this.currentData.characters
                     .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
-                    .map((e) => this.removeTooltip(
-                        this.getTaleIdByCharacterId(e.id),
-                    ));
+                    .forEach((e) => {
+                        this.removeTooltip(this.getTaleIdByCharacterId(e.id));
+                        const tooltip = this.tooltipRegister.find((t) => this.getTaleIdByCharacterId(e.id) === t.id);
+                        if (tooltip) {
+                            $(tooltip.id).addEventListener('click', tooltip.listener);
+                        }
+                    });
             };
         },
 
@@ -620,13 +638,17 @@ function (dojo, declare, baseFx) {
             const buttonId = 'rotate-approve';
             if (disableButton) {
                 dojo.addClass(buttonId, 'rotate-approve-disable');
-                this.addTooltipHtml(
+                this.addTooltipHtmlCustom(
                     buttonId,
                     `<span class="tooltip-text">You should change the tale\'s orientation. You can\'t stay it as it is.</span>`,
                 );
             } else {
                 dojo.removeClass(buttonId, 'rotate-approve-disable');
                 this.removeTooltip(buttonId);
+                const tooltip = this.tooltipRegister.find((e) => e.id === buttonId);
+                if (tooltip) {
+                    $(tooltip.id).addEventListener('click', tooltip.listener);
+                }
             }
         },
 
@@ -1421,7 +1443,7 @@ function (dojo, declare, baseFx) {
         },
 
         addGoalTooltip(text) {
-            this.addTooltipHtml(
+            this.addTooltipHtmlCustom(
                 'goal-info-container',
                 `<span class="tooltip-text">${text}</span>`,
             );
