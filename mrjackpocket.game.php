@@ -916,9 +916,12 @@ class MrJackPocket extends Table
         (note: each method below must match an input method in mrjackpocket.action.php)
     */
 
-    function rotateTale(string $taleId, string $wallSide)
+    function rotateTale(string $taleId, string $wallSide, ?int $playerId)
     {
-        $playerId = $this->getCurrentPlayerId();
+        if (is_null($playerId)) {
+            $playerId = $this->getCurrentPlayerId();
+        }
+
         /**
          * 1) check ability of player to do it
          * 2) rotate
@@ -950,9 +953,12 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
-    function exchangeTales(string $taleId1, string $taleId2)
+    function exchangeTales(string $taleId1, string $taleId2, ?int $playerId)
     {
-        $playerId = $this->getCurrentPlayerId();
+        if (is_null($playerId)) {
+            $playerId = $this->getCurrentPlayerId();
+        }
+
         /**
          * 1) check ability of player to do it
          * 2) exchange
@@ -991,9 +997,12 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
-    function jocker(?string $detectiveId, ?int $newPos)
+    function jocker(?string $detectiveId, ?int $newPos, ?int $playerId)
     {
-        $playerId = $this->getCurrentPlayerId();
+        if (is_null($playerId)) {
+            $playerId = $this->getCurrentPlayerId();
+        }
+
         /**
          * 1) check ability of player to do it
          * 2) move
@@ -1033,9 +1042,12 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
-    function detective(string $action, int $newPos)
+    function detective(string $action, int $newPos, ?int $playerId)
     {
-        $playerId = $this->getCurrentPlayerId();
+        if (is_null($playerId)) {
+            $playerId = $this->getCurrentPlayerId();
+        }
+
         /**
          * 1) check ability of player to do it
          * 2) move
@@ -1066,9 +1078,12 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
-    function alibi()
+    function alibi(?int $playerId)
     {
-        $playerId = (int) $this->getCurrentPlayerId();
+        if (is_null($playerId)) {
+            $playerId = $this->getCurrentPlayerId();
+        }
+
         /**
          * 1) check ability of player to do it
          * 2) pull
@@ -1481,24 +1496,24 @@ class MrJackPocket extends Table
         $optionToMoveName = $optionToMove['option'];
 
         if ($optionToMoveName === 'alibi') {
-            $this->alibi();
+            $this->alibi($playerId);
         }
 
         if ($optionToMoveName === 'watson' || $optionToMoveName === 'holmes' || $optionToMoveName === 'dog') {
             $steps = bga_rand(1, 2);
             $newPos = $this->getNewPosFor($optionToMoveName, $steps);
-            $this->detective($optionToMoveName, $newPos);
+            $this->detective($optionToMoveName, $newPos, $playerId);
         }
 
         if ($optionToMoveName === 'jocker') {
             $detectiveIndex = bga_rand(0, count($this->detectives));
             if ($detectiveIndex === count($this->detectives)) {
-                $this->jocker(null, null);
+                $this->jocker(null, null, $playerId);
             } else {
                 $metaDetective = $this->detectives[$detectiveIndex];
                 $detectiveId = $metaDetective['id'];
                 $newPos = $this->getNewPosFor($detectiveId, 1);
-                $this->jocker($detectiveId, $newPos);
+                $this->jocker($detectiveId, $newPos, $playerId);
             }
         }
 
@@ -1512,7 +1527,7 @@ class MrJackPocket extends Table
                 $wallIndex = bga_rand(1, 4);
                 $wallSide = $this->wall_sides[$wallIndex];
             } while ($currentWallSide === $wallSide);
-            $this->rotateTale($characterId, $wallSide);
+            $this->rotateTale($characterId, $wallSide, $playerId);
         }
 
         if ($optionToMoveName === 'exchange') {
@@ -1524,7 +1539,7 @@ class MrJackPocket extends Table
             $metaCharacter2 = $this->characters[$randomCharacterIndex2];
             $characterId1 = $metaCharacter1['id'];
             $characterId2 = $metaCharacter2['id'];
-            $this->exchangeTales($characterId1, $characterId2);
+            $this->exchangeTales($characterId1, $characterId2, $playerId);
         }
 
         // throw new feException("Zombie mode not supported at this game state: " . $statename);
