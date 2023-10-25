@@ -46,20 +46,35 @@
     * Statistic name is the English description of the statistic as shown to players
     
 */
-        // round
-        // jack_win
-        // turn_time
-        // jack_id
-        // first card
 
 $stats_type = array(
 
     // Statistics global to table
     "table" => array(
 
-        "turns_number" => array("id"=> 10,
-                    "name" => totranslate("Number of turns"),
-                    "type" => "int" ),
+        "closed_characters" => array(
+            "id"=> 10,
+            "name" => totranslate("Characters with alibi"),
+            "type" => "int",
+        ),
+        "jack_win" => array(
+            "id"=> 11,
+            "name" => totranslate("Jack wins"),
+            "type" => "bool",
+        ),
+        "draw" => array(
+            "id"=> 12,
+            "name" => totranslate("Draw: play intil visibility"),
+            "type" => "bool",
+        ),
+        "last_round" => array(
+            "id"=> 13,
+            "name" => totranslate("Last Round"),
+            "type" => "int",
+        ),
+        // "turns_number" => array("id"=> 10,
+        //             "name" => totranslate("Number of turns"),
+        //             "type" => "int" ),
 
 /*
         Examples:
@@ -78,9 +93,30 @@ $stats_type = array(
     // Statistics existing for each player
     "player" => array(
 
-        "turns_number" => array("id"=> 10,
-                    "name" => totranslate("Number of turns"),
-                    "type" => "int" ),
+        "winned_rounds" => array(
+            "id"=> 14,
+            "name" => totranslate("Winned rounds"),
+            "type" => "int",
+        ),
+        "is_win" => array(
+            "id"=> 15,
+            "name" => totranslate("Is winner"),
+            "type" => "bool",
+        ),
+        "is_jack" => array(
+            "id"=> 16,
+            "name" => totranslate("Is Jack"),
+            "type" => "bool",
+        ),
+        "num_rounds" => array(
+            "id"=> 17,
+            "name" => totranslate("Count of rounds"),
+            "type" => "int",
+        ),
+
+        // "turns_number" => array("id"=> 10,
+        //             "name" => totranslate("Number of turns"),
+        //             "type" => "int" ),
     
 /*
         Examples:    

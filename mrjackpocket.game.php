@@ -78,6 +78,7 @@ class MrJackPocket extends Table
 
         $jackId = (string) bga_rand(1, 9);
         $jackIndex = bga_rand(0, 1);
+
         // $jackPlayerId = $players[$jackIndex]['player_id'];
 
         // saving player in db
@@ -87,6 +88,11 @@ class MrJackPocket extends Table
         $index = 0;
         foreach ($players as $player_id => $player) {
             $playerIsJack = (int) $index === $jackIndex;
+            if ($playerIsJack == 1) {
+                $jackPlayerId = (int) $player_id;
+            } else {
+                $detectivePlayerId = (int) $player_id;
+            }
             $color = array_shift($default_color);
             $player_no = ((int) $playerIsJack === 1) + 1;
             $values[] = "('" . $player_id . "','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "','" . $playerIsJack . "','" . $player_no . "')";
@@ -141,8 +147,18 @@ class MrJackPocket extends Table
 
         // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
-        //self::initStat( 'table', 'table_teststat1', 0 );    // Init a table statistics
-        //self::initStat( 'player', 'player_teststat1', 0 );  // Init a player statistics (for all players)
+        self::initStat('table', 'closed_characters', 0);
+        self::initStat('table', 'jack_win', false);
+        self::initStat('table', 'draw', false);
+        self::initStat('table', 'last_round', 1);
+        self::initStat('player', 'winned_rounds', 0, $detectivePlayerId);
+        self::initStat('player', 'is_win', false, $detectivePlayerId);
+        self::initStat('player', 'is_jack', false, $detectivePlayerId);
+        self::initStat('player', 'num_rounds', 0, $detectivePlayerId);
+        self::initStat('player', 'winned_rounds', 0, $jackPlayerId);
+        self::initStat('player', 'is_win', false, $jackPlayerId);
+        self::initStat('player', 'is_jack', true, $jackPlayerId);
+        self::initStat('player', 'num_rounds', 0, $jackPlayerId);
 
         // TODO: setup the initial game situation here
 
@@ -1100,8 +1116,9 @@ class MrJackPocket extends Table
         $sql = "UPDATE character_status SET player_id_with_alibi = '$playerId' WHERE character_id = '$alibiCharacterId'";
         self::DbQuery($sql);
         $jackPlayer = $this->getJackPlayer();
-        if (((int) $jackPlayer['player_id']) !== $playerId) {
+        if (((int) $jackPlayer['player_id']) !== $playerId && $alibiCharacter['tale_is_opened'] === '1') {
             $this->closeCharacters([$alibiCharacter]);
+            self::incStat(1, 'closed_characters');
         }
 
         $this->useOption($action);
@@ -1277,6 +1294,7 @@ class MrJackPocket extends Table
         );
 
         $this->closeCharacters($charactersToClose);
+        self::incStat(count($charactersToClose), 'closed_characters');
 
         $detectivePlayer = $this->getDetectivePlayer();
         $detectivePlayerId = (int) $detectivePlayer['player_id'];
@@ -1287,7 +1305,12 @@ class MrJackPocket extends Table
         } else {
             $winPlayerId = $jackPlayerId;
         }
+        self::incStat(1, 'winned_rounds', $winPlayerId);
+        self::incStat(1, 'num_rounds', $detectivePlayerId);
+        self::incStat(1, 'num_rounds', $jackPlayerId);
+
         $currentRoundNum = $this->getLastRoundNum();
+        self::setStat($currentRoundNum, 'last_round');
         $sqlIsJackVisible = (int) $isJackVisible;
         $sql = "UPDATE `round` SET is_criminal_visible = '$sqlIsJackVisible', win_player_id = '$winPlayerId' WHERE round_num = '$currentRoundNum';";
         self::DbQuery($sql);
@@ -1298,6 +1321,7 @@ class MrJackPocket extends Table
         if ($playUntilVisibility) {
             $sql = "UPDATE `round` SET play_until_visibility = '1' WHERE round_num = '$currentRoundNum'";
             self::DbQuery($sql);
+            self::setStat(true, 'draw');
         }
 
         $isGameEnd = $gameEndStatus === 'DETECTIVE_WIN' || $gameEndStatus === 'JACK_WIN';
@@ -1305,9 +1329,12 @@ class MrJackPocket extends Table
         if ($isGameEnd) {
             if ($gameEndStatus === 'DETECTIVE_WIN') {
                 $winnerId = $detectivePlayerId;
+                self::setStat('0', 'jack_win');
             } else {
                 $winnerId = $jackPlayerId;
+                self::setStat('1', 'jack_win');
             }
+            self::setStat(true, 'is_win', $winnerId);
             self::DbQuery("UPDATE player
                               SET player_score = 1,
                                   player_score_aux = 1
