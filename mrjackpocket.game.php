@@ -823,7 +823,9 @@ class MrJackPocket extends Table
     {
         $metaCharacter = $this->getMetaCharacterById($taleId);
         if (is_null($metaCharacter)) {
-            throw new BgaUserException(self::_("You can't rotate tale with id = $taleId. It doesn't exist"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not rotate tale with id = %s. It does not exist'), $taleId),
+            );
         }
 
         $character = $this->getCharacterById($taleId);
@@ -839,7 +841,7 @@ class MrJackPocket extends Table
             fn(string $side) => $side === $wallSide,
         );
         if (!$isValidWallSide) {
-            throw new BgaUserException(self::_("You can't rotate tale to $wallSide. This side doesn't exist"));
+            throw new BgaUserException(self::_("You can't rotate tale to this side. It doesn't exist"));
         }
 
         $currentRoundNum = $this->getLastRoundNum();
@@ -856,12 +858,16 @@ class MrJackPocket extends Table
 
         $metaCharacter1 = $this->getMetaCharacterById($taleId1);
         if (is_null($metaCharacter1)) {
-            throw new BgaUserException(self::_("You can't exchange tale with id = $taleId1. It does not exist"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not exchange tale with id = %s. It does not exist'), $taleId1),
+            );
         }
 
         $metaCharacter2 = $this->getMetaCharacterById($taleId2);
         if (is_null($metaCharacter2)) {
-            throw new BgaUserException(self::_("You can't exchange tale with id = $taleId2. It does not exist"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not exchange tale with id = %s. It does not exist'), $taleId2),
+            );
         }
     }
 
@@ -878,19 +884,25 @@ class MrJackPocket extends Table
 
         $metaDetective = $this->getMetaDetectiveById($detectiveId);
         if (is_null($metaDetective)) {
-            throw new BgaUserException(self::_("You can't move detective with id = $detectiveId. This detective does not exist"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not move detective with id = %s. This detective does not exist'), $detectiveId),
+            );
         }
 
         $metaNewPos = $this->detective_pos[$newPos];
         if (is_null($metaNewPos)) {
-            throw new BgaUserException(self::_("You can't move detective to $newPos. This position doesn't exist"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not move detective to %d. This position does not exist'), $newPos),
+            );
         }
 
         $detective = $this->getDetectiveById($detectiveId);
         $oldPos = (int) $detective['detective_pos'];
         $difference = $this->getDifferencePos($oldPos, $newPos);
         if ($difference !== 1) {
-            throw new BgaUserException(self::_("You can't move detective to $newPos. Jocker allows to move it only for one step ahead"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not move detective to %d. Jocker allows to move it only for one step ahead'), $newPos),
+            );
         }
     }
 
@@ -898,19 +910,25 @@ class MrJackPocket extends Table
     {
         $metaDetective = $this->getMetaDetectiveById($detectiveId);
         if (is_null($metaDetective)) {
-            throw new BgaUserException(self::_("You can't move detective with id = $detectiveId. This detective does not exist"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not move detective with id = %s. This detective does not exist'), $detectiveId),
+            );
         }
 
         $metaNewPos = $this->detective_pos[$newPos];
         if (is_null($metaNewPos)) {
-            throw new BgaUserException(self::_("You can't move detective to $newPos. This position doesn't exist"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not move detective to %d. This position does not exist'), $newPos),
+            );
         }
 
         $detective = $this->getDetectiveById($detectiveId);
         $oldPos = (int) $detective['detective_pos'];
         $difference = $this->getDifferencePos($oldPos, $newPos);
         if (!($difference === 1 || $difference === 2)) {
-            throw new BgaUserException(self::_("You can't move detective to $newPos. Detective can move only for 1 or 2 steps ahead"));
+            throw new BgaUserException(
+                sprintf(self::_('You can not move detective to %d. Detective can move only for 1 or 2 steps ahead'), $newPos),
+            );
         }
     }
 
@@ -935,7 +953,7 @@ class MrJackPocket extends Table
     function rotateTale(string $taleId, string $wallSide, ?int $playerId)
     {
         if (is_null($playerId)) {
-            $playerId = $this->getCurrentPlayerId();
+            $playerId = (int) $this->getCurrentPlayerId();
         }
 
         /**
@@ -956,8 +974,9 @@ class MrJackPocket extends Table
 
         self::notifyAllPlayers(
             "rotateTale",
-            clienttranslate('${playerName} rotates ${characterName} to the ${wallSide || "other side"}'),
+            clienttranslate('${playerName} rotates ${characterName} to the ${wallSide}'),
             array(
+                'i18n' => array('wallSide'),
                 'playerId' => $playerId,
                 'playerName' => self::getActivePlayerName(),
                 'characterName' => $metaCharacter['name'],
@@ -972,7 +991,7 @@ class MrJackPocket extends Table
     function exchangeTales(string $taleId1, string $taleId2, ?int $playerId)
     {
         if (is_null($playerId)) {
-            $playerId = $this->getCurrentPlayerId();
+            $playerId = (int) $this->getCurrentPlayerId();
         }
 
         /**
@@ -1016,7 +1035,7 @@ class MrJackPocket extends Table
     function jocker(?string $detectiveId, ?int $newPos, ?int $playerId)
     {
         if (is_null($playerId)) {
-            $playerId = $this->getCurrentPlayerId();
+            $playerId = (int) $this->getCurrentPlayerId();
         }
 
         /**
@@ -1061,7 +1080,7 @@ class MrJackPocket extends Table
     function detective(string $action, int $newPos, ?int $playerId)
     {
         if (is_null($playerId)) {
-            $playerId = $this->getCurrentPlayerId();
+            $playerId = (int) $this->getCurrentPlayerId();
         }
 
         /**
@@ -1081,7 +1100,7 @@ class MrJackPocket extends Table
         $detectiveName = $metaDetective['name'];
         self::notifyAllPlayers(
             "detective",
-            clienttranslate('${playerName} uses jocker to move ${detectiveName}'),
+            clienttranslate('${playerName} moves ${detectiveName}'),
             array(
                 'playerId' => $playerId,
                 'playerName' => self::getActivePlayerName(),
@@ -1097,7 +1116,7 @@ class MrJackPocket extends Table
     function alibi(?int $playerId)
     {
         if (is_null($playerId)) {
-            $playerId = $this->getCurrentPlayerId();
+            $playerId = (int) $this->getCurrentPlayerId();
         }
 
         /**
@@ -1127,7 +1146,7 @@ class MrJackPocket extends Table
             self::notifyPlayer(
                 $playerId,
                 "alibiJack",
-                clienttranslate('${playerName} opens alibi card for ${alibiName}'),
+                clienttranslate('${playerName} opens alibi card with ${alibiName}'),
                 array(
                     'playerId' => $playerId,
                     'playerName' => self::getActivePlayerName(),
@@ -1147,7 +1166,7 @@ class MrJackPocket extends Table
         } else {
             self::notifyAllPlayers(
                 "alibiAll",
-                clienttranslate('${playerName} opens alibi card for ${alibiName}'),
+                clienttranslate('${playerName} opens alibi card with ${alibiName}'),
                 array(
                     'playerId' => $playerId,
                     'playerName' => self::getActivePlayerName(),
@@ -1161,7 +1180,8 @@ class MrJackPocket extends Table
         $this->gamestate->nextState('nextTurn');
     }
 
-    function confirmGameEnd() {
+    function confirmGameEnd()
+    {
         $currentState = $this->gamestate->state();
         if ($currentState['name'] === 'gameEndApprove') {
             $this->gamestate->nextState('gameEnd');
@@ -1365,10 +1385,11 @@ class MrJackPocket extends Table
 
         self::notifyAllPlayers(
             "roundEnd",
-            clienttranslate('Round ${newRoundNum - 1} is over'),
+            clienttranslate('Round ${oldRoundNum} is over'),
             array(
                 'nextActivePlayerId' => $nextActivePlayerId,
                 'newRoundNum' => $currentRoundNum + 1,
+                'oldRoundNum' => $currentRoundNum,
                 'newOptions' => $newOptions,
                 'newNextOptions' => $nextOptions,
                 'characterIdsToClose' => array_map(
@@ -1442,7 +1463,8 @@ class MrJackPocket extends Table
         return 'NOT_GAME_END';
     }
 
-    function stEndOfGame() {
+    function stEndOfGame()
+    {
         $characters = $this->getCharacters();
         $detectives = $this->getDetectives();
         $visibleCharacters = $this->getVisibleCharacters($characters, $detectives);
@@ -1455,14 +1477,14 @@ class MrJackPocket extends Table
         $gameEndStatus = $this->getGameEndStatus($isJackVisible, $jackPlayerId);
         $jackCharacter = $this->getJackCharacter();
         if ('JACK_WIN' === $gameEndStatus) {
-            $text = 'End game. Jack win';
+            $text = clienttranslate('End game. Jack win');
         } else {
-            $text = 'End game. Detective win';
+            $text = clienttranslate('End game. Detective win');
         }
         $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
         self::notifyAllPlayers(
             "gameEnd",
-            clienttranslate($text),
+            $text,
             array(
                 'jackCharacterId' => $jackCharacter['character_id'],
                 'gameEndStatus' => $gameEndStatus,

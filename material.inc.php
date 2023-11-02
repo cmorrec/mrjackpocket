@@ -47,10 +47,10 @@ $this->init_tale_rotations = array(
 );
 
 $this->wall_sides = array(
-  1 => 'left',
-  2 => 'up',
-  3 => 'right',
-  4 => 'down',
+  1 => clienttranslate('left'),
+  2 => clienttranslate('up'),
+  3 => clienttranslate('right'),
+  4 => clienttranslate('down'),
 );
 
 $this->detective_pos = array(

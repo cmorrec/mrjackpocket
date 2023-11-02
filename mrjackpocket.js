@@ -455,7 +455,10 @@ function (dojo, declare, baseFx) {
                 $(taleId).addEventListener(type, listener);
                 this.eventListeners.detectiveTales.push({ id: taleId, type, listener });
             });
-            this.setDescriptionState(`must choose a new position for ${metaDetective.name}`);
+            const desc = dojo.string.substitute( _("must choose a new position for ${name}"), {
+                name: metaDetective.name,
+            });
+            this.setDescriptionState(desc);
         },
 
         onNewPosClick(detectiveId, pos, isJocker) {
@@ -490,7 +493,7 @@ function (dojo, declare, baseFx) {
                 $(taleId).addEventListener(type, listener);
                 this.eventListeners.detectiveTales.push({ id: taleId, type, listener });
             });
-            this.setDescriptionState(`must choose a detective to move`);
+            this.setDescriptionState(_('must choose a detective to move'));
         },
 
         skipByJockerIfJack() {
@@ -529,9 +532,9 @@ function (dojo, declare, baseFx) {
                 .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
                 .forEach((e) => this.addTooltipHtmlCustom(
                     this.getTaleIdByCharacterId(e.id),
-                    `<span class="tooltip-text">You can\'t rotate this tale, because it already was rotated in the current round. Please, choose another tale.</span>`,
+                    `<span class="tooltip-text">${_('You can not rotate this tale, because it already was rotated in the current round. Please, choose another tale.')}</span>`,
                 ));
-            this.setDescriptionState('must choose a character to rotate');
+            this.setDescriptionState(_('must choose a character to rotate'));
         },
 
         addTooltipHtmlCustom(id, html) {
@@ -595,7 +598,10 @@ function (dojo, declare, baseFx) {
                 this.updateRotateApproveButtonStatus();
 
                 const metaCharacter = this.getMetaCharacterById(characterId);
-                this.setDescriptionState(`must choose a rotation for ${metaCharacter.name}`);
+                const desc = dojo.string.substitute( _("must choose a rotation for ${name}"), {
+                    name: metaCharacter.name,
+                });
+                this.setDescriptionState(desc);
 
                 this.currentData.characters
                     .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
@@ -644,7 +650,7 @@ function (dojo, declare, baseFx) {
                 dojo.addClass(buttonId, 'rotate-approve-disable');
                 this.addTooltipHtmlCustom(
                     buttonId,
-                    `<span class="tooltip-text">You should change the tale\'s orientation. You can\'t stay it as it is.</span>`,
+                    `<span class="tooltip-text">${_('You should change the tale`s orientation. You can not stay it as it is.')}</span>`,
                 );
             } else {
                 dojo.removeClass(buttonId, 'rotate-approve-disable');
@@ -710,7 +716,7 @@ function (dojo, declare, baseFx) {
             this.currentData.characters.forEach(
                 (e) => this.setTaleListener(e.id, 'exchangeTalesListenerTale1'),
             );
-            this.setDescriptionState('must choose a first character to exchange');
+            this.setDescriptionState(_('must choose a first character to exchange'));
         },
 
         exchangeTalesListenerTale1(characterId) {
@@ -724,7 +730,10 @@ function (dojo, declare, baseFx) {
                         (e) => this.setTaleListener(e.id, 'exchangeTalesListenerTale2'),
                     );
                 const metaCharacter = this.getMetaCharacterById(characterId);
-                this.setDescriptionState(`must choose a second character to exchange it with ${metaCharacter.name}`);
+                const desc = dojo.string.substitute( _("must choose a second character to exchange it with ${name}"), {
+                    name: metaCharacter.name,
+                });
+                this.setDescriptionState(desc);
             };
         },
 
@@ -1067,7 +1076,7 @@ function (dojo, declare, baseFx) {
                         : y - 1;
                     const newFEpos = this.boardPos.find((pos) => pos.x === newX && pos.y === newY);
                     if (!newFEpos) {
-                        alert('System error! Please write support');
+                        // alert('System error! Please write support');
                         console.log('getTaleRoute', x, y, newX, newY, currentPos, this.currentData.meta.detectivePos[currentPos]);
                     }
                     result.push(newFEpos);
@@ -1338,16 +1347,16 @@ function (dojo, declare, baseFx) {
                 this.wasGoalInitiated = true;
             }
 
-            const playerStatus = isJackPlayer ? 'You are Jack' : 'You are a detective';
+            const playerStatus = isJackPlayer ? _('You are Jack') : _('You are a detective');
             const visibilityStatus = playUntilVisibility
-                ? 'Both players achieved their goals simultaneously. The game will end when a detective see jack in the end of round. Otherwise Jack will win in the end of 8th round'
-                : 'The detective wins if at the end of the round only one character remains under suspicion. Jack wins if he manages to score 6 points by summing up the alibi cards and the rounds won';
+                ? _('Both players achieved their goals simultaneously. The game will end when a detective see jack in the end of round. Otherwise Jack will win in the end of 8th round')
+                : _('The detective wins if at the end of the round only one character remains under suspicion. Jack wins if he manages to score 6 points by summing up the alibi cards and the rounds won');
             const winnerStatus = gameEndStatus === GameEndStatus.DETECTIVE_WIN
-                ? 'Detetive wins'
+                ? _('Detetive wins')
                 : gameEndStatus === GameEndStatus.JACK_WIN
-                ? 'Jack wins'
+                ? _('Jack wins')
                 : null;
-            const text = `${playerStatus}. ${winnerStatus ?? visibilityStatus}`;
+            const text = `${playerStatus}. ${winnerStatus ?? visibilityStatus}.`;
             this.addGoalTooltip(text);
 
             if (playUntilVisibility) {
