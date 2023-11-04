@@ -13,7 +13,7 @@
 $gameinfos = array( 
 
 // Name of the game in English (will serve as the basis for translation) 
-'game_name' => "Mr. Jack Pocket",
+'game_name' => totranslate("Mr. Jack Pocket"),
 
 // Game designer (or game designers, separated by commas)
 'designer' => 'Bruno Cathala, Ludovic Maublanc',       
@@ -97,7 +97,7 @@ $gameinfos = array(
 'strategy' => 3,    
 
 // Diplomacy of the game, from 0 (no interaction in this game) to 5 (totally based on interaction and discussion between players)
-'diplomacy' => 3,    
+'diplomacy' => 0,    
 
 // Colors attributed to players
 'player_colors' => array( "ff0000", "008000"),
@@ -132,6 +132,12 @@ $gameinfos = array(
 // Each paragraph must be wrapped with totranslate() for translation and should not contain html (plain text without formatting).
 // A good length for this text is between 100 and 150 words (about 6 to 9 lines on a standard display)
 'presentation' => array(
+    totranslate("This time he won't get away. Discover the pocket version of Mr. Jack the favorite investigation game of strategy game players."),
+    totranslate("As in the board version a player takes on the role of the inspector trying to unmask Jack the Ripper while the other player takes on the role of the fleeing criminal."),
+    totranslate("The difference is in the game mechanics the infernal pursuit now takes place on a board that's 3 squares to a side each square representing both a London street and one of the nine suspects."),
+    totranslate("Around the board are placed a Holmes a Watson and a police dog token. On each turn the first player (the inspector or Jack in turn) uses 4 action tokens which allow to move the investigator tokens to reorient the tiles or to draw a ''suspect card''."),
+    totranslate("A suspect is visible only if the investigator can see that suspect in the streets in front of him. Suspects hidden by buildings are invisible. At the end of each turn the player in the role of Jack must say if the guilty character is visible or not."),
+    totranslate("If that character isn't visible Jack earns an hourglass. If the Jack player can earn 6 hourglasses that player wins the game (knowing that hourglasses are earned by remaining invisible and by drawing ''suspect'' cards). The inspector wins if there's only a single suspect left at the end of a turn."),
 //    totranslate("This wonderful game is about geometric shapes!"),
 //    totranslate("It was awarded best triangle game of the year in 2005 and nominated for the Spiel des Jahres."),
 //    ...
