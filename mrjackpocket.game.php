@@ -952,6 +952,7 @@ class MrJackPocket extends Table
 
     function rotateTale(string $taleId, string $wallSide, ?int $playerId)
     {
+        self::checkAction( "rotate" );
         if (is_null($playerId)) {
             $playerId = (int) $this->getCurrentPlayerId();
         }
@@ -990,6 +991,7 @@ class MrJackPocket extends Table
 
     function exchangeTales(string $taleId1, string $taleId2, ?int $playerId)
     {
+        self::checkAction( "exchange" );
         if (is_null($playerId)) {
             $playerId = (int) $this->getCurrentPlayerId();
         }
@@ -1034,6 +1036,7 @@ class MrJackPocket extends Table
 
     function jocker(?string $detectiveId, ?int $newPos, ?int $playerId)
     {
+        self::checkAction( "jocker" );
         if (is_null($playerId)) {
             $playerId = (int) $this->getCurrentPlayerId();
         }
@@ -1079,6 +1082,7 @@ class MrJackPocket extends Table
 
     function detective(string $action, int $newPos, ?int $playerId)
     {
+        self::checkAction( "detective" );
         if (is_null($playerId)) {
             $playerId = (int) $this->getCurrentPlayerId();
         }
@@ -1115,6 +1119,7 @@ class MrJackPocket extends Table
 
     function alibi(?int $playerId)
     {
+        self::checkAction( "alibi" );
         if (is_null($playerId)) {
             $playerId = (int) $this->getCurrentPlayerId();
         }
@@ -1182,6 +1187,7 @@ class MrJackPocket extends Table
 
     function confirmGameEnd()
     {
+        // self::checkAction( "confirmGameEnd" );
         $currentState = $this->gamestate->state();
         if ($currentState['name'] === 'gameEndApprove') {
             $this->gamestate->nextState('gameEnd');

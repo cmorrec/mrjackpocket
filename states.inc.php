@@ -30,6 +30,7 @@ $machinestates = array(
         "description" => clienttranslate('${actplayer} must choose an action'),
         "descriptionmyturn" => clienttranslate('${you} must choose an action'),
         "type" => "activeplayer",
+        "possibleactions" => array( "detective",  "jocker", "alibi", "exchange", "rotate"),
         "transitions" => array(
             "nextTurn" => 24,
         ),
@@ -69,6 +70,7 @@ $machinestates = array(
     27 => array(
         "name" => "gameEndApprove",
         "type" => "multipleactiveplayer",
+        "possibleactions" => array( "confirmGameEnd"),
         "transitions" => array(
             "gameEnd" => 99,
         ),

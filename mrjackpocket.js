@@ -52,7 +52,7 @@ define([
 ], function (dojo, declare, baseFx) {
   return declare("bgagame.mrjackpocket", ebg.core.gamegui, {
     constructor: function () {
-      console.log("mrjackpocket constructor");
+    //   console.log("mrjackpocket constructor");
       this.boardPos = range(25).map((n) => ({
         id: String(n + 1),
         pos: n + 1,
@@ -96,7 +96,7 @@ define([
 
     setup: function (gamedatas) {
       this.currentData = gamedatas;
-      console.log("Starting game setup");
+    //   console.log("Starting game setup");
 
       // async
       this.initOptions(gamedatas.currentOptions, gamedatas.nextOptions);
@@ -188,7 +188,7 @@ define([
         dojo.toggleClass("visible-status-card-inner", "is-visible");
       }
 
-      console.log("Ending game setup");
+    //   console.log("Ending game setup");
     },
 
     setPlayerPanels() {
@@ -214,9 +214,9 @@ define([
         (e) => e.player_is_jack === "0"
       )?.player_id;
       if (!jackPlayerId || !detectivePlayerId) {
-        console.error(
-          `Error: jackPlayerId = ${jackPlayerId}, detectivePlayerId = ${detectivePlayerId}`
-        );
+        // console.error(
+        //   `Error: jackPlayerId = ${jackPlayerId}, detectivePlayerId = ${detectivePlayerId}`
+        // );
         return;
       }
       const jackBoardDiv = $(`player_board_${jackPlayerId}`);
@@ -762,9 +762,9 @@ define([
       return (e) => {
         const { wallSide, taleId } = this.optionActions.rotation;
         if (taleId !== characterId) {
-          console.log(
-            `Something is broken. Player trying to update ${taleId}, but callback is called for ${characterId}`
-          );
+        //   console.log(
+        //     `Something is broken. Player trying to update ${taleId}, but callback is called for ${characterId}`
+        //   );
           return;
         }
         const character = this.getCharacterById(characterId);
@@ -841,6 +841,7 @@ define([
       this.ajaxcall(
         "/mrjackpocket/mrjackpocket/exchange.html",
         {
+          lock: true,
           taleId1: taleId1,
           taleId2: taleId2,
         },
@@ -855,6 +856,7 @@ define([
       this.ajaxcall(
         "/mrjackpocket/mrjackpocket/rotate.html",
         {
+          lock: true,
           taleId: taleId,
           wallSide: wallSide,
         },
@@ -867,7 +869,9 @@ define([
       this.actionDone();
       this.ajaxcall(
         "/mrjackpocket/mrjackpocket/alibi.html",
-        {},
+        {
+          lock: true,
+        },
         this,
         () => {}
       );
@@ -879,6 +883,7 @@ define([
       this.ajaxcall(
         "/mrjackpocket/mrjackpocket/jocker.html",
         {
+          lock: true,
           detectiveId: detectiveId,
           newPos: newPos,
         },
@@ -893,6 +898,7 @@ define([
       this.ajaxcall(
         "/mrjackpocket/mrjackpocket/detective.html",
         {
+          lock: true,
           detectiveId: detectiveId,
           newPos: newPos,
         },
@@ -903,15 +909,17 @@ define([
 
     action_gameEnd() {
       try {
-        console.log("action_gameEnd");
+        // console.log("action_gameEnd");
         this.ajaxcall(
           "/mrjackpocket/mrjackpocket/confirmGameEnd.html",
-          {},
+          {
+            lock: true,
+          },
           this,
           () => {}
         );
       } catch (e) {
-        console.error(e);
+        // console.error(e);
       }
     },
 
@@ -934,7 +942,7 @@ define([
     //                  You can use this method to perform some user interface changes at this moment.
     //
     onEnteringState: function (stateName, args) {
-      console.log("Entering state: " + stateName);
+    //   console.log("Entering state: " + stateName);
 
       switch (stateName) {
         case "playerTurn":
@@ -996,7 +1004,7 @@ define([
     //                 You can use this method to perform some user interface changes at this moment.
     //
     onLeavingState: function (stateName) {
-      console.log("Leaving state: " + stateName);
+    //   console.log("Leaving state: " + stateName);
 
       switch (stateName) {
         case "playerTurn":
@@ -1009,7 +1017,7 @@ define([
     //                        action status bar (ie: the HTML links in the status bar).
     //
     onUpdateActionButtons: function (stateName, args) {
-      console.log("onUpdateActionButtons: " + stateName);
+    //   console.log("onUpdateActionButtons: " + stateName);
 
       if (this.isCurrentPlayerActive()) {
         switch (
@@ -1163,15 +1171,15 @@ define([
           );
           if (!newFEpos) {
             // alert('System error! Please write support');
-            console.log(
-              "getTaleRoute",
-              x,
-              y,
-              newX,
-              newY,
-              currentPos,
-              this.currentData.meta.detectivePos[currentPos]
-            );
+            // console.log(
+            //   "getTaleRoute",
+            //   x,
+            //   y,
+            //   newX,
+            //   newY,
+            //   currentPos,
+            //   this.currentData.meta.detectivePos[currentPos]
+            // );
           }
           result.push(newFEpos);
           // console.log('corner cycle', newFEpos);
@@ -1740,7 +1748,7 @@ define([
         
         */
     setupNotifications: function () {
-      console.log("notifications subscriptions setup");
+    //   console.log("notifications subscriptions setup");
       dojo.subscribe("roundEnd", this, "notif_roundEnd");
       // this.notifqueue.setSynchronous('roundEnd', 3000);
 
@@ -1758,9 +1766,9 @@ define([
     // TODO: from this point and below, you can write your game notifications handling methods
 
     notif_rotateTale(notif) {
-      console.log("notif_rotateTale");
+    //   console.log("notif_rotateTale");
       const { characterId, wallSide } = notif.args;
-      console.log("characterId", characterId, "wallSide", wallSide);
+    //   console.log("characterId", characterId, "wallSide", wallSide);
 
       this.optionWasUsed("rotation");
       const character = this.getCharacterById(characterId);
@@ -1777,9 +1785,9 @@ define([
     },
 
     notif_exchangeTales(notif) {
-      console.log("notif_exchangeTales");
+    //   console.log("notif_exchangeTales");
       const { characterId1, characterId2 } = notif.args;
-      console.log("characterId1", characterId1, "characterId2", characterId2);
+    //   console.log("characterId1", characterId1, "characterId2", characterId2);
 
       this.optionWasUsed("exchange");
       const character1 = this.getCharacterById(characterId1);
@@ -1793,9 +1801,9 @@ define([
     },
 
     async notif_jocker(notif) {
-      console.log("notif_jocker");
+    //   console.log("notif_jocker");
       const { detectiveId, newPos } = notif.args;
-      console.log("detectiveId", detectiveId, "newPos", newPos);
+    //   console.log("detectiveId", detectiveId, "newPos", newPos);
 
       this.optionWasUsed("jocker");
       if (!detectiveId || !newPos) {
@@ -1812,9 +1820,9 @@ define([
     },
 
     async notif_detective(notif) {
-      console.log("notif_detective");
+    //   console.log("notif_detective");
       const { detectiveId, newPos } = notif.args;
-      console.log("detectiveId", detectiveId, "newPos", newPos);
+    //   console.log("detectiveId", detectiveId, "newPos", newPos);
 
       this.optionWasUsed(detectiveId);
       await this.detective({ detectiveId, newPos });
@@ -1828,9 +1836,9 @@ define([
     },
 
     async notif_alibiJack(notif) {
-      console.log("notif_alibiJack");
+    //   console.log("notif_alibiJack");
       const { alibiId, points } = notif.args;
-      console.log("alibiId", alibiId, "points", points);
+    //   console.log("alibiId", alibiId, "points", points);
 
       this.optionWasUsed("alibi");
       this.updateAlibiTimerStatus();
@@ -1844,7 +1852,7 @@ define([
     },
 
     async notif_alibiAllExceptJack(notif) {
-      console.log("notif_alibiAllExceptJack");
+    //   console.log("notif_alibiAllExceptJack");
       const {} = notif.args;
 
       const playerisJack = Boolean(this.currentData.jackId);
@@ -1862,9 +1870,9 @@ define([
     },
 
     async notif_alibiAll(notif) {
-      console.log("notif_alibiAll");
+    //   console.log("notif_alibiAll");
       const { alibiId, close } = notif.args;
-      console.log("alibiId", alibiId, "close", close);
+    //   console.log("alibiId", alibiId, "close", close);
 
       this.optionWasUsed("alibi");
       this.updateAlibiTimerStatus();
@@ -1917,35 +1925,35 @@ define([
         gameEndStatus,
       } = notif.args;
       const characterIdsToClose = Object.values(closeCharactersObj);
-      console.log(
-        "nextActivePlayerId =",
-        nextActivePlayerId,
-        "\n",
-        "newRoundNum =",
-        newRoundNum,
-        "\n",
-        "newOptions =",
-        newOptions,
-        "\n",
-        "newNextOptions =",
-        newNextOptions,
-        "\n",
-        "characterIdsToClose =",
-        characterIdsToClose,
-        "\n",
-        "isVisible =",
-        isVisible,
-        "\n",
-        "playUntilVisibility =",
-        playUntilVisibility,
-        "\n",
-        "winPlayerId =",
-        winPlayerId,
-        "\n",
-        "gameEndStatus = ",
-        gameEndStatus,
-        "\n"
-      );
+    //   console.log(
+    //     "nextActivePlayerId =",
+    //     nextActivePlayerId,
+    //     "\n",
+    //     "newRoundNum =",
+    //     newRoundNum,
+    //     "\n",
+    //     "newOptions =",
+    //     newOptions,
+    //     "\n",
+    //     "newNextOptions =",
+    //     newNextOptions,
+    //     "\n",
+    //     "characterIdsToClose =",
+    //     characterIdsToClose,
+    //     "\n",
+    //     "isVisible =",
+    //     isVisible,
+    //     "\n",
+    //     "playUntilVisibility =",
+    //     playUntilVisibility,
+    //     "\n",
+    //     "winPlayerId =",
+    //     winPlayerId,
+    //     "\n",
+    //     "gameEndStatus = ",
+    //     gameEndStatus,
+    //     "\n"
+    //   );
 
       const currentOptions = newOptions.map((e) => ({
         ability: e,
@@ -1993,12 +2001,12 @@ define([
     notif_gameEnd(notif) {
       const { jackCharacterId, gameEndStatus, jackAlibiCards } = notif.args;
 
-      console.log(
-        "notif_gameEnd",
-        jackCharacterId,
-        gameEndStatus,
-        jackAlibiCards
-      );
+    //   console.log(
+    //     "notif_gameEnd",
+    //     jackCharacterId,
+    //     gameEndStatus,
+    //     jackAlibiCards
+    //   );
       this.currentData.jackAlibiCards = jackAlibiCards;
       this.currentData.jackCharacterId = jackCharacterId;
       this.currentData.gameEndStatus = gameEndStatus;
