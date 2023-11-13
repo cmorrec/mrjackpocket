@@ -317,7 +317,13 @@ class MrJackPocket extends Table
         $jackPlayerId = (int) $jackPlayer['player_id'];
         $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
         $result['jackAlibiCardsNum'] = count($jackALibiCards);
-        $result['playersInfo'] = $this->getPlayers();
+        $result['playersInfo'] = array_map(
+            fn(array $player): array => array(
+                'player_id' => $player['player_id'],
+                'player_is_jack' => $player['player_is_jack'],
+            ),
+            $this->getPlayers(),
+        );
         $player = $this->getPlayer($playerId);
         if (is_null($player)) {
             return $result;
