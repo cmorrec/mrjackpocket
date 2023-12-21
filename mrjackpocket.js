@@ -374,7 +374,7 @@ define([
         this.updateOptionsStatuses();
       }
       this.removeActionButtons();
-      this.setDescriptionState("must choose an action");
+      this.setDescriptionState(_("must choose an action"));
       this.updateVisibleTales();
 
       this.currentData.characters
@@ -663,7 +663,7 @@ define([
         this.addActionButton(
           "rotate-approve-action-button",
           _("Approve rotate"),
-          this.rotateTaleListenerApprove(characterId),
+          this.rotateTaleListenerApprove(characterId)
         );
 
         this.updateRotateApproveButtonStatus();
@@ -1402,6 +1402,47 @@ define([
     },
 
     async initOptions(currentOptions, nextOptions) {
+      const detectiveTooltip = {
+        name: _("Holmes / Watson / The dog"),
+        rule: _(
+          "The corresponding Detective token is moved one or two spaces clockwise. More than one Detective can occupy a given space next to an area."
+        ),
+      };
+      const optionTooltip = {
+        rotation: {
+          name: _("Rotation"),
+          rule: _(
+            "The player rotates an area tile by 90 degrees (in either direction) or by 180 degrees, thus moving the wall to either block or open up a Detective`s line of sight. There are two actions of this type. The action may not be used to rotate a tile that has already been rotated in the same turn."
+          ),
+        },
+        exchange: {
+          name: _("Exchange tales"),
+          rule: _(
+            "The player switches two area tiles without changing their orientation."
+          ),
+        },
+        joker: {
+          name: _("Joker"),
+          rule: `<i>${_("If the Investigator chooses this action:")}</i><br>${_(
+            "- He moves a Detective token of his choice one space clockwise."
+          )}<br><i>${_(
+            "If Mr. Jack chooses this action, he can either:"
+          )}</i><br>${_(
+            "- Move a Detective token of his choice one space clockwise, or"
+          )}<br>${_("- Leave the three Detective tokens where they are.")}`,
+        },
+        alibi: {
+          name: _("Alibi"),
+          rule: `<i>${_("If Mr. Jack chooses this action:")}</i><br>${_(
+            "- He takes an Alibi card, but doesn`t show it to the Investigator. He keeps it face down in front of him. He mentally adds any hourglasses on the card to any hourglasses tokens already acquired."
+          )}<br><i>${_("If the Investigator chooses this action:")}</i><br>${_(
+            "- He takes an Alibi card and reveals it. If the card shows a character who is still a suspect, the Investigator has cleared them and turns over the appropriate area tile to its empty side. Mr Jack loses any hourglasses that were on the card..."
+          )}`,
+        },
+        holmes: detectiveTooltip,
+        watson: detectiveTooltip,
+        dog: detectiveTooltip,
+      };
       const optionMeta = [
         ["rotation", "exchange"],
         ["rotation", "joker"],
@@ -1459,6 +1500,19 @@ define([
             dojo.removeClass(backId, "option-was-used");
           }
           this.initOptionListener(option, availableId);
+
+          const availableTooltip = optionTooltip[option.ability];
+          this.addTooltipHtmlCustom(
+            availableId,
+            `<span class="tooltip-text"><b>${availableTooltip.name}</b><br><br>${availableTooltip.rule}</span>`
+          );
+          if (nextOption) {
+            const nextTooltip = optionTooltip[nextOption.ability];
+            this.addTooltipHtmlCustom(
+              nextId,
+              `<span class="tooltip-text"><b>${nextTooltip.name}</b><br><br>${nextTooltip.rule}</span>`
+            );
+          }
         })
       );
     },
