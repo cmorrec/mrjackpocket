@@ -23,7 +23,7 @@ $this->round_num = 8;
 
 $this->options_to_move = [
   ['rotation', 'exchange'],
-  ['rotation', 'jocker'],
+  ['rotation', 'joker'],
   ['alibi', 'holmes'],
   ['watson', 'dog'],
 ];
@@ -82,7 +82,7 @@ $this->characters = [
 
 $this->detectives = [
   array('id' => 'holmes', 'name' => 'Mr. Holmes', 'img' => 'img/holmes.png'),
-  array('id' => 'watson', 'name' => 'Mr. Watson', 'img' => 'img/watson.png'),
+  array('id' => 'watson', 'name' => 'Dr. Watson', 'img' => 'img/watson.png'),
   array('id' => 'dog', 'name' => 'Toby', 'img' => 'img/dog.png'),
 ];
 

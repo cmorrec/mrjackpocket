@@ -48,14 +48,14 @@ class action_mrjackpocket extends APP_GameAction
     self::ajaxResponse();
   }
 
-  public function jocker()
+  public function joker()
   {
     self::setAjaxMode();
 
     $detectiveId = self::getArg("detectiveId", AT_enum, false, null, ['holmes', 'watson', 'dog']);
     $newPos = self::getArg("newPos", AT_posint, false, null);
 
-    $this->game->jocker($detectiveId, $newPos, null);
+    $this->game->joker($detectiveId, $newPos, null);
 
     self::ajaxResponse();
   }

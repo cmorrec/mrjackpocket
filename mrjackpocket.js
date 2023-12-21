@@ -52,7 +52,7 @@ define([
 ], function (dojo, declare, baseFx) {
   return declare("bgagame.mrjackpocket", ebg.core.gamegui, {
     constructor: function () {
-    //   console.log("mrjackpocket constructor");
+      //   console.log("mrjackpocket constructor");
       this.boardPos = range(25).map((n) => ({
         id: String(n + 1),
         pos: n + 1,
@@ -70,7 +70,7 @@ define([
         rotation: {},
         exchange: {},
         detective: {},
-        jocker: {},
+        joker: {},
       };
       this.sideDict = { down: 0, left: 1, up: 2, right: 3 };
       this.availableDetectivePos = this.boardPos.filter((e) => {
@@ -96,7 +96,7 @@ define([
 
     setup: function (gamedatas) {
       this.currentData = gamedatas;
-    //   console.log("Starting game setup");
+      //   console.log("Starting game setup");
 
       // async
       this.initOptions(gamedatas.currentOptions, gamedatas.nextOptions);
@@ -188,7 +188,7 @@ define([
         dojo.toggleClass("visible-status-card-inner", "is-visible");
       }
 
-    //   console.log("Ending game setup");
+      //   console.log("Ending game setup");
     },
 
     setPlayerPanels() {
@@ -322,7 +322,7 @@ define([
         rotation: {},
         exchange: {},
         detective: {},
-        jocker: {},
+        joker: {},
       };
       this.clearCharacterEventListeners();
       this.clearDetectiveEventListeners();
@@ -368,7 +368,7 @@ define([
         rotation: {},
         exchange: {},
         detective: {},
-        jocker: {},
+        joker: {},
       };
       if (this.isCurrentPlayerActive()) {
         this.updateOptionsStatuses();
@@ -474,7 +474,7 @@ define([
         return this.alibiListener.bind(this);
       }
 
-      if (option === "jocker") {
+      if (option === "joker") {
         return this.jockerListener.bind(this);
       }
 
@@ -491,7 +491,7 @@ define([
         currentPos,
         isJocker ? 1 : 2
       );
-      this.optionActions[isJocker ? "jocker" : "detective"].detectiveId =
+      this.optionActions[isJocker ? "joker" : "detective"].detectiveId =
         detectiveId;
 
       availablePoses.forEach(({ fePos, bePos }) => {
@@ -513,7 +513,7 @@ define([
 
     onNewPosClick(detectiveId, pos, isJocker) {
       return (e) => {
-        this.optionActions[isJocker ? "jocker" : "detective"].newPos = pos;
+        this.optionActions[isJocker ? "joker" : "detective"].newPos = pos;
         if (isJocker) {
           this.action_jocker();
         } else {
@@ -526,12 +526,12 @@ define([
     },
 
     jockerListener() {
-      this.clickOnAction("jocker");
+      this.clickOnAction("joker");
 
       const playerisJack = Boolean(this.currentData.jackId);
       if (playerisJack) {
         this.addActionButton(
-          "skip-jocker-way",
+          "skip-joker-way",
           _("Skip"),
           "skipByJockerIfJack",
           null,
@@ -555,9 +555,9 @@ define([
 
     skipByJockerIfJack() {
       this.clearDetectiveEventListeners();
-      this.removeActionButtons(); // dojo.destroy('skip-jocker-way');
-      this.optionActions.jocker.newPos = null;
-      this.optionActions.jocker.detectiveId = null;
+      this.removeActionButtons(); // dojo.destroy('skip-joker-way');
+      this.optionActions.joker.newPos = null;
+      this.optionActions.joker.detectiveId = null;
       this.action_jocker();
       this.setDescriptionState();
     },
@@ -660,6 +660,12 @@ define([
           })
         );
 
+        this.addActionButton(
+          "rotate-approve-action-button",
+          _("Approve rotate"),
+          this.rotateTaleListenerApprove(characterId),
+        );
+
         this.updateRotateApproveButtonStatus();
 
         const metaCharacter = this.getMetaCharacterById(characterId);
@@ -703,6 +709,7 @@ define([
       ["clockwise", "counter-clockwise", "rotate-approve"].forEach((e) =>
         dojo.destroy(e)
       );
+      this.removeActionButtons();
     },
 
     updateRotateApproveButtonStatus() {
@@ -762,9 +769,9 @@ define([
       return (e) => {
         const { wallSide, taleId } = this.optionActions.rotation;
         if (taleId !== characterId) {
-        //   console.log(
-        //     `Something is broken. Player trying to update ${taleId}, but callback is called for ${characterId}`
-        //   );
+          //   console.log(
+          //     `Something is broken. Player trying to update ${taleId}, but callback is called for ${characterId}`
+          //   );
           return;
         }
         const character = this.getCharacterById(characterId);
@@ -879,9 +886,9 @@ define([
 
     action_jocker() {
       this.actionDone();
-      const { detectiveId, newPos } = this.optionActions.jocker;
+      const { detectiveId, newPos } = this.optionActions.joker;
       this.ajaxcall(
-        "/mrjackpocket/mrjackpocket/jocker.html",
+        "/mrjackpocket/mrjackpocket/joker.html",
         {
           lock: true,
           detectiveId: detectiveId,
@@ -930,7 +937,7 @@ define([
         rotation: {},
         exchange: {},
         detective: {},
-        jocker: {},
+        joker: {},
       };
       // TODO add styles to active and inactive options
     },
@@ -942,19 +949,23 @@ define([
     //                  You can use this method to perform some user interface changes at this moment.
     //
     onEnteringState: function (stateName, args) {
-    //   console.log("Entering state: " + stateName);
+      //   console.log("Entering state: " + stateName);
 
       switch (stateName) {
         case "playerTurn":
           setTimeout(() => this.updateOptionsStatuses(), 1000);
           break;
         case "gameEndAnimation":
+        case "gameEndApprove":
           setTimeout(() => this.winnerDetermination(), 8500);
           break;
       }
     },
 
     winnerDetermination() {
+      if (this.winnerWasDetermined) {
+        return;
+      }
       let isSend = false;
       const { jackCharacterId, gameEndStatus, jackAlibiCards } =
         this.currentData;
@@ -965,6 +976,7 @@ define([
       $("jack-alibi-num").innerHTML = this.getAlibiJackPoints();
 
       const send = () => {
+        this.winnerWasDetermined = true;
         if (!isSend) {
           isSend = true;
           this.action_gameEnd();
@@ -972,7 +984,7 @@ define([
       };
       const isJackWin = gameEndStatus === GameEndStatus.JACK_WIN;
       const winner = isJackWin ? "Jack" : "Detective";
-      const endText = _("End game") + ": " + winner + " " + _("win");
+      const endText = _("End game") + ": " + winner + " " + _("wins");
       $("pagemaintitletext").innerHTML = endText;
 
       this.myDlg = new ebg.popindialog();
@@ -1004,7 +1016,7 @@ define([
     //                 You can use this method to perform some user interface changes at this moment.
     //
     onLeavingState: function (stateName) {
-    //   console.log("Leaving state: " + stateName);
+      //   console.log("Leaving state: " + stateName);
 
       switch (stateName) {
         case "playerTurn":
@@ -1017,7 +1029,7 @@ define([
     //                        action status bar (ie: the HTML links in the status bar).
     //
     onUpdateActionButtons: function (stateName, args) {
-    //   console.log("onUpdateActionButtons: " + stateName);
+      //   console.log("onUpdateActionButtons: " + stateName);
 
       if (this.isCurrentPlayerActive()) {
         switch (
@@ -1392,7 +1404,7 @@ define([
     async initOptions(currentOptions, nextOptions) {
       const optionMeta = [
         ["rotation", "exchange"],
-        ["rotation", "jocker"],
+        ["rotation", "joker"],
         ["alibi", "holmes"],
         ["watson", "dog"],
       ];
@@ -1499,7 +1511,7 @@ define([
           );
       const winnerStatus =
         gameEndStatus === GameEndStatus.DETECTIVE_WIN
-          ? _("Detetive wins")
+          ? _("Detective wins")
           : gameEndStatus === GameEndStatus.JACK_WIN
           ? _("Jack wins")
           : null;
@@ -1748,13 +1760,13 @@ define([
         
         */
     setupNotifications: function () {
-    //   console.log("notifications subscriptions setup");
+      //   console.log("notifications subscriptions setup");
       dojo.subscribe("roundEnd", this, "notif_roundEnd");
       // this.notifqueue.setSynchronous('roundEnd', 3000);
 
       dojo.subscribe("rotateTale", this, "notif_rotateTale");
       dojo.subscribe("exchangeTales", this, "notif_exchangeTales");
-      dojo.subscribe("jocker", this, "notif_jocker");
+      dojo.subscribe("joker", this, "notif_jocker");
       dojo.subscribe("detective", this, "notif_detective");
       dojo.subscribe("alibiJack", this, "notif_alibiJack");
       // todo     this.notifqueue.setIgnoreNotificationCheck( 'dealCard', (notif) => (notif.args.player_id == this.player_id) );
@@ -1766,9 +1778,9 @@ define([
     // TODO: from this point and below, you can write your game notifications handling methods
 
     notif_rotateTale(notif) {
-    //   console.log("notif_rotateTale");
+      //   console.log("notif_rotateTale");
       const { characterId, wallSide } = notif.args;
-    //   console.log("characterId", characterId, "wallSide", wallSide);
+      //   console.log("characterId", characterId, "wallSide", wallSide);
 
       this.optionWasUsed("rotation");
       const character = this.getCharacterById(characterId);
@@ -1785,9 +1797,9 @@ define([
     },
 
     notif_exchangeTales(notif) {
-    //   console.log("notif_exchangeTales");
+      //   console.log("notif_exchangeTales");
       const { characterId1, characterId2 } = notif.args;
-    //   console.log("characterId1", characterId1, "characterId2", characterId2);
+      //   console.log("characterId1", characterId1, "characterId2", characterId2);
 
       this.optionWasUsed("exchange");
       const character1 = this.getCharacterById(characterId1);
@@ -1801,15 +1813,15 @@ define([
     },
 
     async notif_jocker(notif) {
-    //   console.log("notif_jocker");
+      //   console.log("notif_jocker");
       const { detectiveId, newPos } = notif.args;
-    //   console.log("detectiveId", detectiveId, "newPos", newPos);
+      //   console.log("detectiveId", detectiveId, "newPos", newPos);
 
-      this.optionWasUsed("jocker");
+      this.optionWasUsed("joker");
       if (!detectiveId || !newPos) {
         this.showBubble(
           "container",
-          _("Jack skipped by jocker"),
+          _("Jack skipped by joker"),
           0,
           1500,
           "pink_bubble"
@@ -1820,9 +1832,9 @@ define([
     },
 
     async notif_detective(notif) {
-    //   console.log("notif_detective");
+      //   console.log("notif_detective");
       const { detectiveId, newPos } = notif.args;
-    //   console.log("detectiveId", detectiveId, "newPos", newPos);
+      //   console.log("detectiveId", detectiveId, "newPos", newPos);
 
       this.optionWasUsed(detectiveId);
       await this.detective({ detectiveId, newPos });
@@ -1836,9 +1848,9 @@ define([
     },
 
     async notif_alibiJack(notif) {
-    //   console.log("notif_alibiJack");
+      //   console.log("notif_alibiJack");
       const { alibiId, points } = notif.args;
-    //   console.log("alibiId", alibiId, "points", points);
+      //   console.log("alibiId", alibiId, "points", points);
 
       this.optionWasUsed("alibi");
       this.updateAlibiTimerStatus();
@@ -1852,7 +1864,7 @@ define([
     },
 
     async notif_alibiAllExceptJack(notif) {
-    //   console.log("notif_alibiAllExceptJack");
+      //   console.log("notif_alibiAllExceptJack");
       const {} = notif.args;
 
       const playerisJack = Boolean(this.currentData.jackId);
@@ -1870,9 +1882,9 @@ define([
     },
 
     async notif_alibiAll(notif) {
-    //   console.log("notif_alibiAll");
+      //   console.log("notif_alibiAll");
       const { alibiId, close } = notif.args;
-    //   console.log("alibiId", alibiId, "close", close);
+      //   console.log("alibiId", alibiId, "close", close);
 
       this.optionWasUsed("alibi");
       this.updateAlibiTimerStatus();
@@ -1925,35 +1937,35 @@ define([
         gameEndStatus,
       } = notif.args;
       const characterIdsToClose = Object.values(closeCharactersObj);
-    //   console.log(
-    //     "nextActivePlayerId =",
-    //     nextActivePlayerId,
-    //     "\n",
-    //     "newRoundNum =",
-    //     newRoundNum,
-    //     "\n",
-    //     "newOptions =",
-    //     newOptions,
-    //     "\n",
-    //     "newNextOptions =",
-    //     newNextOptions,
-    //     "\n",
-    //     "characterIdsToClose =",
-    //     characterIdsToClose,
-    //     "\n",
-    //     "isVisible =",
-    //     isVisible,
-    //     "\n",
-    //     "playUntilVisibility =",
-    //     playUntilVisibility,
-    //     "\n",
-    //     "winPlayerId =",
-    //     winPlayerId,
-    //     "\n",
-    //     "gameEndStatus = ",
-    //     gameEndStatus,
-    //     "\n"
-    //   );
+      //   console.log(
+      //     "nextActivePlayerId =",
+      //     nextActivePlayerId,
+      //     "\n",
+      //     "newRoundNum =",
+      //     newRoundNum,
+      //     "\n",
+      //     "newOptions =",
+      //     newOptions,
+      //     "\n",
+      //     "newNextOptions =",
+      //     newNextOptions,
+      //     "\n",
+      //     "characterIdsToClose =",
+      //     characterIdsToClose,
+      //     "\n",
+      //     "isVisible =",
+      //     isVisible,
+      //     "\n",
+      //     "playUntilVisibility =",
+      //     playUntilVisibility,
+      //     "\n",
+      //     "winPlayerId =",
+      //     winPlayerId,
+      //     "\n",
+      //     "gameEndStatus = ",
+      //     gameEndStatus,
+      //     "\n"
+      //   );
 
       const currentOptions = newOptions.map((e) => ({
         ability: e,
@@ -2001,12 +2013,12 @@ define([
     notif_gameEnd(notif) {
       const { jackCharacterId, gameEndStatus, jackAlibiCards } = notif.args;
 
-    //   console.log(
-    //     "notif_gameEnd",
-    //     jackCharacterId,
-    //     gameEndStatus,
-    //     jackAlibiCards
-    //   );
+      //   console.log(
+      //     "notif_gameEnd",
+      //     jackCharacterId,
+      //     gameEndStatus,
+      //     jackAlibiCards
+      //   );
       this.currentData.jackAlibiCards = jackAlibiCards;
       this.currentData.jackCharacterId = jackCharacterId;
       this.currentData.gameEndStatus = gameEndStatus;

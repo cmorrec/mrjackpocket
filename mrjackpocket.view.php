@@ -70,7 +70,7 @@ class view_mrjackpocket_mrjackpocket extends game_view
 
         $options_to_move = [
             ['rotation', 'exchange'],
-            ['rotation', 'jocker'],
+            ['rotation', 'joker'],
             ['alibi', 'holmes'],
             ['watson', 'dog'],
         ];
