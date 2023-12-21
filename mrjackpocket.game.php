@@ -434,10 +434,10 @@ class MrJackPocket extends Table
     function getCurrentAvailableOptions(): array
     {
         $currentOptions = $this->getCurrentOptions();
-        $availableOptions = array_filter(
+        $availableOptions = array_values(array_filter(
             $currentOptions,
             fn(array $option) => $option['was_used'] === '0',
-        );
+        ));
 
         return $availableOptions;
     }
@@ -590,11 +590,11 @@ class MrJackPocket extends Table
     {
         $currentRoundNum = $this->getLastRoundNum();
         $usedOptions = count(
-            array_filter(
+            array_values(array_filter(
                 $currentOptions,
                 fn(array $option) => $option['was_used'] !== '0',
                 ARRAY_FILTER_USE_BOTH,
-            ),
+            )),
         );
         if ($usedOptions === 0 || $usedOptions === 3) {
             return $currentRoundNum % 2 === 0;
@@ -762,13 +762,13 @@ class MrJackPocket extends Table
         string $normalAxis,
         int $lineNumber
     ): array {
-        $lineCharacters = array_filter(
+        $lineCharacters = array_values(array_filter(
             $characters,
             fn(array $character) => (
                 $this->character_pos[(int) $character['tale_pos']][$axis] === $lineNumber
             ),
             ARRAY_FILTER_USE_BOTH,
-        );
+        ));
         usort(
             $lineCharacters,
             fn($a, $b) => (
@@ -1310,20 +1310,20 @@ class MrJackPocket extends Table
         if (!$isJackVisible) {
             $charactersToClose = $visibleCharacters;
         } else {
-            $charactersToClose = array_filter(
+            $charactersToClose = array_values(array_filter(
                 $characters,
                 fn(array $character) => !$this->array_any(
                     $visibleCharacters,
                     fn(array $visibleCharacter) => $visibleCharacter['character_id'] === $character['character_id'],
                 ),
                 ARRAY_FILTER_USE_BOTH,
-            );
+            ));
         }
-        $charactersToClose = array_filter(
+        $charactersToClose = array_values(array_filter(
             $charactersToClose,
             fn(array $character) => $character['tale_is_opened'] === '1',
             ARRAY_FILTER_USE_BOTH,
-        );
+        ));
 
         $this->closeCharacters($charactersToClose);
         self::incStat(count($charactersToClose), 'closed_characters');
@@ -1390,10 +1390,6 @@ class MrJackPocket extends Table
             $nextOptions = $this->getRevertOptions();
             $nextActivePlayerId = (int) $detectivePlayerId;
         }
-        if (!$isGameEnd) {
-            $this->activeNextPlayer();
-            $this->gamestate->nextState('playerTurn');
-        }
 
         self::notifyAllPlayers(
             "roundEnd",
@@ -1415,7 +1411,10 @@ class MrJackPocket extends Table
             ),
         );
 
-        if ($isGameEnd) {
+        if (!$isGameEnd) {
+            $this->activeNextPlayer();
+            $this->gamestate->nextState('playerTurn');
+        } else {
             $this->gamestate->nextState('gameEndAnimation');
         }
     }
@@ -1428,17 +1427,17 @@ class MrJackPocket extends Table
         $rounds = $this->getRounds();
         $currentRoundNum = count($rounds);
         $jackWinRounds = count(
-            array_filter(
+            array_values(array_filter(
                 $rounds,
                 fn(array $round) => ((int) $round['win_player_id']) === ((int) $jackPlayerId),
                 ARRAY_FILTER_USE_BOTH,
-            ),
+            )),
         );
-        $jackAlibiCharacters = array_filter(
+        $jackAlibiCharacters = array_values(array_filter(
             $characters,
             fn(array $character) => ((int) $character['player_id_with_alibi']) === ((int) $jackPlayerId),
             ARRAY_FILTER_USE_BOTH,
-        );
+        ));
         $jackAlibiBonuses = array_reduce(
             $jackAlibiCharacters,
             function (int $acc, array $character) {
@@ -1448,11 +1447,11 @@ class MrJackPocket extends Table
             0,
         );
         $isJackWin = ($jackWinRounds + $jackAlibiBonuses) >= 6;
-        $openedCharacters = array_filter(
+        $openedCharacters = array_values(array_filter(
             $characters,
             fn(array $character) => $character['tale_is_opened'] === '1',
             ARRAY_FILTER_USE_BOTH,
-        );
+        ));
         $isDetectiveWin = count($openedCharacters) <= 1;
         if ($isDetectiveWin && $isJackWin) {
             if ($isJackVisible) {
@@ -1550,8 +1549,10 @@ class MrJackPocket extends Table
             return;
         }
 
-        $playerId = (int) $active_player['player_id'];
+        $playerId = (int) $active_player;
         $availableOptions = $this->getCurrentAvailableOptions();
+        // self::trace("MYLOGZOMBIE");
+        // self::trace(json_encode($availableOptions));
         $randomOptionNum = bga_rand(0, count($availableOptions) - 1);
         $optionToMove = $availableOptions[$randomOptionNum];
         $optionToMoveName = $optionToMove['option'];
@@ -1567,8 +1568,8 @@ class MrJackPocket extends Table
         }
 
         if ($optionToMoveName === 'joker') {
-            $detectiveIndex = bga_rand(0, count($this->detectives));
-            if ($detectiveIndex === count($this->detectives)) {
+            $detectiveIndex = bga_rand(0, count($this->detectives) - 1);
+            if ($detectiveIndex === count($this->detectives)) { // should only if zombie is jack
                 $this->joker(null, null, $playerId);
             } else {
                 $metaDetective = $this->detectives[$detectiveIndex];
