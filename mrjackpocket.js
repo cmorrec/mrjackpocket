@@ -79,6 +79,7 @@ define([
         return isRowCorner + isColumnCorner === 1;
       });
       this.tooltipRegister = [];
+      this.unusedOptions = [];
     },
 
     /*
@@ -1815,18 +1816,32 @@ define([
         */
     setupNotifications: function () {
       //   console.log("notifications subscriptions setup");
-      dojo.subscribe("roundEnd", this, "notif_roundEnd");
       // this.notifqueue.setSynchronous('roundEnd', 3000);
-
-      dojo.subscribe("rotateTale", this, "notif_rotateTale");
-      dojo.subscribe("exchangeTales", this, "notif_exchangeTales");
-      dojo.subscribe("joker", this, "notif_jocker");
-      dojo.subscribe("detective", this, "notif_detective");
-      dojo.subscribe("alibiJack", this, "notif_alibiJack");
       // todo     this.notifqueue.setIgnoreNotificationCheck( 'dealCard', (notif) => (notif.args.player_id == this.player_id) );
-      dojo.subscribe("alibiAllExceptJack", this, "notif_alibiAllExceptJack");
-      dojo.subscribe("alibiAll", this, "notif_alibiAll");
-      dojo.subscribe("gameEnd", this, "notif_gameEnd");
+
+      const notifications = [
+        "roundEnd",
+        "rotateTale",
+        "exchangeTales",
+        "joker",
+        "detective",
+        "alibiJack",
+        "alibiAllExceptJack",
+        "alibiAll",
+        "gameEnd",
+      ];
+      notifications.forEach((notif) =>
+        dojo.subscribe(notif, this, `notif_${notif}`)
+      );
+      // dojo.subscribe("roundEnd", this, "notif_roundEnd");
+      // dojo.subscribe("rotateTale", this, "notif_rotateTale");
+      // dojo.subscribe("exchangeTales", this, "notif_exchangeTales");
+      // dojo.subscribe("joker", this, "notif_joker");
+      // dojo.subscribe("detective", this, "notif_detective");
+      // dojo.subscribe("alibiJack", this, "notif_alibiJack");
+      // dojo.subscribe("alibiAllExceptJack", this, "notif_alibiAllExceptJack");
+      // dojo.subscribe("alibiAll", this, "notif_alibiAll");
+      // dojo.subscribe("gameEnd", this, "notif_gameEnd");
     },
 
     // TODO: from this point and below, you can write your game notifications handling methods
@@ -1866,7 +1881,7 @@ define([
       this.updateVisibleTales();
     },
 
-    async notif_jocker(notif) {
+    async notif_joker(notif) {
       //   console.log("notif_jocker");
       const { detectiveId, newPos } = notif.args;
       //   console.log("detectiveId", detectiveId, "newPos", newPos);
@@ -1968,6 +1983,8 @@ define([
       );
       if (currentOption) {
         currentOption.wasUsed = true;
+      } else {
+        this.unusedOptions.push(option);
       }
     },
 
@@ -2062,6 +2079,13 @@ define([
 
       this.setPlayerPanels();
       this.updateVisibleTales();
+      if (this.unusedOptions.length) {
+        for (const option of this.unusedOptions) {
+          this.optionWasUsed(option);
+        }
+        this.initOptions(currentOptions, nextOptions);
+        this.unusedOptions = [];
+      }
     },
 
     notif_gameEnd(notif) {
