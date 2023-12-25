@@ -146,6 +146,7 @@ define([
           newWallSide: character.wallSide,
         });
       }
+      this.updateCharactersTooltips();
 
       for (const pos of this.availableDetectivePos) {
         const taleId = `tale_${pos.id}`;
@@ -190,6 +191,18 @@ define([
       }
 
       //   console.log("Ending game setup");
+    },
+
+    updateCharactersTooltips() {
+      for (const { id } of this.currentData.characters) {
+        const taleOuterId = this.getTaleIdByCharacterId(id, "outer");
+        const metaCharacter = this.getMetaCharacterById(id);
+        this.removeTooltipCustom(taleOuterId);
+        this.addTooltipHtmlCustom(
+          taleOuterId,
+          `<span class="tooltip-text">${metaCharacter.name}</span>`
+        );
+      }
     },
 
     setPlayerPanels() {
@@ -381,13 +394,8 @@ define([
       this.currentData.characters
         .filter((e) => e.lastRoundRotated === this.currentData.currentRound.num)
         .forEach((e) => {
-          this.removeTooltip(this.getTaleIdByCharacterId(e.id));
-          const tooltip = this.tooltipRegister.find(
-            (t) => this.getTaleIdByCharacterId(e.id) === t.id
-          );
-          if (tooltip) {
-            $(tooltip.id).addEventListener("click", tooltip.listener);
-          }
+          const taleId = this.getTaleIdByCharacterId(e.id);
+          this.removeTooltipCustom(taleId);
         });
     },
 
@@ -683,13 +691,8 @@ define([
             (e) => e.lastRoundRotated === this.currentData.currentRound.num
           )
           .forEach((e) => {
-            this.removeTooltip(this.getTaleIdByCharacterId(e.id));
-            const tooltip = this.tooltipRegister.find(
-              (t) => this.getTaleIdByCharacterId(e.id) === t.id
-            );
-            if (tooltip) {
-              $(tooltip.id).addEventListener("click", tooltip.listener);
-            }
+            const taleId = this.getTaleIdByCharacterId(e.id);
+            this.removeTooltipCustom(taleId);
           });
       };
     },
@@ -728,11 +731,15 @@ define([
         );
       } else {
         dojo.removeClass(buttonId, "rotate-approve-disable");
-        this.removeTooltip(buttonId);
-        const tooltip = this.tooltipRegister.find((e) => e.id === buttonId);
-        if (tooltip) {
-          $(tooltip.id).addEventListener("click", tooltip.listener);
-        }
+        this.removeTooltipCustom(buttonId);
+      }
+    },
+
+    removeTooltipCustom(id) {
+      this.removeTooltip(id);
+      const tooltip = this.tooltipRegister.find((e) => e.id === id);
+      if (tooltip) {
+        $(tooltip.id).removeEventListener("click", tooltip.listener);
       }
     },
 
@@ -1131,6 +1138,8 @@ define([
       tale2.innerHTML = children1;
       dojo.setStyle(taleIdInner1, { left: "0px", top: "0px" });
       dojo.setStyle(taleIdInner2, { left: "0px", top: "0px" });
+
+      this.updateCharactersTooltips();
     },
 
     async moveDetective({ detectiveId, newPos, oldPos }) {
