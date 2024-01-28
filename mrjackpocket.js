@@ -2110,5 +2110,59 @@ define([
       this.currentData.jackCharacterId = jackCharacterId;
       this.currentData.gameEndStatus = gameEndStatus;
     },
+
+    /** Override this function to inject html into log items. This is a built-in BGA method.  */
+
+    /* @Override */
+    format_string_recursive: function format_string_recursive(log, args) {
+      try {
+        if (log && args && !args.processed) {
+          args.processed = true;
+
+          // list of special keys we want to replace with images
+          const keys = [
+            "characterName",
+            "characterName1",
+            "characterName2",
+            "alibiName",
+          ];
+
+          for (const key of keys) {
+            if (key in args) {
+              args[key] = this.getTokenDiv(key, args);
+            }
+          }
+        }
+      } catch (e) {
+        console.error(log, args, "Exception thrown", e.stack);
+      }
+      return this.inherited({ callee: format_string_recursive }, arguments);
+    },
+
+    getTokenDiv: function (key, args) {
+      // ... implement whatever html you want here, example from sharedcode.js
+      const characterName = args[key];
+      // const logid = "log" + this.globalid++ + "_" + token_id;
+      // switch (key) {
+      //   case "wcube":
+      const metaCharacter = this.currentData.meta.characters.find(
+        (e) => e.name === characterName
+      );
+      if (!metaCharacter) {
+        return (
+          "'" + this.clienttranslate_string(this.getTokenName(token_id)) + "'"
+        );
+      }
+      const tokenDiv = `<span style="color: ${metaCharacter.color}">${characterName}</span>`;
+      return tokenDiv;
+
+      //   default:
+      //     break;
+      // }
+    },
+
+    // getTokenName: function (key) {
+    //   return this.gamedatas.token_types[key].name; // get name for the key, from static table for example
+    // },
   });
 });
