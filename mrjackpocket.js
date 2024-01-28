@@ -1653,6 +1653,9 @@ define([
         const { start, end } = inverse
           ? { start: offsetGoal, end: offsetDetective }
           : { start: offsetDetective, end: offsetGoal };
+        if (offsetGoal.top < offsetDetective.top) {
+          offsetDetective.top -= 50;
+        }
 
         dojo.place(
           `<div

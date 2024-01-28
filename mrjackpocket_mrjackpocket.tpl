@@ -49,7 +49,7 @@
 
     <div id="board">
         <!-- BEGIN tale -->
-            <div id="tale_outer_{pos}" class="tale-outer">
+            <div id="tale_outer_{pos}" class="tale-outer {status}">
                 <div id="tale_{pos}" class="tale {status}"></div>
             </div>
         <!-- END tale -->
