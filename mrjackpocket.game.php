@@ -434,10 +434,12 @@ class MrJackPocket extends Table
     function getCurrentAvailableOptions(): array
     {
         $currentOptions = $this->getCurrentOptions();
-        $availableOptions = array_values(array_filter(
-            $currentOptions,
-            fn(array $option) => $option['was_used'] === '0',
-        ));
+        $availableOptions = array_values(
+            array_filter(
+                $currentOptions,
+                fn(array $option) => $option['was_used'] === '0',
+            )
+        );
 
         return $availableOptions;
     }
@@ -590,11 +592,13 @@ class MrJackPocket extends Table
     {
         $currentRoundNum = $this->getLastRoundNum();
         $usedOptions = count(
-            array_values(array_filter(
-                $currentOptions,
-                fn(array $option) => $option['was_used'] !== '0',
-                ARRAY_FILTER_USE_BOTH,
-            )),
+            array_values(
+                array_filter(
+                    $currentOptions,
+                    fn(array $option) => $option['was_used'] !== '0',
+                    ARRAY_FILTER_USE_BOTH,
+                )
+            ),
         );
         if ($usedOptions === 0 || $usedOptions === 3) {
             return $currentRoundNum % 2 === 0;
@@ -762,13 +766,15 @@ class MrJackPocket extends Table
         string $normalAxis,
         int $lineNumber
     ): array {
-        $lineCharacters = array_values(array_filter(
-            $characters,
-            fn(array $character) => (
-                $this->character_pos[(int) $character['tale_pos']][$axis] === $lineNumber
-            ),
-            ARRAY_FILTER_USE_BOTH,
-        ));
+        $lineCharacters = array_values(
+            array_filter(
+                $characters,
+                fn(array $character) => (
+                    $this->character_pos[(int) $character['tale_pos']][$axis] === $lineNumber
+                ),
+                ARRAY_FILTER_USE_BOTH,
+            )
+        );
         usort(
             $lineCharacters,
             fn($a, $b) => (
@@ -1310,20 +1316,24 @@ class MrJackPocket extends Table
         if (!$isJackVisible) {
             $charactersToClose = $visibleCharacters;
         } else {
-            $charactersToClose = array_values(array_filter(
-                $characters,
-                fn(array $character) => !$this->array_any(
-                    $visibleCharacters,
-                    fn(array $visibleCharacter) => $visibleCharacter['character_id'] === $character['character_id'],
-                ),
-                ARRAY_FILTER_USE_BOTH,
-            ));
+            $charactersToClose = array_values(
+                array_filter(
+                    $characters,
+                    fn(array $character) => !$this->array_any(
+                        $visibleCharacters,
+                        fn(array $visibleCharacter) => $visibleCharacter['character_id'] === $character['character_id'],
+                    ),
+                    ARRAY_FILTER_USE_BOTH,
+                )
+            );
         }
-        $charactersToClose = array_values(array_filter(
-            $charactersToClose,
-            fn(array $character) => $character['tale_is_opened'] === '1',
-            ARRAY_FILTER_USE_BOTH,
-        ));
+        $charactersToClose = array_values(
+            array_filter(
+                $charactersToClose,
+                fn(array $character) => $character['tale_is_opened'] === '1',
+                ARRAY_FILTER_USE_BOTH,
+            )
+        );
 
         $this->closeCharacters($charactersToClose);
         self::incStat(count($charactersToClose), 'closed_characters');
@@ -1391,9 +1401,23 @@ class MrJackPocket extends Table
             $nextActivePlayerId = (int) $detectivePlayerId;
         }
 
+        if ($isJackVisible) {
+            if (count($charactersToClose) === 0) {
+                $clientMessage = clienttranslate('Round ${oldRoundNum} is over. Jack is visible. There are no invisible tales to open.');
+            } else {
+                $clientMessage = clienttranslate('Round ${oldRoundNum} is over. Jack is visible. Opening invisible tales: ${characterNamesToClose}');
+            }
+        } else {
+            if (count($charactersToClose) === 0) {
+                $clientMessage = clienttranslate('Round ${oldRoundNum} is over. Jack is invisible. There are no visible tales to open.');
+            } else {
+                $clientMessage = clienttranslate('Round ${oldRoundNum} is over. Jack is invisible. Opening visible tales: ${characterNamesToClose}');
+            }
+        }
+
         self::notifyAllPlayers(
             "roundEnd",
-            clienttranslate('Round ${oldRoundNum} is over'),
+            $clientMessage,
             array(
                 'nextActivePlayerId' => $nextActivePlayerId,
                 'newRoundNum' => $currentRoundNum + 1,
@@ -1402,6 +1426,10 @@ class MrJackPocket extends Table
                 'newNextOptions' => $nextOptions,
                 'characterIdsToClose' => array_map(
                     fn(array $character): string => $character['character_id'],
+                    $charactersToClose,
+                ),
+                'characterNamesToClose' => array_map(
+                    fn(array $character): string => $this->getMetaCharacterById($character['character_id'])['name'],
                     $charactersToClose,
                 ),
                 'isVisible' => $isJackVisible,
@@ -1427,17 +1455,21 @@ class MrJackPocket extends Table
         $rounds = $this->getRounds();
         $currentRoundNum = count($rounds);
         $jackWinRounds = count(
-            array_values(array_filter(
-                $rounds,
-                fn(array $round) => ((int) $round['win_player_id']) === ((int) $jackPlayerId),
-                ARRAY_FILTER_USE_BOTH,
-            )),
+            array_values(
+                array_filter(
+                    $rounds,
+                    fn(array $round) => ((int) $round['win_player_id']) === ((int) $jackPlayerId),
+                    ARRAY_FILTER_USE_BOTH,
+                )
+            ),
         );
-        $jackAlibiCharacters = array_values(array_filter(
-            $characters,
-            fn(array $character) => ((int) $character['player_id_with_alibi']) === ((int) $jackPlayerId),
-            ARRAY_FILTER_USE_BOTH,
-        ));
+        $jackAlibiCharacters = array_values(
+            array_filter(
+                $characters,
+                fn(array $character) => ((int) $character['player_id_with_alibi']) === ((int) $jackPlayerId),
+                ARRAY_FILTER_USE_BOTH,
+            )
+        );
         $jackAlibiBonuses = array_reduce(
             $jackAlibiCharacters,
             function (int $acc, array $character) {
@@ -1447,11 +1479,13 @@ class MrJackPocket extends Table
             0,
         );
         $isJackWin = ($jackWinRounds + $jackAlibiBonuses) >= 6;
-        $openedCharacters = array_values(array_filter(
-            $characters,
-            fn(array $character) => $character['tale_is_opened'] === '1',
-            ARRAY_FILTER_USE_BOTH,
-        ));
+        $openedCharacters = array_values(
+            array_filter(
+                $characters,
+                fn(array $character) => $character['tale_is_opened'] === '1',
+                ARRAY_FILTER_USE_BOTH,
+            )
+        );
         $isDetectiveWin = count($openedCharacters) <= 1;
         if ($isDetectiveWin && $isJackWin) {
             if ($isJackVisible) {

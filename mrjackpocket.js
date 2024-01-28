@@ -2120,16 +2120,23 @@ define([
           args.processed = true;
 
           // list of special keys we want to replace with images
-          const keys = [
+          const singleNameKeys = [
             "characterName",
             "characterName1",
             "characterName2",
             "alibiName",
           ];
+          const multipleNameKeys = ["characterNamesToClose"];
 
-          for (const key of keys) {
+          for (const key of singleNameKeys) {
             if (key in args) {
               args[key] = this.getTokenDiv(key, args);
+            }
+          }
+
+          for (const key of multipleNameKeys) {
+            if (key in args) {
+              args[key] = this.getMultipleTokenDiv(key, args);
             }
           }
         }
@@ -2159,6 +2166,22 @@ define([
       //   default:
       //     break;
       // }
+    },
+
+    getMultipleTokenDiv: function (key, args) {
+      const characterNames = Array.from(args[key]);
+      const metaCharacters = characterNames.map((characterName) =>
+        this.currentData.meta.characters.find((e) => e.name === characterName)
+      ).filter((metaCharacter) => Boolean(metaCharacter));
+
+      if (metaCharacters.length !== characterNames.length) {
+        return (
+          "'" + this.clienttranslate_string(this.getTokenName(token_id)) + "'"
+        );
+      }
+
+      const tokenDiv = metaCharacters.map((metaCharacter) => `<span style="color: ${metaCharacter.color}">${metaCharacter.name}</span>`).join(', ');
+      return tokenDiv;
     },
 
     // getTokenName: function (key) {
