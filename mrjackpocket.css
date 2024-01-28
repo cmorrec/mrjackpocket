@@ -422,8 +422,8 @@
 .alibi-cards-tooltip-container {
     min-width: 100px;
     min-height: 100px;
-    max-width: 100px;
-    max-height: 150px;
+    max-width: 210px;
+    max-height: 310px;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;

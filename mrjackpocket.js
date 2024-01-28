@@ -200,7 +200,7 @@ define([
         this.removeTooltipCustom(taleOuterId);
         this.addTooltipHtmlCustom(
           taleOuterId,
-          `<span class="tooltip-text">${metaCharacter.name}</span>`
+          `<span class="tooltip-text" style="color: ${metaCharacter.color}">${metaCharacter.name}</span>`
         );
       }
     },

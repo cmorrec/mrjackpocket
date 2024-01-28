@@ -987,7 +987,7 @@ class MrJackPocket extends Table
 
         self::notifyAllPlayers(
             "rotateTale",
-            clienttranslate('${playerName} rotates ${characterName} to the ${wallSide}'),
+            clienttranslate('${playerName} rotates ${characterName} the wall ${wallSide}'),
             array(
                 'i18n' => array('wallSide'),
                 'playerId' => $playerId,
@@ -1032,7 +1032,7 @@ class MrJackPocket extends Table
 
         self::notifyAllPlayers(
             "exchangeTales",
-            clienttranslate('${playerName} exchanges ${characterName1} to the ${characterName2}'),
+            clienttranslate('${playerName} exchanges ${characterName1} with ${characterName2}'),
             array(
                 'playerId' => $playerId,
                 'playerName' => self::getActivePlayerName(),
@@ -1163,7 +1163,7 @@ class MrJackPocket extends Table
             self::notifyPlayer(
                 $playerId,
                 "alibiJack",
-                clienttranslate('${playerName} opens alibi card with ${alibiName}'),
+                clienttranslate('${playerName} reveals the alibi card for ${alibiName}'),
                 array(
                     'playerId' => $playerId,
                     'playerName' => self::getActivePlayerName(),
@@ -1174,7 +1174,7 @@ class MrJackPocket extends Table
             );
             self::notifyAllPlayers(
                 "alibiAllExceptJack",
-                clienttranslate('${playerName} opens alibi card'),
+                clienttranslate('${playerName} draws a card from the alibi deck'),
                 array(
                     'playerId' => $playerId,
                     'playerName' => self::getActivePlayerName(),
@@ -1183,7 +1183,7 @@ class MrJackPocket extends Table
         } else {
             self::notifyAllPlayers(
                 "alibiAll",
-                clienttranslate('${playerName} opens alibi card with ${alibiName}'),
+                clienttranslate('${playerName} reveals the alibi card for ${alibiName}'),
                 array(
                     'playerId' => $playerId,
                     'playerName' => self::getActivePlayerName(),
