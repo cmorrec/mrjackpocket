@@ -25,10 +25,13 @@
 
 
 
-    <div id="round-info">
-        <!-- BEGIN round -->
-            <div id="round_{round_num}" class="round"></div>
-        <!-- END round -->
+    <div id="top-container">
+        <div id="round-info">
+            <!-- BEGIN round -->
+                <div id="round_{round_num}" class="round"></div>
+            <!-- END round -->
+        </div>
+        <span id="gamer-jack-status" class="tooltip-text"></span>
     </div>
 
 
@@ -69,7 +72,7 @@
 
 var jstpl_jack_panel=`
     <div id="jack-panel">
-        <div id="jack-character"></div>
+        <div id="jack-character" ></div>
         <div class="time-container" id="jack-winned-rounds">
             <div class="time-num" id="jack-winned-rounds-num">?</div>
             ×

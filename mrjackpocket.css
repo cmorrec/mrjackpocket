@@ -179,12 +179,29 @@
 }
 
 #round-info {
-    grid-area: round;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 10px;
+}
+
+#top-container {
+    position: relative;
+    grid-area: round;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#gamer-jack-status {
+    position: absolute;
+    top: 50px;
+    width: 200px;
+    padding: 3px 100px;
+    background: linear-gradient(to bottom, rgba(30, 30, 30, 0.1), rgba(30, 30, 30, 0.4), rgba(30, 30, 30, 0.1));
+    border-radius: 40px;
+    text-align: center;
 }
 
 .round {
@@ -373,8 +390,8 @@
 }
 
 #jack-character {
-    width: 30px;
-    height: 45px;
+    width: 60px;
+    height: 90px;
 }
 
 #jack-character-tooltip {

@@ -248,10 +248,12 @@ define([
           urls: "img/time.png",
         });
 
-        this.addImg({
-          id: "jack-character",
-          urls: "img/alibi_back.png",
-        });
+        const jackCharacter = $("jack-character");
+        jackCharacter.style = this.addImg({
+          urls: this.currentData.jackId
+            ? this.getMetaCharacterById(this.currentData.jackId).alibi_img
+            : "img/alibi_back.png",
+        }).text;
       }
 
       const jackWinnedRounds = this.currentData.previousRounds.filter(
@@ -268,16 +270,20 @@ define([
         detectiveWinnedRounds
       );
 
+      const jackMetaCharacter = this.currentData.jackId
+        ? this.getMetaCharacterById(this.currentData.jackId)
+        : undefined;
+      const jackCharacterName =
+        jackMetaCharacter?.name ?? _("Jack's secret character");
       this.addTooltipHtmlCustom(
         "jack-character",
-        this.format_block("jstpl_jack_character_tooltip", {
-          styles: this.addImg({
-            urls: this.currentData.jackId
-              ? this.getMetaCharacterById(this.currentData.jackId).alibi_img
-              : "img/alibi_back.png",
-          }).text,
-        })
+        `<span class="tooltip-text" style="color: ${
+          jackMetaCharacter?.color ?? "black"
+        }">${jackCharacterName}</span>`
       );
+      $("gamer-jack-status").innerText = this.currentData.jackId
+        ? _("You are Jack")
+        : _("You are a detective");
 
       if (this.currentData.jackId) {
         $("jack-alibi-num").innerHTML = this.getAlibiJackPoints();
@@ -2173,9 +2179,11 @@ define([
 
     getMultipleTokenDiv: function (key, args) {
       const characterNames = Array.from(args[key]);
-      const metaCharacters = characterNames.map((characterName) =>
-        this.currentData.meta.characters.find((e) => e.name === characterName)
-      ).filter((metaCharacter) => Boolean(metaCharacter));
+      const metaCharacters = characterNames
+        .map((characterName) =>
+          this.currentData.meta.characters.find((e) => e.name === characterName)
+        )
+        .filter((metaCharacter) => Boolean(metaCharacter));
 
       if (metaCharacters.length !== characterNames.length) {
         return (
@@ -2183,7 +2191,12 @@ define([
         );
       }
 
-      const tokenDiv = metaCharacters.map((metaCharacter) => `<span style="color: ${metaCharacter.color}">${metaCharacter.name}</span>`).join(', ');
+      const tokenDiv = metaCharacters
+        .map(
+          (metaCharacter) =>
+            `<span style="color: ${metaCharacter.color}">${metaCharacter.name}</span>`
+        )
+        .join(", ");
       return tokenDiv;
     },
 
