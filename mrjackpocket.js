@@ -194,13 +194,20 @@ define([
     },
 
     updateCharactersTooltips() {
+      const jackId = this.currentData.jackId;
       for (const { id } of this.currentData.characters) {
         const taleOuterId = this.getTaleIdByCharacterId(id, "outer");
         const metaCharacter = this.getMetaCharacterById(id);
         this.removeTooltipCustom(taleOuterId);
         this.addTooltipHtmlCustom(
           taleOuterId,
-          `<span class="tooltip-text" style="color: ${metaCharacter.color}">${metaCharacter.name}</span>`
+          `<span class="tooltip-text" style="font-size: 24px; color: ${
+            metaCharacter.color
+          }">${metaCharacter.name}${
+            Boolean(jackId) && jackId === metaCharacter.id
+              ? ": Jack character"
+              : ""
+          }</span>`
         );
       }
     },
@@ -1589,7 +1596,14 @@ define([
       this.addGoalTooltip(text);
 
       if (playUntilVisibility) {
-        dojo.addClass("goal-info-inner", "until-visibility");
+        const id = "goal-info-inner";
+        this.slideToObject(id, "container", 1000).play();
+        dojo.setStyle(id, { "box-shadow": SHADOW_ALL_SCREEN });
+        await delay(1100);
+        dojo.addClass(id, "until-visibility");
+        await delay(900);
+        this.slideToObject(id, "goal-info-container", 1000).play();
+        dojo.setStyle(id, { "box-shadow": "" });
         await delay(900);
       }
     },

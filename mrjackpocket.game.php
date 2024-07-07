@@ -17,7 +17,7 @@
  */
 
 
-require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
+require_once (APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
 // enum GAME_END_STATUS
 // {
@@ -98,7 +98,7 @@ class MrJackPocket extends Table
             $values[] = "('" . $player_id . "','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "','" . $playerIsJack . "','" . $player_no . "')";
             $index += 1;
         }
-        $sql .= implode($values, ',');
+        $sql .= implode(',', $values);
         self::DbQuery($sql);
         self::reloadPlayersBasicInfos();
 
@@ -123,7 +123,7 @@ class MrJackPocket extends Table
         foreach ($tales as $tale) {
             $values[] = "('" . $tale['character_id'] . "','" . $tale['tale_pos'] . "','" . $tale['is_jack'] . "','" . $tale['wall_side'] . "')";
         }
-        $sql .= implode($values, ',');
+        $sql .= implode(',', $values);
         self::DbQuery($sql);
 
         // saving detective_status in db
@@ -132,7 +132,7 @@ class MrJackPocket extends Table
         foreach ($this->init_pos as $pos) {
             $values[] = "('" . $pos['detective'] . "','" . $pos['pos'] . "')";
         }
-        $sql .= implode($values, ',');
+        $sql .= implode(',', $values, );
         self::DbQuery($sql);
 
         // saving round in db
@@ -218,7 +218,7 @@ class MrJackPocket extends Table
         $result = array();
         $characters = $this->getCharacters();
         $result['characters'] = array_map(
-            fn(array $character): array => array(
+            fn(array $character): array => array (
                 'id' => $character['character_id'],
                 'pos' => (int) $character['tale_pos'],
                 'isOpened' => $character['tale_is_opened'] === '1',
@@ -230,7 +230,7 @@ class MrJackPocket extends Table
 
         $detectives = $this->getDetectives();
         $result['detectives'] = array_map(
-            fn(array $detective): array => array(
+            fn(array $detective): array => array (
                 'id' => $detective['detective_id'],
                 'pos' => (int) $detective['detective_pos'],
             ),
@@ -239,7 +239,7 @@ class MrJackPocket extends Table
 
         $currentOptions = $this->getCurrentOptions();
         $result['currentOptions'] = array_map(
-            fn(array $option): array => array(
+            fn(array $option): array => array (
                 'ability' => $option['option'],
                 'wasUsed' => $option['was_used'] === '1',
             ),
@@ -251,7 +251,7 @@ class MrJackPocket extends Table
         if ($currentRoundNum % 2 === 1) {
             $nextOptions = $this->getRevertOptions();
             $result['nextOptions'] = array_map(
-                fn(string $option): array => array(
+                fn(string $option): array => array (
                     'ability' => $option,
                     'wasUsed' => false,
                 ),
@@ -261,7 +261,7 @@ class MrJackPocket extends Table
 
         $previousRounds = $this->getPreviousRounds();
         $result['previousRounds'] = array_map(
-            fn(array $round): array => array(
+            fn(array $round): array => array (
                 'num' => $round['round_num'],
                 'winPlayerId' => $round['win_player_id'],
                 'isCriminalVisible' => $round['is_criminal_visible'] === '1',
@@ -287,7 +287,7 @@ class MrJackPocket extends Table
         );
 
         $result['visibleCharacters'] = array_map(
-            fn(array $character): array => array(
+            fn(array $character): array => array (
                 'id' => $character['character_id'],
                 'pos' => (int) $character['tale_pos'],
                 'isOpened' => $character['tale_is_opened'] === '1',
@@ -318,7 +318,7 @@ class MrJackPocket extends Table
         $jackALibiCards = $this->getAlibiCardsByPlayerId($jackPlayerId);
         $result['jackAlibiCardsNum'] = count($jackALibiCards);
         $result['playersInfo'] = array_map(
-            fn(array $player): array => array(
+            fn(array $player): array => array (
                 'player_id' => $player['player_id'],
                 'player_is_jack' => $player['player_is_jack'],
             ),
@@ -452,7 +452,7 @@ class MrJackPocket extends Table
         foreach ($options as $index => $option) {
             $values[] = "('" . $roundNum . "','" . $option . "','" . $index . "')";
         }
-        $sql .= implode($values, ',');
+        $sql .= implode(',', $values);
         self::DbQuery($sql);
     }
 
@@ -636,11 +636,11 @@ class MrJackPocket extends Table
         }
 
         $characterIds = implode(
+            ',',
             array_map(
                 fn(array $character) => "'" . $character['character_id'] . "'",
                 $characters,
             ),
-            ',',
         );
         $sql = "UPDATE character_status SET tale_is_opened = '0' WHERE character_id in ($characterIds)";
         self::DbQuery($sql);
